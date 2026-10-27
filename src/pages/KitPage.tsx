@@ -5,6 +5,7 @@ import { useHardware } from '../input/hardware';
 import { engine } from '../audio/engine';
 import type { Pad, PlayMode } from '../types';
 import { CHANNEL_COUNT, PIN_LABELS } from '../types';
+import { SOURCE_LABELS } from '../kits';
 import { Close, Down, Move, Plus, PlayIcon, Trash, Up, Wave } from '../components/Icons';
 
 const MODES: { id: PlayMode; label: string; help: string }[] = [
@@ -65,17 +66,46 @@ export function KitPage({ goLibrary }: { goLibrary: () => void }) {
     <main className="page">
       <section className="grow" aria-label="ชุดกลอง">
         <div className="kit-head">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginRight: 'auto', minWidth: 220, flex: '1 1 260px' }}>
-            <label htmlFor="kitname" className="label">ชุดกลองปัจจุบัน · บันทึกอัตโนมัติ</label>
-            <input id="kitname" className="kit-name" value={kit.name} onChange={(e) => store.setKitName(e.target.value)} />
+          <div className="stack" style={{ gap: 4, marginRight: 'auto', minWidth: 240, flex: '1 1 300px' }}>
+            <label htmlFor="kitsel" className="label">ชุดกลอง</label>
+            <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+              <select id="kitsel" className="input kit-select" value={kit.id} onChange={(e) => store.selectKit(e.target.value)}>
+                <optgroup label="ชุดกลองในแอป">
+                  {store.kits.filter((k) => k.presetId).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+                </optgroup>
+                {store.kits.some((k) => !k.presetId) && (
+                  <optgroup label="ชุดของฉัน">
+                    {store.kits.filter((k) => !k.presetId).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+                  </optgroup>
+                )}
+              </select>
+              {store.kitLoading && <span className="faint" style={{ fontSize: 13, whiteSpace: 'nowrap' }} role="status">กำลังโหลดเสียง…</span>}
+            </div>
+            <span className="faint" style={{ fontSize: 13 }}>
+              {store.preset ? `${store.preset.description} · ${store.preset.credit}` : 'ชุดที่คุณสร้างเอง — แก้ไขได้ทุกอย่าง บันทึกอัตโนมัติ'}
+            </span>
           </div>
+          <button type="button" className="btn" onClick={store.duplicateKit}>ทำสำเนาเป็นชุดของฉัน</button>
+          {store.preset ? (
+            <button type="button" className="btn ghost" onClick={() => { if (confirm(`คืนค่าเสียงของ "${kit.name}" เป็นแบบเดิม?`)) store.resetKitSounds(); }}>คืนค่าเสียงเดิม</button>
+          ) : (
+            <button type="button" className="btn ghost danger" onClick={() => { if (confirm(`ลบชุด "${kit.name}"?`)) store.deleteKit(kit.id); }}><Trash /> ลบชุดนี้</button>
+          )}
+        </div>
+        {!store.preset && (
+          <div className="row" style={{ gap: 8 }}>
+            <label htmlFor="kitname" className="label">ชื่อชุด</label>
+            <input id="kitname" className="input" style={{ maxWidth: 320, minHeight: 36 }} value={kit.name} onChange={(e) => store.setKitName(e.target.value)} />
+          </div>
+        )}
+        <div className="row" style={{ gap: 10 }}>
           <button type="button" className={'btn' + (arrange ? ' outline' : '')} aria-pressed={arrange} onClick={() => setArrange((a) => !a)}>
             <Move /> {arrange ? 'จัดวางเสร็จแล้ว' : 'จัดตำแหน่ง'}
           </button>
           <button type="button" className="btn" onClick={store.addPad}>
             <Plus /> เพิ่มชิ้นกลอง
           </button>
-          <button type="button" className="btn" onClick={store.exportKit}>ส่งออกชุดกลอง</button>
+          <button type="button" className="btn ghost" onClick={store.exportKit}>ส่งออกชุดกลอง</button>
         </div>
 
         <div ref={stageRef} className={'stage' + (arrange ? ' arrange' : '')}>
@@ -270,8 +300,12 @@ function PadPanel({ pad, goLibrary }: { pad: Pad; goLibrary: () => void }) {
               onChange={(e) => e.target.value && updatePad(pad.id, { samples: [...pad.samples, e.target.value] })}
             >
               <option value="">เพิ่มจากคลังเสียง…</option>
-              {samples.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}{s.builtin ? '' : ' (ของฉัน)'}</option>
+              {Object.entries(SOURCE_LABELS).map(([src, label]) => (
+                <optgroup key={src} label={label}>
+                  {samples.filter((s) => s.source === src).map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             <button type="button" className="btn ghost" onClick={goLibrary}>เปิดคลัง</button>

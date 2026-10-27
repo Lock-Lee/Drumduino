@@ -36,27 +36,28 @@ class Engine {
     );
   }
 
-  /** Load the bundled acoustic samples (public/samples). Uses XHR so it also works from file:// in the packaged app. */
-  async loadBundled(items: { id: string; file: string }[]): Promise<void> {
-    const get = (url: string) =>
-      new Promise<ArrayBuffer>((resolve, reject) => {
-        const x = new XMLHttpRequest();
-        x.open('GET', url);
-        x.responseType = 'arraybuffer';
-        x.onload = () => (x.status === 200 || x.status === 0) && x.response ? resolve(x.response) : reject(new Error(url));
-        x.onerror = () => reject(new Error(url));
-        x.send();
-      });
-    await Promise.all(
-      items.map(async (it) => {
-        if (this.buffers.has(it.id)) return;
-        try {
-          this.buffers.set(it.id, await this.decode(await get('samples/' + it.file)));
-        } catch {
-          /* missing file: pad just stays silent for this layer */
-        }
-      })
-    );
+  private bundled = new Map<string, string>();
+
+  /** Register the bundled acoustic samples (public/samples). They load on demand via ensure(). */
+  registerBundled(items: { id: string; file: string }[]) {
+    for (const it of items) this.bundled.set(it.id, it.file);
+  }
+
+  /** XHR (not fetch) so it also works from file:// in the packaged app. */
+  private fetchFile(url: string): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('GET', url);
+      x.responseType = 'arraybuffer';
+      x.onload = () => ((x.status === 200 || x.status === 0) && x.response ? resolve(x.response) : reject(new Error(url)));
+      x.onerror = () => reject(new Error(url));
+      x.send();
+    });
+  }
+
+  /** Load many samples (e.g. everything the current kit uses). */
+  preload(ids: string[]): Promise<unknown> {
+    return Promise.all(ids.map((id) => this.ensure(id)));
   }
 
   /** Decode a user file. Returns the decoded buffer (throws if not audio). */
@@ -76,14 +77,16 @@ class Engine {
     return this.buffers.has(id);
   }
 
-  /** Ensure a user sample is loaded from storage. */
+  /** Ensure a sample is decoded: bundled file or user sample from storage. */
   ensure(id: string): Promise<AudioBuffer | null> {
     const b = this.buffers.get(id);
     if (b) return Promise.resolve(b);
     let p = this.loading.get(id);
     if (!p) {
-      p = getSample(id)
-        .then((data) => (data ? this.decode(data) : null))
+      const file = this.bundled.get(id);
+      const data = file ? this.fetchFile('samples/' + file) : getSample(id);
+      p = data
+        .then((d) => (d ? this.decode(d) : null))
         .then((buf) => {
           if (buf) this.buffers.set(id, buf);
           return buf;

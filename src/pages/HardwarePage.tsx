@@ -3,7 +3,7 @@ import { useHardware } from '../input/hardware';
 import { CHANNEL_COUNT, PIN_LABELS, sensitivityToThreshold } from '../types';
 
 export function HardwarePage() {
-  const { kit, updatePad, resetKit } = useStore();
+  const { kit, updatePad, resetLayout } = useStore();
   const hw = useHardware();
   const boardChannels = hw.boardInfo ? parseInt(hw.boardInfo.split(' ')[2] ?? '', 10) : NaN;
 
@@ -171,8 +171,8 @@ export function HardwarePage() {
           <span>Scan = เวลาหาค่าสูงสุดหลังตี · Mask = เวลากันตีซ้ำ (เพิ่มถ้าตีครั้งเดียวแต่ดังสองที)</span>
         </div>
         <div>
-          <button type="button" className="btn ghost danger" onClick={() => { if (confirm('รีเซ็ตชุดกลองกลับเป็นค่าเริ่มต้น? (ไฟล์เสียงที่นำเข้ายังอยู่ในคลัง)')) resetKit(); }}>
-            รีเซ็ตชุดกลองเป็นค่าเริ่มต้น
+          <button type="button" className="btn ghost danger" onClick={() => { if (confirm('รีเซ็ตตำแหน่งชิ้นกลอง ขา Arduino และความไว กลับเป็นค่าเริ่มต้น? (เสียงของแต่ละชุดไม่เปลี่ยน)')) resetLayout(); }}>
+            รีเซ็ตตำแหน่งและการตั้งค่าขา
           </button>
         </div>
       </section>

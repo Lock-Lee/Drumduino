@@ -1,64 +1,62 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Kit, Pad, SampleMeta } from './types';
+import type { Kit, KitSounds, Pad, PadSound, SampleMeta } from './types';
+import { SOUND_FIELDS } from './types';
 import { BUILTINS } from './audio/synth';
-import realKit from './audio/realKit.json';
+import vdKit from './audio/vdKit.json';
+import avlKit from './audio/avlKit.json';
 import { engine } from './audio/engine';
 import { deleteSample, putSample } from './audio/sampleDb';
+import { PRESETS } from './kits';
+import type { Preset } from './kits';
 
-const KIT_KEY = 'drumduino.kit.v2';
+const STATE_KEY = 'drumduino.state.v3';
 const SAMPLES_KEY = 'drumduino.samples.v1';
 
-function pad(p: Partial<Pad> & Pick<Pad, 'id' | 'name' | 'th' | 'channel' | 'x' | 'y' | 'w' | 'samples' | 'midiNote' | 'key'>): Pad {
-  return {
-    cymbal: false,
-    mode: 'vel',
-    volume: 85,
-    pitch: 0,
-    sensitivity: 60,
-    scan: 3,
-    mask: 35,
-    ...p
-  };
+const EMPTY_SOUND: PadSound = { samples: [], mode: 'vel', volume: 85, pitch: 0 };
+
+type PadInit = Partial<Pad> & Pick<Pad, 'id' | 'name' | 'th' | 'channel' | 'x' | 'y' | 'w' | 'midiNote' | 'key'>;
+function pad(p: PadInit): Pad {
+  return { cymbal: false, sensitivity: 60, scan: 3, mask: 35, ...EMPTY_SOUND, ...p };
 }
 
-/** ids of the bundled acoustic layers for one articulation, soft → hard */
-function vd(group: string, n: number): string[] {
-  return Array.from({ length: n }, (_, i) => `vd:${group}-${i + 1}`);
+/** Shared layout + Arduino settings (sound fields are filled from the current kit). */
+export function defaultPads(): Pad[] {
+  return [
+    pad({ id: 'crash', name: 'Crash', th: 'ฉาบแครช', channel: 0, x: 14, y: 6, w: 20, cymbal: true, midiNote: 49, key: 'q', mask: 45 }),
+    pad({ id: 'tom1', name: 'Tom 1', th: 'ทอมสูง', channel: 4, x: 35, y: 16, w: 14, midiNote: 48, key: 'w' }),
+    pad({ id: 'tom2', name: 'Tom 2', th: 'ทอมกลาง', channel: 5, x: 51, y: 16, w: 14, midiNote: 45, key: 'e' }),
+    pad({ id: 'ride', name: 'Ride', th: 'ฉาบไรด์', channel: 7, x: 72, y: 8, w: 22, cymbal: true, midiNote: 51, key: 'r', mask: 45 }),
+    pad({ id: 'hihat', name: 'Hi-hat', th: 'ไฮแฮท', channel: 1, x: 3, y: 40, w: 16, cymbal: true, midiNote: 42, key: 'a', mask: 30 }),
+    pad({ id: 'snare', name: 'Snare', th: 'กลองสแนร์', channel: 2, x: 21, y: 50, w: 18, midiNote: 38, key: 's', mask: 25 }),
+    pad({ id: 'kick', name: 'Kick', th: 'กลองเบส', channel: 3, x: 40, y: 56, w: 22, midiNote: 36, key: 'd', mask: 45 }),
+    pad({ id: 'floor', name: 'Floor Tom', th: 'ทอมตั้งพื้น', channel: 6, x: 66, y: 50, w: 20, midiNote: 43, key: 'f' })
+  ];
 }
 
-export function defaultKit(): Kit {
-  return {
-    name: 'Rock Kit 01',
-    master: 80,
-    pads: [
-      pad({ id: 'crash', name: 'Crash', th: 'ฉาบแครช', channel: 0, x: 14, y: 6, w: 20, cymbal: true, samples: vd('crash', 3), midiNote: 49, key: 'q', mask: 45 }),
-      pad({ id: 'tom1', name: 'Tom 1', th: 'ทอมสูง', channel: 4, x: 35, y: 16, w: 14, samples: vd('htom', 4), midiNote: 48, key: 'w' }),
-      pad({ id: 'tom2', name: 'Tom 2', th: 'ทอมกลาง', channel: 5, x: 51, y: 16, w: 14, samples: vd('ltom', 4), midiNote: 45, key: 'e', pitch: 1 }),
-      pad({ id: 'ride', name: 'Ride', th: 'ฉาบไรด์', channel: 7, x: 72, y: 8, w: 22, cymbal: true, samples: vd('ride', 3), midiNote: 51, key: 'r', mask: 45 }),
-      pad({ id: 'hihat', name: 'Hi-hat', th: 'ไฮแฮท', channel: 1, x: 3, y: 40, w: 16, cymbal: true, samples: vd('hhclosed', 4), midiNote: 42, key: 'a', mask: 30 }),
-      pad({ id: 'snare', name: 'Snare', th: 'กลองสแนร์', channel: 2, x: 21, y: 50, w: 18, samples: vd('snare', 6), midiNote: 38, key: 's', mask: 25 }),
-      pad({ id: 'kick', name: 'Kick', th: 'กลองเบส', channel: 3, x: 40, y: 56, w: 22, samples: vd('kick', 4), midiNote: 36, key: 'd', mask: 45 }),
-      pad({ id: 'floor', name: 'Floor Tom', th: 'ทอมตั้งพื้น', channel: 6, x: 66, y: 50, w: 20, samples: vd('ltom', 4), midiNote: 43, key: 'f', pitch: -4 })
-    ]
-  };
+function kitFromPreset(p: Preset): KitSounds {
+  return { id: p.id, name: p.name, presetId: p.id, sounds: JSON.parse(JSON.stringify(p.sounds)) };
 }
+
+interface Persisted {
+  pads: Pad[];
+  kits: KitSounds[];
+  currentKitId: string;
+  master: number;
+}
+
+function defaultState(): Persisted {
+  return { pads: defaultPads(), kits: PRESETS.map(kitFromPreset), currentKitId: PRESETS[0].id, master: 80 };
+}
+
+type Bundled = { id: string; file: string; name: string; category: SampleMeta['category']; duration: number };
+const bundledList: Bundled[] = [...(vdKit as Bundled[]), ...(avlKit as Bundled[])];
+engine.registerBundled(bundledList);
 
 const builtinMeta: SampleMeta[] = [
-  ...(realKit as { id: string; name: string; category: SampleMeta['category']; duration: number }[]).map((r) => ({
-    id: r.id,
-    name: r.name,
-    category: r.category,
-    duration: r.duration,
-    builtin: true
-  })),
-  ...BUILTINS.map((b) => ({
-    id: b.id,
-    name: 'Synth ' + b.name,
-    category: b.category,
-    duration: b.seconds,
-    builtin: true
-  }))
+  ...(vdKit as Bundled[]).map((r) => ({ id: r.id, name: r.name, category: r.category, duration: r.duration, builtin: true, source: 'vd' as const })),
+  ...(avlKit as Bundled[]).map((r) => ({ id: r.id, name: r.name, category: r.category, duration: r.duration, builtin: true, source: 'avl' as const })),
+  ...BUILTINS.map((b) => ({ id: b.id, name: 'Synth ' + b.name, category: b.category, duration: b.seconds, builtin: true, source: 'synth' as const }))
 ];
 
 function load<T>(key: string, fallback: T): T {
@@ -78,8 +76,19 @@ function save(key: string, value: unknown) {
   }
 }
 
+/** Keep factory kits that were added in newer app versions. */
+function withAllPresets(st: Persisted): Persisted {
+  const have = new Set(st.kits.map((k) => k.presetId));
+  const missing = PRESETS.filter((p) => !have.has(p.id)).map(kitFromPreset);
+  const kits = [...st.kits, ...missing];
+  const currentKitId = kits.some((k) => k.id === st.currentKitId) ? st.currentKitId : kits[0].id;
+  return { ...st, kits, currentKitId };
+}
+
 interface Store {
   kit: Kit;
+  kits: { id: string; name: string; presetId: string | null }[];
+  preset: Preset | null;
   samples: SampleMeta[];
   selectedId: string;
   select(id: string): void;
@@ -88,11 +97,16 @@ interface Store {
   removePad(id: string): void;
   setKitName(name: string): void;
   setMaster(v: number): void;
+  selectKit(id: string): void;
+  duplicateKit(): void;
+  deleteKit(id: string): void;
+  resetKitSounds(): void;
+  resetLayout(): void;
   importFiles(files: FileList | File[], assignTo?: string): Promise<{ ok: number; failed: string[] }>;
   removeSample(id: string): Promise<void>;
-  resetKit(): void;
   exportKit(): void;
   ready: boolean;
+  kitLoading: boolean;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -116,100 +130,151 @@ const EXTRA_SLOTS = [
 ];
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [kit, setKit] = useState<Kit>(() => load(KIT_KEY, defaultKit()));
-  const [userSamples, setUserSamples] = useState<SampleMeta[]>(() => load(SAMPLES_KEY, [] as SampleMeta[]));
-  const [selectedId, setSelectedId] = useState<string>(() => kit.pads.find((p) => p.id === 'snare')?.id ?? kit.pads[0]?.id ?? '');
+  const [st, setSt] = useState<Persisted>(() => withAllPresets(load(STATE_KEY, defaultState())));
+  const [userSamples, setUserSamples] = useState<SampleMeta[]>(() =>
+    load(SAMPLES_KEY, [] as SampleMeta[]).map((s) => ({ ...s, source: 'user' as const }))
+  );
+  const [selectedId, setSelectedId] = useState<string>(() => st.pads.find((p) => p.id === 'snare')?.id ?? st.pads[0]?.id ?? '');
   const [ready, setReady] = useState(false);
+  const [kitLoading, setKitLoading] = useState(false);
+
+  const current = st.kits.find((k) => k.id === st.currentKitId) ?? st.kits[0];
+
+  const kit = useMemo<Kit>(
+    () => ({
+      id: current.id,
+      name: current.name,
+      presetId: current.presetId,
+      master: st.master,
+      pads: st.pads.map((p) => ({ ...p, ...(current.sounds[p.id] ?? EMPTY_SOUND) }))
+    }),
+    [st.pads, st.master, current]
+  );
   const kitRef = useRef(kit);
   kitRef.current = kit;
 
+  // Built-in synth sounds + the first kit before showing the UI.
   useEffect(() => {
     let alive = true;
     engine
       .loadBuiltins()
-      .then(() => engine.loadBundled(realKit as { id: string; file: string }[]))
-      .then(() => Promise.all(userSamples.map((s) => engine.ensure(s.id))))
+      .then(() => engine.preload(kitRef.current.pads.flatMap((p) => p.samples)))
       .finally(() => alive && setReady(true));
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load the samples of a kit when switching to it.
+  const sampleSig = kit.pads.map((p) => p.samples.join(',')).join('|');
   useEffect(() => {
-    const t = setTimeout(() => save(KIT_KEY, kit), 250);
-    engine.setMaster(kit.master);
+    if (!ready) return;
+    const ids = kitRef.current.pads.flatMap((p) => p.samples).filter((id) => !engine.has(id));
+    if (!ids.length) return;
+    let alive = true;
+    setKitLoading(true);
+    void engine.preload(ids).finally(() => alive && setKitLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [sampleSig, ready]);
+
+  useEffect(() => {
+    const t = setTimeout(() => save(STATE_KEY, st), 250);
+    engine.setMaster(st.master);
     return () => clearTimeout(t);
-  }, [kit]);
+  }, [st]);
 
   useEffect(() => save(SAMPLES_KEY, userSamples), [userSamples]);
 
-  const updatePad = useCallback((id: string, patch: Partial<Pad>) => {
-    setKit((k) => ({ ...k, pads: k.pads.map((p) => (p.id === id ? { ...p, ...patch } : p)) }));
+  const updateSounds = useCallback((fn: (sounds: Record<string, PadSound>) => Record<string, PadSound>) => {
+    setSt((s) => ({ ...s, kits: s.kits.map((k) => (k.id === s.currentKitId ? { ...k, sounds: fn(k.sounds) } : k)) }));
   }, []);
 
+  const updatePad = useCallback(
+    (id: string, patch: Partial<Pad>) => {
+      const soundPatch: Partial<PadSound> = {};
+      const padPatch: Partial<Pad> = {};
+      for (const [k, v] of Object.entries(patch)) {
+        if ((SOUND_FIELDS as string[]).includes(k)) (soundPatch as Record<string, unknown>)[k] = v;
+        else (padPatch as Record<string, unknown>)[k] = v;
+      }
+      if (Object.keys(padPatch).length) setSt((s) => ({ ...s, pads: s.pads.map((p) => (p.id === id ? { ...p, ...padPatch } : p)) }));
+      if (Object.keys(soundPatch).length) updateSounds((snd) => ({ ...snd, [id]: { ...(snd[id] ?? EMPTY_SOUND), ...soundPatch } }));
+    },
+    [updateSounds]
+  );
+
   const addPad = useCallback(() => {
-    setKit((k) => {
-      const used = new Set(k.pads.map((p) => p.channel));
+    setSt((s) => {
+      const used = new Set(s.pads.map((p) => p.channel));
       let channel = -1;
       for (let c = 0; c < 8; c++) if (!used.has(c)) { channel = c; break; }
-      const n = k.pads.length + 1;
-      const slot = EXTRA_SLOTS[Math.max(0, k.pads.length - 8) % EXTRA_SLOTS.length];
+      const n = s.pads.length + 1;
+      const slot = EXTRA_SLOTS[Math.max(0, s.pads.length - 8) % EXTRA_SLOTS.length];
       const id = 'pad-' + Date.now().toString(36);
-      const p = pad({ id, name: 'ชิ้นที่ ' + n, th: 'ชิ้นใหม่', channel, x: slot.x, y: slot.y, w: 12, samples: [], midiNote: 60 + n, key: '' });
       setSelectedId(id);
-      return { ...k, pads: [...k.pads, p] };
+      return { ...s, pads: [...s.pads, pad({ id, name: 'ชิ้นที่ ' + n, th: 'ชิ้นใหม่', channel, x: slot.x, y: slot.y, w: 12, midiNote: 60 + n, key: '' })] };
     });
   }, []);
 
   const removePad = useCallback((id: string) => {
-    setKit((k) => {
-      const pads = k.pads.filter((p) => p.id !== id);
-      setSelectedId((s) => (s === id ? pads[0]?.id ?? '' : s));
-      return { ...k, pads };
+    setSt((s) => {
+      const pads = s.pads.filter((p) => p.id !== id);
+      setSelectedId((cur) => (cur === id ? pads[0]?.id ?? '' : cur));
+      return { ...s, pads };
     });
   }, []);
 
-  const importFiles = useCallback(async (files: FileList | File[], assignTo?: string) => {
-    const list = Array.from(files);
-    const added: SampleMeta[] = [];
-    const failed: string[] = [];
-    for (const f of list) {
-      try {
-        const data = await f.arrayBuffer();
-        const buf = await engine.decode(data);
-        const id = 'u:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-        await putSample(id, data);
-        engine.setBuffer(id, buf);
-        added.push({ id, name: f.name, category: guessCategory(f.name), duration: buf.duration, builtin: false });
-      } catch {
-        failed.push(f.name);
+  const importFiles = useCallback(
+    async (files: FileList | File[], assignTo?: string) => {
+      const added: SampleMeta[] = [];
+      const failed: string[] = [];
+      for (const f of Array.from(files)) {
+        try {
+          const data = await f.arrayBuffer();
+          const buf = await engine.decode(data);
+          const id = 'u:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+          await putSample(id, data);
+          engine.setBuffer(id, buf);
+          added.push({ id, name: f.name, category: guessCategory(f.name), duration: buf.duration, builtin: false, source: 'user' });
+        } catch {
+          failed.push(f.name);
+        }
       }
-    }
-    if (added.length) {
-      setUserSamples((s) => [...s, ...added]);
-      if (assignTo) {
-        setKit((k) => ({
-          ...k,
-          pads: k.pads.map((p) => (p.id === assignTo ? { ...p, samples: [...p.samples, ...added.map((a) => a.id)] } : p))
-        }));
+      if (added.length) {
+        setUserSamples((s) => [...s, ...added]);
+        if (assignTo) {
+          updateSounds((snd) => {
+            const cur = snd[assignTo] ?? EMPTY_SOUND;
+            return { ...snd, [assignTo]: { ...cur, samples: [...cur.samples, ...added.map((a) => a.id)] } };
+          });
+        }
       }
-    }
-    return { ok: added.length, failed };
-  }, []);
+      return { ok: added.length, failed };
+    },
+    [updateSounds]
+  );
 
   const removeSample = useCallback(async (id: string) => {
     await deleteSample(id).catch(() => undefined);
     engine.forget(id);
     setUserSamples((s) => s.filter((x) => x.id !== id));
-    setKit((k) => ({ ...k, pads: k.pads.map((p) => ({ ...p, samples: p.samples.filter((x) => x !== id) })) }));
+    setSt((s) => ({
+      ...s,
+      kits: s.kits.map((k) => ({
+        ...k,
+        sounds: Object.fromEntries(Object.entries(k.sounds).map(([pid, snd]) => [pid, { ...snd, samples: snd.samples.filter((x) => x !== id) }]))
+      }))
+    }));
   }, []);
 
   const exportKit = useCallback(() => {
-    const blob = new Blob([JSON.stringify(kitRef.current, null, 2)], { type: 'application/json' });
+    const k = kitRef.current;
+    const blob = new Blob([JSON.stringify(k, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = kitRef.current.name.replace(/[^\w฀-๿ -]/g, '') + '.drumkit.json';
+    a.download = k.name.replace(/[^\w฀-๿ -]/g, '') + '.drumkit.json';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }, []);
@@ -217,25 +282,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Store>(
     () => ({
       kit,
+      kits: st.kits.map((k) => ({ id: k.id, name: k.name, presetId: k.presetId })),
+      preset: PRESETS.find((p) => p.id === current.presetId) ?? null,
       samples: [...builtinMeta, ...userSamples],
       selectedId,
       select: setSelectedId,
       updatePad,
       addPad,
       removePad,
-      setKitName: (name) => setKit((k) => ({ ...k, name })),
-      setMaster: (master) => setKit((k) => ({ ...k, master })),
-      importFiles,
-      removeSample,
-      resetKit: () => {
-        const k = defaultKit();
-        setKit(k);
+      setKitName: (name) => setSt((s) => ({ ...s, kits: s.kits.map((k) => (k.id === s.currentKitId ? { ...k, name } : k)) })),
+      setMaster: (master) => setSt((s) => ({ ...s, master })),
+      selectKit: (id) => setSt((s) => ({ ...s, currentKitId: id })),
+      duplicateKit: () =>
+        setSt((s) => {
+          const src = s.kits.find((k) => k.id === s.currentKitId) ?? s.kits[0];
+          const copy: KitSounds = { id: 'kit-' + Date.now().toString(36), name: src.name + ' (ของฉัน)', presetId: null, sounds: JSON.parse(JSON.stringify(src.sounds)) };
+          return { ...s, kits: [...s.kits, copy], currentKitId: copy.id };
+        }),
+      deleteKit: (id) =>
+        setSt((s) => {
+          const kits = s.kits.filter((k) => k.id !== id || k.presetId);
+          return { ...s, kits, currentKitId: s.currentKitId === id ? kits[0].id : s.currentKitId };
+        }),
+      resetKitSounds: () =>
+        setSt((s) => {
+          const k = s.kits.find((x) => x.id === s.currentKitId);
+          const p = PRESETS.find((x) => x.id === k?.presetId);
+          if (!k || !p) return s;
+          return { ...s, kits: s.kits.map((x) => (x.id === k.id ? kitFromPreset(p) : x)) };
+        }),
+      resetLayout: () => {
+        setSt((s) => ({ ...s, pads: defaultPads() }));
         setSelectedId('snare');
       },
+      importFiles,
+      removeSample,
       exportKit,
-      ready
+      ready,
+      kitLoading
     }),
-    [kit, userSamples, selectedId, updatePad, addPad, removePad, importFiles, removeSample, exportKit, ready]
+    [kit, st.kits, current, userSamples, selectedId, updatePad, addPad, removePad, importFiles, removeSample, exportKit, ready, kitLoading]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

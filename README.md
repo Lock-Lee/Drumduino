@@ -5,7 +5,8 @@
 
 ## สิ่งที่ทำได้
 
-- ชุดกลอง 8 ชิ้นพร้อมเสียงกลองอะคูสติกจริง (หลายระดับแรงตี) ใช้งานได้ทันที
+- ชุดกลองให้เลือก 4 ชุด: Studio Maple, Black Pearl, Red Zeppelin (กลองอะคูสติกจริง หลายระดับแรงตี) และ Synth Kit
+- ทำสำเนาชุดกลองเป็น "ชุดของฉัน" แล้วแก้เสียงได้ ตำแหน่งและการตั้งค่าขา Arduino ใช้ร่วมกันทุกชุด
 - **เพิ่มเสียงให้แต่ละชิ้น**: นำเข้า .wav .mp3 .ogg .flac .aiff (ลากมาวางได้) หรือเลือกจากคลังเสียง
 - เล่นหลายไฟล์ต่อชิ้น: ตามแรงตี (velocity layers) · วนตามลำดับ (round robin) · สุ่ม
 - ปรับความดัง, pitch, ความไวเซนเซอร์, scan/mask time แยกแต่ละชิ้น — ส่งค่าไปบอร์ดอัตโนมัติ
@@ -89,6 +90,9 @@ firmware/        โค้ด Arduino
 
 ## เครดิตเสียง
 
-เสียงกลองในตัวมาจาก [Virtuosity Drums](https://versilian-studios.com/virtuosity-drums/) โดย Versilian Studios
-(ไลเซนส์ CC0 — ใช้และแจกต่อได้อิสระ) มิกซ์จากไมค์ kick + snare + overhead แล้วเลือกบางระดับแรงตีมาใช้
-ดูไลเซนส์ได้ที่ `public/samples/LICENSE-VirtuosityDrums-CC0.txt`
+- **Studio Maple** — [Virtuosity Drums](https://versilian-studios.com/virtuosity-drums/) โดย Versilian Studios, ไลเซนส์ CC0
+  มิกซ์จากไมค์ kick + snare + overhead และเลือกบางระดับแรงตีมาใช้ (`public/samples/LICENSE-VirtuosityDrums-CC0.txt`)
+- **Black Pearl / Red Zeppelin** — [AVL Drumkits](https://github.com/studiorack/avl-drumkits) โดย Glen MacArthur ([bandshed.net](http://www.bandshed.net/avldrumkits/)),
+  ไลเซนส์ [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) — แปลงเป็น OGG สเตอริโอ ตัดหางเสียงเงียบ และแพนตามไฟล์ SFZ ต้นฉบับ
+  ไฟล์เสียงชุดนี้ (รวมที่แก้ไขแล้ว) แจกต่อภายใต้ CC BY-SA 3.0 เช่นเดิม (`public/samples/avl/LICENSE-AVL-Drumkits-CC-BY-SA-3.0.txt`)
+- **Synth Kit** — สร้างขึ้นในแอป

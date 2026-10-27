@@ -31,11 +31,29 @@ export interface Pad {
   key: string;
 }
 
-export interface Kit {
+/** What a drum kit (sound set) decides for a pad. Layout and Arduino settings are shared by all kits. */
+export type SoundField = 'samples' | 'mode' | 'volume' | 'pitch';
+export type PadSound = Pick<Pad, SoundField>;
+export const SOUND_FIELDS: SoundField[] = ['samples', 'mode', 'volume', 'pitch'];
+
+export interface KitSounds {
+  id: string;
   name: string;
+  /** factory preset this kit came from (null = user copy) */
+  presetId: string | null;
+  sounds: Record<string, PadSound>;
+}
+
+/** The current kit as the UI sees it: shared pads merged with the kit's sounds. */
+export interface Kit {
+  id: string;
+  name: string;
+  presetId: string | null;
   master: number;
   pads: Pad[];
 }
+
+export type SampleSource = 'vd' | 'avl' | 'synth' | 'user';
 
 export type SampleCategory = 'kick' | 'snare' | 'hihat' | 'tom' | 'cym' | 'mine';
 
@@ -45,6 +63,7 @@ export interface SampleMeta {
   category: SampleCategory;
   duration: number;
   builtin: boolean;
+  source: SampleSource;
 }
 
 export type InputMode = 'serial' | 'midi';

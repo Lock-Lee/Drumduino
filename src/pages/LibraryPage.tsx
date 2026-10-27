@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import { useStore } from '../store';
 import { engine } from '../audio/engine';
-import type { SampleCategory } from '../types';
+import type { SampleCategory, SampleSource } from '../types';
+import { SOURCE_LABELS } from '../kits';
 import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
 
 const CATS: { id: 'all' | SampleCategory; label: string }[] = [
@@ -12,7 +13,7 @@ const CATS: { id: 'all' | SampleCategory; label: string }[] = [
   { id: 'hihat', label: 'Hi-hat' },
   { id: 'tom', label: 'Tom' },
   { id: 'cym', label: 'ฉาบ (Cymbal)' },
-  { id: 'mine', label: 'อื่นๆ ที่นำเข้า' }
+  { id: 'mine', label: 'อื่นๆ / เพอร์คัสชัน' }
 ];
 
 function WaveThumb({ id }: { id: string }) {
@@ -34,6 +35,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
   const { samples, kit, selectedId } = store;
   const [cat, setCat] = useState<'all' | SampleCategory>('all');
   const [q, setQ] = useState('');
+  const [src, setSrc] = useState<'all' | SampleSource>('all');
   const [playing, setPlaying] = useState<string | null>(null);
   const [over, setOver] = useState(false);
   const [msg, setMsg] = useState('');
@@ -42,25 +44,28 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const target = kit.pads.find((p) => p.id === selectedId);
 
-  // user samples may still be decoding when the page opens
-  useEffect(() => {
-    let alive = true;
-    Promise.all(samples.filter((s) => !engine.has(s.id)).map((s) => engine.ensure(s.id))).then(() => alive && force((n) => n + 1));
-    return () => {
-      alive = false;
-      stopRef.current?.();
-    };
-  }, [samples]);
-
   const usedBy = useMemo(() => {
     const m = new Map<string, string[]>();
     for (const p of kit.pads) for (const s of p.samples) m.set(s, [...(m.get(s) ?? []), p.name]);
     return m;
   }, [kit]);
 
-  const rows = samples.filter(
+  const inSrc = samples.filter((s) => src === 'all' || s.source === src);
+  const rows = inSrc.filter(
     (s) => (cat === 'all' || s.category === cat) && (!q || s.name.toLowerCase().includes(q.toLowerCase()))
   );
+
+  // decode what's on screen so the waveforms can be drawn
+  const rowSig = rows.slice(0, 80).map((r) => r.id).join(',');
+  useEffect(() => {
+    let alive = true;
+    const ids = rowSig ? rowSig.split(',').filter((id) => !engine.has(id)) : [];
+    if (ids.length) void engine.preload(ids).then(() => alive && force((n) => n + 1));
+    return () => {
+      alive = false;
+    };
+  }, [rowSig]);
+  useEffect(() => () => stopRef.current?.(), []);
 
   const toggle = (id: string) => {
     stopRef.current?.();
@@ -91,7 +96,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
           <button key={c.id} type="button" aria-pressed={cat === c.id} onClick={() => setCat(c.id)}>
             <span>{c.label}</span>
             <span className="mono" style={{ fontSize: 12, opacity: 0.75 }}>
-              {c.id === 'all' ? samples.length : samples.filter((s) => s.category === c.id).length}
+              {c.id === 'all' ? inSrc.length : inSrc.filter((s) => s.category === c.id).length}
             </span>
           </button>
         ))}
@@ -104,6 +109,13 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
             <span className="muted" style={{ fontSize: 14 }}>
               นำเข้าไฟล์เสียงของคุณ แล้วเพิ่มให้ชิ้นกลองที่เลือก{target ? ` (ตอนนี้: ${target.name})` : ''}
             </span>
+          </div>
+          <div className="field" style={{ minWidth: 200 }}>
+            <label htmlFor="src" className="sr-only">ที่มาของเสียง</label>
+            <select id="src" className="input" value={src} onChange={(e) => setSrc(e.target.value as 'all' | SampleSource)}>
+              <option value="all">ทุกชุดเสียง</option>
+              {Object.entries(SOURCE_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+            </select>
           </div>
           <div className="search">
             <Search />
@@ -158,7 +170,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
                     </td>
                     <td>
                       <div style={{ fontWeight: 500 }}>{s.name}</div>
-                      <div className="faint" style={{ fontSize: 12 }}>{s.builtin ? 'เสียงในตัว' : 'นำเข้าเอง'}</div>
+                      <div className="faint" style={{ fontSize: 12 }}>{SOURCE_LABELS[s.source]}</div>
                     </td>
                     <td><WaveThumb id={s.id} /></td>
                     <td className="mono" style={{ fontSize: 13 }}>{s.duration.toFixed(2)}s</td>
