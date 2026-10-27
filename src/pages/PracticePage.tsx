@@ -41,7 +41,8 @@ interface Stats { ok: number; early: number; late: number; miss: number; extra: 
 const EMPTY_STATS: Stats = { ok: 0, early: 0, late: 0, miss: 0, extra: 0, offsets: [] };
 
 export function PracticePage() {
-  const { kit } = useStore();
+  const store = useStore();
+  const { kit } = store;
   const kitRef = useRef(kit);
   kitRef.current = kit;
 
@@ -341,6 +342,20 @@ export function PracticePage() {
             <input id="bpm" type="range" min={30} max={240} value={bpm} onChange={(e) => setBpm(Number(e.target.value))} />
             <input className="num" type="number" min={30} max={240} value={bpm} aria-label="BPM" onChange={(e) => setBpm(Math.max(30, Math.min(240, Number(e.target.value) || score.bpm)))} />
             <button type="button" className="btn sm ghost" onClick={() => setBpm(score.bpm)} title="ความเร็วเดิมของเพลง">{score.bpm}</button>
+          </div>
+          <div className="pr-kit">
+            <label htmlFor="prkit" className="label">ชุดกลอง</label>
+            <select id="prkit" className="input sm" value={kit.id} onChange={(e) => store.selectKit(e.target.value)} title="เปลี่ยนเสียงกลองได้ทันที แม้เพลงกำลังเล่นอยู่">
+              <optgroup label="ชุดกลองในแอป">
+                {store.kits.filter((k) => k.presetId).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+              </optgroup>
+              {store.kits.some((k) => !k.presetId) && (
+                <optgroup label="ชุดของฉัน">
+                  {store.kits.filter((k) => !k.presetId).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+                </optgroup>
+              )}
+            </select>
+            {store.kitLoading && <span className="faint" style={{ fontSize: 12 }}>กำลังโหลดเสียง…</span>}
           </div>
           <div className="pr-toggles">
             <label><input type="checkbox" checked={prefs.metronome} onChange={(e) => setPrefs((p) => ({ ...p, metronome: e.target.checked }))} /> เมโทรนอม</label>

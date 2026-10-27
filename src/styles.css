@@ -354,3 +354,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .ed-preview { background: #F7F5EF; border-radius: 12px; padding: 4px 8px 10px; flex: none; }
 .ed-grid { flex: none; }
 .ed-head, .ed-bars, .ed-help { flex: none; }
+
+.pr-kit { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.pr-kit select { min-width: 150px; }
