@@ -212,7 +212,22 @@ class Engine {
     const layered = pad.mode === 'vel' && list.length >= 3;
     const velGain = layered ? 0.6 + 0.4 * (v / 127) : Math.pow(v / 127, 1.6);
     g.gain.value = (pad.volume / 100) * velGain;
-    src.connect(g).connect(this.master);
+    const tn = pad.tone;
+    if (tn && (tn.low || tn.mid || tn.high)) {
+      // simple 3-band EQ: low shelf (body), mid bell (boxiness), high shelf (attack / click)
+      const lo = this.ctx.createBiquadFilter();
+      lo.type = 'lowshelf'; lo.frequency.value = 100; lo.gain.value = tn.low;
+      const mi = this.ctx.createBiquadFilter();
+      mi.type = 'peaking'; mi.frequency.value = 450; mi.Q.value = 1; mi.gain.value = tn.mid;
+      const hi = this.ctx.createBiquadFilter();
+      hi.type = 'highshelf'; hi.frequency.value = 3500; hi.gain.value = tn.high;
+      // keep the overall level steady when boosting
+      const boost = Math.max(0, tn.low, tn.high) * 0.5;
+      g.gain.value *= Math.pow(10, -boost / 20);
+      src.connect(lo).connect(mi).connect(hi).connect(g).connect(this.master);
+    } else {
+      src.connect(g).connect(this.master);
+    }
 
     // Same pad re-hit: fade the previous voice to avoid build-up on cymbals/hats.
     // A closed hi-hat (or foot chick) in a score means the pedal closed: choke the ringing open hat.

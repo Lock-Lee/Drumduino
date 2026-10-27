@@ -338,6 +338,15 @@ function Setup({ pad }: { pad: Pad }) {
     <div className="stack" style={{ gap: 14 }}>
       {slider('vol', 'ความดัง', pad.volume, 0, 100, '%', (v) => updatePad(pad.id, { volume: v }))}
       {slider('pitch', 'ระดับเสียงสูงต่ำ (Pitch)', pad.pitch, -12, 12, ' st', (v) => updatePad(pad.id, { pitch: v }))}
+      <div className="field">
+        <span className="label">แต่งเสียง (EQ): ทุ้มคือตัวเสียง กลางคือเสียงอู้ แหลมคือหัวเสียง</span>
+        <div className="grid3">
+          {([['low', 'ทุ้ม'], ['mid', 'กลาง'], ['high', 'แหลม']] as const).map(([k, l]) => {
+            const t = pad.tone ?? { low: 0, mid: 0, high: 0 };
+            return <div key={k}>{slider('tone-' + k, l, t[k], -12, 12, ' dB', (v) => updatePad(pad.id, { tone: { ...t, [k]: v } }))}</div>;
+          })}
+        </div>
+      </div>
       {slider('sens', 'ความไวเซนเซอร์', pad.sensitivity, 1, 100, '', (v) => updatePad(pad.id, { sensitivity: v }))}
       {pad.rimChannel >= 0 && slider('rimratio', 'นับเป็นตีขอบเมื่อแรงที่ขอบ ≥ แรงที่หนัง ×', pad.rimRatio, 20, 300, '%', (v) => updatePad(pad.id, { rimRatio: v }), 5)}
       <div className="grid3">

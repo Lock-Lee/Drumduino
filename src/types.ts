@@ -37,6 +37,8 @@ export interface Pad {
   volume: number;
   /** semitones, -12..12 */
   pitch: number;
+  /** tone shaping in dB (-12..12): low = body/boom, mid = boxiness, high = attack/click */
+  tone?: Tone;
   /** 1–100, higher = softer hits still trigger */
   sensitivity: number;
   /** ms the firmware looks for the peak after a hit starts */
@@ -51,10 +53,11 @@ export interface Pad {
 
 /** What a drum kit (sound set) decides for a pad. Layout and Arduino settings are shared by all kits. */
 export type SampleField = 'samples' | 'rimSamples' | 'halfSamples' | 'openSamples' | 'chickSamples';
-export type SoundField = SampleField | 'mode' | 'volume' | 'pitch';
+export interface Tone { low: number; mid: number; high: number }
+export type SoundField = SampleField | 'mode' | 'volume' | 'pitch' | 'tone';
 export type PadSound = Pick<Pad, SoundField>;
 export const SAMPLE_FIELDS: SampleField[] = ['samples', 'rimSamples', 'halfSamples', 'openSamples', 'chickSamples'];
-export const SOUND_FIELDS: SoundField[] = [...SAMPLE_FIELDS, 'mode', 'volume', 'pitch'];
+export const SOUND_FIELDS: SoundField[] = [...SAMPLE_FIELDS, 'mode', 'volume', 'pitch', 'tone'];
 
 export interface KitSounds {
   id: string;

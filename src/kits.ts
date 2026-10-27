@@ -28,6 +28,9 @@ const vd = (group: string, n: number, pitch = 0) => s(vdIds(group, n), pitch);
 /** AVL Drumkits: 5 velocity layers per piece */
 const avl = (slug: string, pitch = 0, volume = 85) => s(avlIds(slug), pitch, volume);
 
+/** tone shaping (dB) */
+const eq = (snd: PadSound, low: number, mid: number, high: number): PadSound => ({ ...snd, tone: { low, mid, high } });
+
 const AVL_XSTICK = ['avl:Sidestick2-3', 'avl:Sidestick2-5'];
 const VD_RIMSHOT = ['vd:rimshot-3', 'vd:rimshot-4', 'vd:rimshot-5', 'vd:rimshot-6'];
 
@@ -80,6 +83,22 @@ export const PRESETS: Preset[] = [
       snare: rim(avl('PorkpieSnare'), [...AVL_XSTICK, ...VD_RIMSHOT]),
       kick: avl('Ludwig26Kick'),
       floor: avl('Ludwig18FloorTom')
+    }
+  },
+  {
+    id: 'arena',
+    name: 'Arena Metal',
+    description: 'กลองเมทัลคอร์สมัยใหม่ กระเดื่องมีหัวเสียงคลิกชัด สแนร์แน่นและแตก ทอมเสียงต่ำ ใช้ฉาบ Zildjian',
+    credit: 'AVL Drumkits — Glen MacArthur (CC BY-SA 3.0) + Virtuosity Drums (CC0), แต่งเสียงในแอป',
+    sounds: {
+      crash: eq(avl('ZildjianA20Crash', 0, 80), -2, -2, 2),
+      tom1: eq(avl('Pearl12Tom', -1, 90), 4, -5, 4),
+      tom2: eq(avl('Pearl16FloorTom', 2, 90), 4, -5, 4),
+      ride: eq(rim(avl('ZildjianA24Ride', 1, 78), avlIds('ZildjianA24RideBell')), -2, 0, 1),
+      hihat: eq(hat(avlIds('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen'), avlIds('SabianRockHatSwish'), avlIds('SabianRockHatPedal')), -3, 0, 1),
+      snare: eq(rim(vd('snare', 6), ['vd:xstick-2', 'vd:xstick-3', ...VD_RIMSHOT]), 3, -3, 5),
+      kick: eq(avl('Pearl22Kick', 0, 95), 5, -7, 8),
+      floor: eq(avl('Ludwig18FloorTom', 0, 90), 4, -5, 3)
     }
   },
   {
