@@ -17,6 +17,7 @@ const GM: Record<number, [PadId, Art]> = {
   42: ['hihat', 'normal'],
   44: ['hihat', 'pedal'],
   46: ['hihat', 'open'],
+  23: ['hihat', 'half'], // half-open (used by many drum libraries)
   49: ['crash', 'normal'],
   52: ['crash', 'normal'], // china
   55: ['crash', 'normal'], // splash

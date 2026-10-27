@@ -3,7 +3,7 @@ import { fromGM } from './gm';
 import type { Art, PadId, Score, ScoreNote } from './types';
 import { PPQ, sortNotes, ticksPerMeasure } from './types';
 
-function finish(title: string, bpm: number, sig: [number, number], notes: ScoreNote[]): Score {
+function finish(title: string, bpm: number, sig: [number, number], notes: ScoreNote[], marks: { tick: number; name: string }[] = []): Score {
   if (!notes.length) throw new Error('ไม่พบโน้ตกลองในไฟล์นี้');
   const sorted = sortNotes(notes);
   const tpm = ticksPerMeasure({ sig });
@@ -17,6 +17,7 @@ function finish(title: string, bpm: number, sig: [number, number], notes: ScoreN
     sig,
     measures,
     notes: sorted,
+    sections: marks.length ? marks.map((m) => ({ name: m.name, measure: Math.floor(m.tick / tpm) })) : undefined,
     imported: true
   };
 }
@@ -31,6 +32,12 @@ export function parseMidi(buf: ArrayBuffer, fileName = 'MIDI'): Score {
     for (let i = 0; i < n; i++) s += String.fromCharCode(d.getUint8(p + i));
     p += n;
     return s;
+  };
+  // text meta events: UTF-8 (falls back to Latin-1 for old files)
+  const text = (n: number) => {
+    const bytes = new Uint8Array(buf, p, n);
+    p += n;
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch { return String.fromCharCode(...bytes); }
   };
   const u32 = () => { const v = d.getUint32(p); p += 4; return v; };
   const u16 = () => { const v = d.getUint16(p); p += 2; return v; };
@@ -56,6 +63,7 @@ export function parseMidi(buf: ArrayBuffer, fileName = 'MIDI'): Score {
   let bpm = 0;
   let sig: [number, number] | null = null;
   let title = '';
+  const marks: { tick: number; name: string }[] = [];
   const raw: { tick: number; ch: number; note: number; vel: number }[] = [];
 
   for (let t = 0; t < ntrks && p < d.byteLength; t++) {
@@ -74,7 +82,8 @@ export function parseMidi(buf: ArrayBuffer, fileName = 'MIDI'): Score {
         const ml = vlq();
         if (mt === 0x51 && !bpm) bpm = 60000000 / ((d.getUint8(p) << 16) | (d.getUint8(p + 1) << 8) | d.getUint8(p + 2));
         else if (mt === 0x58 && !sig) sig = [d.getUint8(p), Math.pow(2, d.getUint8(p + 1))];
-        else if (mt === 0x03 && !title) { const s0 = p; title = str(ml).trim(); p = s0; }
+        else if (mt === 0x03 && !title) { const s0 = p; title = text(ml).trim(); p = s0; }
+        else if (mt === 0x06) { const s0 = p; const name = text(ml).trim(); p = s0; if (name) marks.push({ tick: Math.round(tick * scale), name }); }
         p += ml;
       } else if (status === 0xf0 || status === 0xf7) {
         p += vlq();
@@ -97,7 +106,7 @@ export function parseMidi(buf: ArrayBuffer, fileName = 'MIDI'): Score {
     const m = fromGM(r.note);
     if (m) notes.push({ tick: r.tick, pad: m[0], art: m[1], vel: r.vel });
   }
-  return finish(title || fileName.replace(/\.(mid|midi)$/i, ''), bpm || 120, sig ?? [4, 4], notes);
+  return finish(title || fileName.replace(/\.(mid|midi)$/i, ''), bpm || 120, sig ?? [4, 4], notes, marks);
 }
 
 /* ---------------- MusicXML ---------------- */
