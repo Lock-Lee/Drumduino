@@ -143,5 +143,58 @@ export const GROOVES: Score[] = [
       times: 2
     },
     { name: 'Outro', rows: { crash: 'X---------------|X---------------', snare: '----X-------X---|----------------', kick: 'x-------x-x-----|x---------------' } }
-  ])
+  ]),
+
+  // ---- modern rock / metalcore style (original patterns) ----
+  build('fourfloor-rock', 'ร็อกกระเดื่องสี่', 'กระเดื่องทุกจังหวะ แบบอัลเทอร์เนทีฟร็อก', 144, [4, 4], 4, [
+    { rows: { crash: 'X---------------|----------------', hihat: '--x-x-x-x-x-x-x-|x-x-x-x-x-x-x-o-', snare: '----X-------X---|----X-------X---', kick: 'x---x---x---x---|x---x---x---x---' }, times: 2 }
+  ]),
+  build('halftime-breakdown', 'เบรกดาวน์ฮาล์ฟไทม์', 'แครชทุก 2 จังหวะ กระเดื่องกระชาก', 144, [4, 4], 4, [
+    { rows: { crash: 'X-------X-------', snare: '--------X-------', kick: 'x-x-xx----x-xx--' }, times: 4 }
+  ]),
+  build('double-kick', 'ดับเบิลกระเดื่อง 16', 'กระเดื่องเขบ็ต 2 ชั้นต่อเนื่อง (เริ่มช้าๆ)', 110, [4, 4], 4, [
+    { rows: { ride: 'x-x-x-x-x-x-x-x-', snare: '----X-------X---', kick: 'xxxxxxxxxxxxxxxx' }, times: 4 }
+  ]),
+  build('skank', 'พังก์ / สแกงก์บีต', 'สแนร์ตัวหลังทุกจังหวะ เร็วและแน่น', 170, [4, 4], 4, [
+    { rows: { hihat: 'x-x-x-x-x-x-x-x-', snare: '--X---X---X---X-', kick: 'x---x---x---x---' }, times: 4 }
+  ]),
+
+  build('song-metalcore', 'เพลงฝึก: Arena Metalcore', 'ท่อน Intro / Verse / Pre / Chorus / Breakdown · 144 BPM', 144, [4, 4], 4, [
+    { name: 'Intro', rows: { floor: 'x-x-x-x-x-x-x-x-|x-x-x-x---------', tom2: '                |--------xx--xx--', tom1: '                |----------xx--xx', kick: 'x---x---x---x---|x---x---x---x---' } },
+    {
+      name: 'Verse',
+      rows: {
+        crash: 'X---------------|----------------',
+        hihat: '--x-x-x-x-x-x-x-|x-x-x-x-x-x-x-o-',
+        snare: '----X--g----X---|----X--g----X--g',
+        kick: 'x-----x-x-----x-|x-----x-x--x----'
+      },
+      times: 2
+    },
+    {
+      name: 'Pre-chorus',
+      rows: {
+        hihat: '--o---o---o---o-|--o---o---o-----',
+        snare: '----X-------X---|----X---XXXXXXXX',
+        kick: 'x---x---x---x---|x---x---x-------'
+      }
+    },
+    {
+      name: 'Chorus',
+      rows: {
+        crash: 'X---------------|X---------------|X---------------|X---------------',
+        ride: '--x-x-x-x-x-x-x-|--x-x-x-x-x-x-x-|--x-x-x-x-x-x-x-|--x-x-x-x-------',
+        snare: '----X-------X---|----X-------X---|----X-------X---|----X---XX--XX--',
+        floor: '                |                |                |----------xx--xx',
+        kick: 'x--x--x-x--x----|x--x--x-x--x----|x--x--x-x--x----|x--x--x---------'
+      },
+      times: 2
+    },
+    {
+      name: 'Breakdown',
+      rows: { crash: 'X-------X-------|X-------X---X---', snare: '--------X-------|--------X-------', kick: 'x-x-xx----x-xx--|x-x-xx----xxxxxx' },
+      times: 2
+    },
+    { name: 'Outro', rows: { crash: 'X---------------|X---X---X---X---|X---------------', snare: '----X-------X---|X---X---X---X---|----------------', kick: 'x-----x-x-------|x---x---x---x---|x---------------' } }
+  ]),
 ];
