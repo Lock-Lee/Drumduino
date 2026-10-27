@@ -36,6 +36,29 @@ class Engine {
     );
   }
 
+  /** Load the bundled acoustic samples (public/samples). Uses XHR so it also works from file:// in the packaged app. */
+  async loadBundled(items: { id: string; file: string }[]): Promise<void> {
+    const get = (url: string) =>
+      new Promise<ArrayBuffer>((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open('GET', url);
+        x.responseType = 'arraybuffer';
+        x.onload = () => (x.status === 200 || x.status === 0) && x.response ? resolve(x.response) : reject(new Error(url));
+        x.onerror = () => reject(new Error(url));
+        x.send();
+      });
+    await Promise.all(
+      items.map(async (it) => {
+        if (this.buffers.has(it.id)) return;
+        try {
+          this.buffers.set(it.id, await this.decode(await get('samples/' + it.file)));
+        } catch {
+          /* missing file: pad just stays silent for this layer */
+        }
+      })
+    );
+  }
+
   /** Decode a user file. Returns the decoded buffer (throws if not audio). */
   async decode(data: ArrayBuffer): Promise<AudioBuffer> {
     return this.ctx.decodeAudioData(data.slice(0));
@@ -118,8 +141,9 @@ class Engine {
     src.buffer = buf;
     src.playbackRate.value = Math.pow(2, pad.pitch / 12);
     const g = this.ctx.createGain();
-    // perceptual velocity curve
-    const velGain = Math.pow(v / 127, 1.6);
+    // With 3+ velocity layers the recordings already carry the dynamics, so only shade within a layer.
+    const layered = pad.mode === 'vel' && pad.samples.length >= 3;
+    const velGain = layered ? 0.6 + 0.4 * (v / 127) : Math.pow(v / 127, 1.6);
     g.gain.value = (pad.volume / 100) * velGain;
     src.connect(g).connect(this.master);
     const t = this.ctx.currentTime;

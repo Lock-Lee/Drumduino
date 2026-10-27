@@ -1,0 +1,353 @@
+[
+ {
+  "id": "vd:kick-1",
+  "file": "kick_1.ogg",
+  "name": "Kick 1",
+  "category": "kick",
+  "duration": 1.75,
+  "group": "kick",
+  "layer": 1
+ },
+ {
+  "id": "vd:kick-2",
+  "file": "kick_2.ogg",
+  "name": "Kick 2",
+  "category": "kick",
+  "duration": 1.76,
+  "group": "kick",
+  "layer": 2
+ },
+ {
+  "id": "vd:kick-3",
+  "file": "kick_3.ogg",
+  "name": "Kick 3",
+  "category": "kick",
+  "duration": 1.93,
+  "group": "kick",
+  "layer": 3
+ },
+ {
+  "id": "vd:kick-4",
+  "file": "kick_4.ogg",
+  "name": "Kick 4",
+  "category": "kick",
+  "duration": 2.41,
+  "group": "kick",
+  "layer": 4
+ },
+ {
+  "id": "vd:snare-1",
+  "file": "snare_1.ogg",
+  "name": "Snare 1",
+  "category": "snare",
+  "duration": 0.31,
+  "group": "snare",
+  "layer": 1
+ },
+ {
+  "id": "vd:snare-2",
+  "file": "snare_2.ogg",
+  "name": "Snare 2",
+  "category": "snare",
+  "duration": 1.08,
+  "group": "snare",
+  "layer": 2
+ },
+ {
+  "id": "vd:snare-3",
+  "file": "snare_3.ogg",
+  "name": "Snare 3",
+  "category": "snare",
+  "duration": 0.7,
+  "group": "snare",
+  "layer": 3
+ },
+ {
+  "id": "vd:snare-4",
+  "file": "snare_4.ogg",
+  "name": "Snare 4",
+  "category": "snare",
+  "duration": 1.0,
+  "group": "snare",
+  "layer": 4
+ },
+ {
+  "id": "vd:snare-5",
+  "file": "snare_5.ogg",
+  "name": "Snare 5",
+  "category": "snare",
+  "duration": 1.19,
+  "group": "snare",
+  "layer": 5
+ },
+ {
+  "id": "vd:snare-6",
+  "file": "snare_6.ogg",
+  "name": "Snare 6",
+  "category": "snare",
+  "duration": 1.56,
+  "group": "snare",
+  "layer": 6
+ },
+ {
+  "id": "vd:rimshot-1",
+  "file": "rimshot_1.ogg",
+  "name": "Snare Rimshot 1",
+  "category": "snare",
+  "duration": 1.53,
+  "group": "rimshot",
+  "layer": 1
+ },
+ {
+  "id": "vd:rimshot-2",
+  "file": "rimshot_2.ogg",
+  "name": "Snare Rimshot 2",
+  "category": "snare",
+  "duration": 1.44,
+  "group": "rimshot",
+  "layer": 2
+ },
+ {
+  "id": "vd:rimshot-3",
+  "file": "rimshot_3.ogg",
+  "name": "Snare Rimshot 3",
+  "category": "snare",
+  "duration": 1.65,
+  "group": "rimshot",
+  "layer": 3
+ },
+ {
+  "id": "vd:xstick-1",
+  "file": "xstick_1.ogg",
+  "name": "Snare Cross-stick 1",
+  "category": "snare",
+  "duration": 2.06,
+  "group": "xstick",
+  "layer": 1
+ },
+ {
+  "id": "vd:xstick-2",
+  "file": "xstick_2.ogg",
+  "name": "Snare Cross-stick 2",
+  "category": "snare",
+  "duration": 1.83,
+  "group": "xstick",
+  "layer": 2
+ },
+ {
+  "id": "vd:hhclosed-1",
+  "file": "hhclosed_1.ogg",
+  "name": "Hi-hat Closed 1",
+  "category": "hihat",
+  "duration": 0.54,
+  "group": "hhclosed",
+  "layer": 1
+ },
+ {
+  "id": "vd:hhclosed-2",
+  "file": "hhclosed_2.ogg",
+  "name": "Hi-hat Closed 2",
+  "category": "hihat",
+  "duration": 0.46,
+  "group": "hhclosed",
+  "layer": 2
+ },
+ {
+  "id": "vd:hhclosed-3",
+  "file": "hhclosed_3.ogg",
+  "name": "Hi-hat Closed 3",
+  "category": "hihat",
+  "duration": 0.53,
+  "group": "hhclosed",
+  "layer": 3
+ },
+ {
+  "id": "vd:hhclosed-4",
+  "file": "hhclosed_4.ogg",
+  "name": "Hi-hat Closed 4",
+  "category": "hihat",
+  "duration": 0.67,
+  "group": "hhclosed",
+  "layer": 4
+ },
+ {
+  "id": "vd:hhhalf-1",
+  "file": "hhhalf_1.ogg",
+  "name": "Hi-hat Half 1",
+  "category": "hihat",
+  "duration": 1.54,
+  "group": "hhhalf",
+  "layer": 1
+ },
+ {
+  "id": "vd:hhhalf-2",
+  "file": "hhhalf_2.ogg",
+  "name": "Hi-hat Half 2",
+  "category": "hihat",
+  "duration": 1.81,
+  "group": "hhhalf",
+  "layer": 2
+ },
+ {
+  "id": "vd:hhopen-1",
+  "file": "hhopen_1.ogg",
+  "name": "Hi-hat Open 1",
+  "category": "hihat",
+  "duration": 5.14,
+  "group": "hhopen",
+  "layer": 1
+ },
+ {
+  "id": "vd:hhopen-2",
+  "file": "hhopen_2.ogg",
+  "name": "Hi-hat Open 2",
+  "category": "hihat",
+  "duration": 8.93,
+  "group": "hhopen",
+  "layer": 2
+ },
+ {
+  "id": "vd:htom-1",
+  "file": "htom_1.ogg",
+  "name": "High Tom 1",
+  "category": "tom",
+  "duration": 1.39,
+  "group": "htom",
+  "layer": 1
+ },
+ {
+  "id": "vd:htom-2",
+  "file": "htom_2.ogg",
+  "name": "High Tom 2",
+  "category": "tom",
+  "duration": 1.66,
+  "group": "htom",
+  "layer": 2
+ },
+ {
+  "id": "vd:htom-3",
+  "file": "htom_3.ogg",
+  "name": "High Tom 3",
+  "category": "tom",
+  "duration": 1.64,
+  "group": "htom",
+  "layer": 3
+ },
+ {
+  "id": "vd:htom-4",
+  "file": "htom_4.ogg",
+  "name": "High Tom 4",
+  "category": "tom",
+  "duration": 1.98,
+  "group": "htom",
+  "layer": 4
+ },
+ {
+  "id": "vd:ltom-1",
+  "file": "ltom_1.ogg",
+  "name": "Low Tom 1",
+  "category": "tom",
+  "duration": 1.96,
+  "group": "ltom",
+  "layer": 1
+ },
+ {
+  "id": "vd:ltom-2",
+  "file": "ltom_2.ogg",
+  "name": "Low Tom 2",
+  "category": "tom",
+  "duration": 4.13,
+  "group": "ltom",
+  "layer": 2
+ },
+ {
+  "id": "vd:ltom-3",
+  "file": "ltom_3.ogg",
+  "name": "Low Tom 3",
+  "category": "tom",
+  "duration": 4.12,
+  "group": "ltom",
+  "layer": 3
+ },
+ {
+  "id": "vd:ltom-4",
+  "file": "ltom_4.ogg",
+  "name": "Low Tom 4",
+  "category": "tom",
+  "duration": 3.61,
+  "group": "ltom",
+  "layer": 4
+ },
+ {
+  "id": "vd:crash-1",
+  "file": "crash_1.ogg",
+  "name": "Crash 1",
+  "category": "cym",
+  "duration": 10.81,
+  "group": "crash",
+  "layer": 1
+ },
+ {
+  "id": "vd:crash-2",
+  "file": "crash_2.ogg",
+  "name": "Crash 2",
+  "category": "cym",
+  "duration": 11.86,
+  "group": "crash",
+  "layer": 2
+ },
+ {
+  "id": "vd:crash-3",
+  "file": "crash_3.ogg",
+  "name": "Crash 3",
+  "category": "cym",
+  "duration": 13.82,
+  "group": "crash",
+  "layer": 3
+ },
+ {
+  "id": "vd:ride-1",
+  "file": "ride_1.ogg",
+  "name": "Ride 1",
+  "category": "cym",
+  "duration": 10.0,
+  "group": "ride",
+  "layer": 1
+ },
+ {
+  "id": "vd:ride-2",
+  "file": "ride_2.ogg",
+  "name": "Ride 2",
+  "category": "cym",
+  "duration": 7.68,
+  "group": "ride",
+  "layer": 2
+ },
+ {
+  "id": "vd:ride-3",
+  "file": "ride_3.ogg",
+  "name": "Ride 3",
+  "category": "cym",
+  "duration": 7.1,
+  "group": "ride",
+  "layer": 3
+ },
+ {
+  "id": "vd:bell-1",
+  "file": "bell_1.ogg",
+  "name": "Ride Bell 1",
+  "category": "cym",
+  "duration": 5.57,
+  "group": "bell",
+  "layer": 1
+ },
+ {
+  "id": "vd:bell-2",
+  "file": "bell_2.ogg",
+  "name": "Ride Bell 2",
+  "category": "cym",
+  "duration": 6.82,
+  "group": "bell",
+  "layer": 2
+ }
+]

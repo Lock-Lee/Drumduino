@@ -2,10 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import type { Kit, Pad, SampleMeta } from './types';
 import { BUILTINS } from './audio/synth';
+import realKit from './audio/realKit.json';
 import { engine } from './audio/engine';
 import { deleteSample, putSample } from './audio/sampleDb';
 
-const KIT_KEY = 'drumduino.kit.v1';
+const KIT_KEY = 'drumduino.kit.v2';
 const SAMPLES_KEY = 'drumduino.samples.v1';
 
 function pad(p: Partial<Pad> & Pick<Pad, 'id' | 'name' | 'th' | 'channel' | 'x' | 'y' | 'w' | 'samples' | 'midiNote' | 'key'>): Pad {
@@ -21,30 +22,44 @@ function pad(p: Partial<Pad> & Pick<Pad, 'id' | 'name' | 'th' | 'channel' | 'x' 
   };
 }
 
+/** ids of the bundled acoustic layers for one articulation, soft → hard */
+function vd(group: string, n: number): string[] {
+  return Array.from({ length: n }, (_, i) => `vd:${group}-${i + 1}`);
+}
+
 export function defaultKit(): Kit {
   return {
     name: 'Rock Kit 01',
     master: 80,
     pads: [
-      pad({ id: 'crash', name: 'Crash', th: 'ฉาบแครช', channel: 0, x: 14, y: 6, w: 20, cymbal: true, samples: ['bi:crash-soft', 'bi:crash-hard'], midiNote: 49, key: 'q', mask: 45 }),
-      pad({ id: 'tom1', name: 'Tom 1', th: 'ทอมสูง', channel: 4, x: 35, y: 16, w: 14, samples: ['bi:tom-high'], midiNote: 48, key: 'w' }),
-      pad({ id: 'tom2', name: 'Tom 2', th: 'ทอมกลาง', channel: 5, x: 51, y: 16, w: 14, samples: ['bi:tom-mid'], midiNote: 45, key: 'e' }),
-      pad({ id: 'ride', name: 'Ride', th: 'ฉาบไรด์', channel: 7, x: 72, y: 8, w: 22, cymbal: true, samples: ['bi:ride-bow', 'bi:ride-bell'], midiNote: 51, key: 'r', mask: 45 }),
-      pad({ id: 'hihat', name: 'Hi-hat', th: 'ไฮแฮท', channel: 1, x: 3, y: 40, w: 16, cymbal: true, samples: ['bi:hh-closed', 'bi:hh-half', 'bi:hh-open'], midiNote: 42, key: 'a', mask: 30 }),
-      pad({ id: 'snare', name: 'Snare', th: 'กลองสแนร์', channel: 2, x: 21, y: 50, w: 18, samples: ['bi:snare-ghost', 'bi:snare-mid', 'bi:snare-hard'], midiNote: 38, key: 's', mask: 25 }),
-      pad({ id: 'kick', name: 'Kick', th: 'กลองเบส', channel: 3, x: 40, y: 56, w: 22, samples: ['bi:kick-soft', 'bi:kick-hard'], midiNote: 36, key: 'd', mask: 45 }),
-      pad({ id: 'floor', name: 'Floor Tom', th: 'ทอมตั้งพื้น', channel: 6, x: 66, y: 50, w: 20, samples: ['bi:tom-floor'], midiNote: 43, key: 'f' })
+      pad({ id: 'crash', name: 'Crash', th: 'ฉาบแครช', channel: 0, x: 14, y: 6, w: 20, cymbal: true, samples: vd('crash', 3), midiNote: 49, key: 'q', mask: 45 }),
+      pad({ id: 'tom1', name: 'Tom 1', th: 'ทอมสูง', channel: 4, x: 35, y: 16, w: 14, samples: vd('htom', 4), midiNote: 48, key: 'w' }),
+      pad({ id: 'tom2', name: 'Tom 2', th: 'ทอมกลาง', channel: 5, x: 51, y: 16, w: 14, samples: vd('ltom', 4), midiNote: 45, key: 'e', pitch: 1 }),
+      pad({ id: 'ride', name: 'Ride', th: 'ฉาบไรด์', channel: 7, x: 72, y: 8, w: 22, cymbal: true, samples: vd('ride', 3), midiNote: 51, key: 'r', mask: 45 }),
+      pad({ id: 'hihat', name: 'Hi-hat', th: 'ไฮแฮท', channel: 1, x: 3, y: 40, w: 16, cymbal: true, samples: vd('hhclosed', 4), midiNote: 42, key: 'a', mask: 30 }),
+      pad({ id: 'snare', name: 'Snare', th: 'กลองสแนร์', channel: 2, x: 21, y: 50, w: 18, samples: vd('snare', 6), midiNote: 38, key: 's', mask: 25 }),
+      pad({ id: 'kick', name: 'Kick', th: 'กลองเบส', channel: 3, x: 40, y: 56, w: 22, samples: vd('kick', 4), midiNote: 36, key: 'd', mask: 45 }),
+      pad({ id: 'floor', name: 'Floor Tom', th: 'ทอมตั้งพื้น', channel: 6, x: 66, y: 50, w: 20, samples: vd('ltom', 4), midiNote: 43, key: 'f', pitch: -4 })
     ]
   };
 }
 
-const builtinMeta: SampleMeta[] = BUILTINS.map((b) => ({
-  id: b.id,
-  name: b.name,
-  category: b.category,
-  duration: b.seconds,
-  builtin: true
-}));
+const builtinMeta: SampleMeta[] = [
+  ...(realKit as { id: string; name: string; category: SampleMeta['category']; duration: number }[]).map((r) => ({
+    id: r.id,
+    name: r.name,
+    category: r.category,
+    duration: r.duration,
+    builtin: true
+  })),
+  ...BUILTINS.map((b) => ({
+    id: b.id,
+    name: 'Synth ' + b.name,
+    category: b.category,
+    duration: b.seconds,
+    builtin: true
+  }))
+];
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -112,6 +127,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     let alive = true;
     engine
       .loadBuiltins()
+      .then(() => engine.loadBundled(realKit as { id: string; file: string }[]))
       .then(() => Promise.all(userSamples.map((s) => engine.ensure(s.id))))
       .finally(() => alive && setReady(true));
     return () => {
