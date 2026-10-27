@@ -89,7 +89,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
   };
 
   return (
-    <main className="page">
+    <main className="lib-page">
       <nav className="side" aria-label="หมวดเสียง">
         <span className="label" style={{ padding: '0 12px 8px' }}>หมวดหมู่</span>
         {CATS.map((c) => (
@@ -102,10 +102,10 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
         ))}
       </nav>
 
-      <section className="grow" aria-label="รายการเสียง">
+      <section className="lib-main" aria-label="รายการเสียง">
         <div className="row" style={{ alignItems: 'flex-end', gap: 12 }}>
           <div className="stack" style={{ gap: 2, marginRight: 'auto' }}>
-            <h1>คลังเสียง</h1>
+            <h1 style={{ fontSize: 22 }}>คลังเสียง</h1>
             <span className="muted" style={{ fontSize: 14 }}>
               นำเข้าไฟล์เสียงของคุณ แล้วเพิ่มให้ชิ้นกลองที่เลือก{target ? ` (ตอนนี้: ${target.name})` : ''}
             </span>
@@ -125,8 +125,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
         </div>
 
         <div
-          className={'drop' + (over ? ' over' : '')}
-          style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: '12px 20px', padding: 24, background: 'var(--bar)' }}
+          className={'drop compact' + (over ? ' over' : '')}
           onDragOver={(e) => { e.preventDefault(); setOver(true); }}
           onDragLeave={() => setOver(false)}
           onDrop={onDrop}
@@ -142,13 +141,13 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
         </div>
 
         <div className="table-wrap">
-          <table style={{ minWidth: 760 }}>
+          <table>
             <thead>
               <tr>
                 <th style={{ width: 60 }}><span className="sr-only">ฟัง</span></th>
                 <th>ชื่อไฟล์</th>
-                <th>รูปคลื่น</th>
-                <th>ความยาว</th>
+                <th className="col-wave">รูปคลื่น</th>
+                <th style={{ whiteSpace: 'nowrap' }}>ความยาว</th>
                 <th>ใช้กับ</th>
                 <th style={{ textAlign: 'right' }}><span className="sr-only">การทำงาน</span></th>
               </tr>
@@ -172,19 +171,19 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
                       <div style={{ fontWeight: 500 }}>{s.name}</div>
                       <div className="faint" style={{ fontSize: 12 }}>{SOURCE_LABELS[s.source]}</div>
                     </td>
-                    <td><WaveThumb id={s.id} /></td>
+                    <td className="col-wave"><WaveThumb id={s.id} /></td>
                     <td className="mono" style={{ fontSize: 13 }}>{s.duration.toFixed(2)}s</td>
                     <td>{used ? used.map((n) => <span key={n} className="chip">{n}</span>) : <span className="faint">—</span>}</td>
                     <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       {target && (
                         <button
                           type="button"
-                          className="btn"
-                          style={{ minHeight: 40 }}
+                          className="btn sm"
+                          title={inTarget ? `อยู่ใน ${target.name} แล้ว` : `เพิ่มให้ ${target.name}`}
                           disabled={inTarget}
                           onClick={() => store.updatePad(target.id, { samples: [...target.samples, s.id] })}
                         >
-                          <Plus /> {inTarget ? `อยู่ใน ${target.name}` : `เพิ่มให้ ${target.name}`}
+                          {inTarget ? `✓ ${target.name}` : <><Plus /> {target.name}</>}
                         </button>
                       )}
                       {!s.builtin && (
@@ -204,7 +203,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
             </tbody>
           </table>
         </div>
-        <div><button type="button" className="btn ghost" onClick={goKit}>← กลับไปที่ชุดกลอง</button></div>
+        
       </section>
     </main>
   );

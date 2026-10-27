@@ -8,8 +8,8 @@ export function HardwarePage() {
   const boardChannels = hw.boardInfo ? parseInt(hw.boardInfo.split(' ')[2] ?? '', 10) : NaN;
 
   return (
-    <main className="page">
-      <div className="stack" style={{ flex: '1 1 340px', maxWidth: 440, minWidth: 0, gap: 24 }}>
+    <main className="hw-page">
+      <div className="hw-side">
         <section className="card stack" aria-labelledby="connH">
           <h2 id="connH" style={{ fontSize: 19 }}>การเชื่อมต่อ</h2>
 
@@ -109,13 +109,13 @@ export function HardwarePage() {
         </section>
       </div>
 
-      <section className="card stack grow" aria-labelledby="inH">
+      <section className="card hw-main" aria-labelledby="inH">
         <div className="row" style={{ alignItems: 'baseline', gap: '8px 16px' }}>
           <h2 id="inH" style={{ fontSize: 19 }}>ช่องสัญญาณเข้า</h2>
           <span className="faint" style={{ fontSize: 13 }}>ตีแต่ละชิ้นเพื่อดูสัญญาณ แล้วปรับให้พอดี — ส่งค่าไปบอร์ดอัตโนมัติ</span>
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ minWidth: 760 }}>
+        <div className="tbl">
+          <table style={{ minWidth: 700 }}>
             <thead>
               <tr>
                 <th>ขา</th>
