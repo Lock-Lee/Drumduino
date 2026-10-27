@@ -4,7 +4,17 @@ import { HH_HALF, HH_OPEN } from '../types';
 import { BUILTINS, renderBuiltin } from './synth';
 import { getSample } from './sampleDb';
 
-export type HitListener = (padId: string, velocity: number, zone: Zone) => void;
+export type HitSource = 'serial' | 'midi' | 'key' | 'ui' | 'score';
+export type HitListener = (padId: string, velocity: number, zone: Zone, source: HitSource) => void;
+
+export interface PlayOpts {
+  /** AudioContext time to play at (default: now) */
+  when?: number;
+  /** hi-hat openness for this hit only (scores), overrides the pedal */
+  hat?: number;
+  /** don't notify hit listeners (guide notes in practice mode) */
+  silentUI?: boolean;
+}
 
 class Engine {
   readonly ctx: AudioContext;
@@ -149,10 +159,10 @@ class Engine {
   }
 
   /** Sounds for a zone. Hi-hat head hits follow the pedal; a rim hit without rim sounds uses the head sounds. */
-  layers(pad: Pad, zone: Zone): string[] {
+  layers(pad: Pad, zone: Zone, hat?: number): string[] {
     if (zone === 'pedal') return pad.chickSamples ?? [];
     if (zone === 'rim' && pad.rimSamples?.length) return pad.rimSamples;
-    const o = this.getPedal(pad.id);
+    const o = hat ?? this.getPedal(pad.id);
     if (o >= HH_OPEN && pad.openSamples?.length) return pad.openSamples;
     if (o >= HH_HALF && pad.halfSamples?.length) return pad.halfSamples;
     return pad.samples;
@@ -176,11 +186,17 @@ class Engine {
   }
 
   /** Play a pad. velocity 1–127. */
-  play(pad: Pad, velocity: number, source: 'serial' | 'midi' | 'key' | 'ui' = 'ui', zone: Zone = 'head') {
+  play(pad: Pad, velocity: number, source: HitSource = 'ui', zone: Zone = 'head', opts: PlayOpts = {}) {
     this.resume();
     const v = Math.max(1, Math.min(127, Math.round(velocity)));
-    this.listeners.forEach((fn) => fn(pad.id, v, zone));
-    const list = this.layers(pad, zone);
+    const now = this.ctx.currentTime;
+    const t = Math.max(now, opts.when ?? now);
+    if (!opts.silentUI) {
+      const notify = () => this.listeners.forEach((fn) => fn(pad.id, v, zone, source));
+      if (t - now > 0.004) setTimeout(notify, (t - now) * 1000);
+      else notify();
+    }
+    const list = this.layers(pad, zone, opts.hat);
     const id = this.pick(pad, list, zone, v);
     if (!id) return;
     const buf = this.buffers.get(id);
@@ -197,18 +213,36 @@ class Engine {
     const velGain = layered ? 0.6 + 0.4 * (v / 127) : Math.pow(v / 127, 1.6);
     g.gain.value = (pad.volume / 100) * velGain;
     src.connect(g).connect(this.master);
-    const t = this.ctx.currentTime;
 
-    // Same pad re-hit: fade the previous voice quickly to avoid build-up on cymbals/hats.
+    // Same pad re-hit: fade the previous voice to avoid build-up on cymbals/hats.
+    // A closed hi-hat (or foot chick) in a score means the pedal closed: choke the ringing open hat.
+    const prev = this.voices.get(pad.id);
+    if (prev) {
+      const closesHat = opts.hat !== undefined && opts.hat < HH_HALF && (pad.openSamples?.length ?? 0) > 0;
+      if (closesHat || (zone === 'pedal' && source === 'score')) prev.gain.gain.setTargetAtTime(0, t, 0.015);
+      else if (source !== 'ui' && zone !== 'pedal') prev.gain.gain.setTargetAtTime(prev.gain.gain.value * 0.5, t, 0.03);
+    }
     if (zone !== 'pedal') {
-      const prev = this.voices.get(pad.id);
-      if (prev && source !== 'ui') prev.gain.gain.setTargetAtTime(prev.gain.gain.value * 0.5, t, 0.03);
       this.voices.set(pad.id, { src, gain: g });
       src.onended = () => {
         if (this.voices.get(pad.id)?.src === src) this.voices.delete(pad.id);
       };
     }
     src.start(t);
+  }
+
+  /** Metronome click at an AudioContext time. */
+  click(when: number, accent: boolean, volume = 0.6) {
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'square';
+    o.frequency.value = accent ? 1760 : 1175;
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(volume * (accent ? 0.35 : 0.22), when + 0.001);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    o.connect(g).connect(this.ctx.destination);
+    o.start(when);
+    o.stop(when + 0.06);
   }
 
   /** Preview a single sample (library page). Returns a stop function. */
