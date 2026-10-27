@@ -78,6 +78,12 @@ function save(key: string, value: unknown) {
 }
 
 /** Keep factory kits that were added in newer app versions. */
+const OLD_FACTORY_RIMS = new Set([
+  'vd:rimshot-1,vd:rimshot-2,vd:rimshot-3',
+  [1, 2, 3, 4, 5].map((i) => `avl:PearlSnare2Edge-${i}`).join(','),
+  [1, 2, 3, 4, 5].map((i) => `avl:PorkpieSnareEdge-${i}`).join(',')
+]);
+
 function withAllPresets(st: Persisted): Persisted {
   // fill fields added in newer versions
   st = {
@@ -90,7 +96,10 @@ function withAllPresets(st: Persisted): Persisted {
       const preset = PRESETS.find((x) => x.id === k.presetId);
       const sounds: Record<string, PadSound> = {};
       for (const [pid, snd] of Object.entries(k.sounds)) {
-        sounds[pid] = { ...EMPTY_SOUND, rimSamples: preset?.sounds[pid]?.rimSamples ?? [], ...(snd as Partial<PadSound>) };
+        const merged: PadSound = { ...EMPTY_SOUND, rimSamples: preset?.sounds[pid]?.rimSamples ?? [], ...(snd as Partial<PadSound>) };
+        // rim lists shipped by older versions get the improved factory list
+        if (preset && OLD_FACTORY_RIMS.has(merged.rimSamples.join(','))) merged.rimSamples = preset.sounds[pid]?.rimSamples ?? [];
+        sounds[pid] = merged;
       }
       return { ...k, sounds };
     })

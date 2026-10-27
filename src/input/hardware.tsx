@@ -217,7 +217,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
       const pad = kitRef.current.pads.find((p) => p.key && p.key === k);
       if (!pad) return;
       e.preventDefault();
-      engine.play(pad, e.shiftKey ? 50 : 110, 'key', e.altKey ? 'rim' : 'head');
+      engine.play(pad, e.shiftKey ? 35 : 115, 'key', e.altKey ? 'rim' : 'head');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

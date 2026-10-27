@@ -110,7 +110,7 @@ export function KitPage({ goLibrary }: { goLibrary: () => void }) {
 
         <div ref={stageRef} className={'stage' + (arrange ? ' arrange' : '')}>
           <span className="stage-hint">
-            {arrange ? 'ลากชิ้นกลองเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเลือกและฟังเสียง · คีย์บอร์ด: ตัวอักษรบนกลอง · Shift = ตีเบา · Option/Alt = ตีขอบ'}
+            {arrange ? 'ลากชิ้นกลองเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเลือกและฟังเสียง · คีย์บอร์ด: ตัวอักษรบนกลอง · Shift = ตีเบา · Option/Alt = ตีขอบ (rimshot) · Shift+Option = cross-stick'}
           </span>
           {kit.pads.map((p) => {
             const on = p.id === sel?.id;

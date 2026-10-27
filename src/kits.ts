@@ -21,6 +21,9 @@ const vd = (group: string, n: number, pitch = 0) => s(vdIds(group, n), pitch);
 /** AVL Drumkits: 5 velocity layers per piece */
 const avl = (slug: string, pitch = 0, volume = 85) => s(avlIds(slug), pitch, volume);
 
+const AVL_XSTICK = ['avl:Sidestick2-3', 'avl:Sidestick2-5'];
+const VD_RIMSHOT = ['vd:rimshot-3', 'vd:rimshot-4', 'vd:rimshot-5', 'vd:rimshot-6'];
+
 export const PRESETS: Preset[] = [
   {
     id: 'studio',
@@ -33,7 +36,8 @@ export const PRESETS: Preset[] = [
       tom2: rim(vd('ltom', 4, 1), vdIds('ltomrim', 3)),
       ride: rim(vd('ride', 3), vdIds('bell', 3)),
       hihat: rim(vd('hhclosed', 4), vdIds('hhopen', 2)),
-      snare: rim(vd('snare', 6), vdIds('rimshot', 3)),
+      // soft rim = cross-stick, harder = rimshot (like a V-Drums snare)
+      snare: rim(vd('snare', 6), ['vd:xstick-2', 'vd:xstick-3', 'vd:rimshot-3', 'vd:rimshot-4', 'vd:rimshot-5', 'vd:rimshot-6']),
       kick: vd('kick', 4),
       floor: rim(vd('ltom', 4, -4), vdIds('ltomrim', 3))
     }
@@ -49,7 +53,8 @@ export const PRESETS: Preset[] = [
       tom2: avl('Pearl13Tom2'),
       ride: rim(avl('SabianAAX20Ride'), avlIds('SabianAAX20RideBell')),
       hihat: rim(avl('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen')),
-      snare: rim(avl('PearlSnare2'), avlIds('PearlSnare2Edge')),
+      // AVL has no rimshot: soft rim = its side stick, harder = Virtuosity rimshot
+      snare: rim(avl('PearlSnare2'), [...AVL_XSTICK, ...VD_RIMSHOT]),
       kick: avl('Pearl22Kick'),
       floor: rim(avl('Pearl16FloorTom'), avlIds('Pearl16FloorTomEdge'))
     }
@@ -65,7 +70,7 @@ export const PRESETS: Preset[] = [
       tom2: avl('Ludwig16FloorTom'),
       ride: rim(avl('ZildjianA24Ride'), avlIds('ZildjianA24RideBell')),
       hihat: rim(avl('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen')),
-      snare: rim(avl('PorkpieSnare'), avlIds('PorkpieSnareEdge')),
+      snare: rim(avl('PorkpieSnare'), [...AVL_XSTICK, ...VD_RIMSHOT]),
       kick: avl('Ludwig26Kick'),
       floor: avl('Ludwig18FloorTom')
     }

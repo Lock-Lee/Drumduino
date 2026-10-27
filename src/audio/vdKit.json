@@ -94,7 +94,7 @@
   "file": "rimshot_1.ogg",
   "name": "Snare Rimshot 1",
   "category": "snare",
-  "duration": 1.53,
+  "duration": 1.32,
   "group": "rimshot",
   "layer": 1
  },
@@ -103,7 +103,7 @@
   "file": "rimshot_2.ogg",
   "name": "Snare Rimshot 2",
   "category": "snare",
-  "duration": 1.44,
+  "duration": 1.46,
   "group": "rimshot",
   "layer": 2
  },
@@ -112,16 +112,43 @@
   "file": "rimshot_3.ogg",
   "name": "Snare Rimshot 3",
   "category": "snare",
-  "duration": 1.65,
+  "duration": 1.34,
   "group": "rimshot",
   "layer": 3
+ },
+ {
+  "id": "vd:rimshot-4",
+  "file": "rimshot_4.ogg",
+  "name": "Snare Rimshot 4",
+  "category": "snare",
+  "duration": 1.44,
+  "group": "rimshot",
+  "layer": 4
+ },
+ {
+  "id": "vd:rimshot-5",
+  "file": "rimshot_5.ogg",
+  "name": "Snare Rimshot 5",
+  "category": "snare",
+  "duration": 1.62,
+  "group": "rimshot",
+  "layer": 5
+ },
+ {
+  "id": "vd:rimshot-6",
+  "file": "rimshot_6.ogg",
+  "name": "Snare Rimshot 6",
+  "category": "snare",
+  "duration": 1.65,
+  "group": "rimshot",
+  "layer": 6
  },
  {
   "id": "vd:xstick-1",
   "file": "xstick_1.ogg",
   "name": "Snare Cross-stick 1",
   "category": "snare",
-  "duration": 2.06,
+  "duration": 0.35,
   "group": "xstick",
   "layer": 1
  },
@@ -130,16 +157,25 @@
   "file": "xstick_2.ogg",
   "name": "Snare Cross-stick 2",
   "category": "snare",
-  "duration": 1.83,
+  "duration": 0.63,
   "group": "xstick",
   "layer": 2
+ },
+ {
+  "id": "vd:xstick-3",
+  "file": "xstick_3.ogg",
+  "name": "Snare Cross-stick 3",
+  "category": "snare",
+  "duration": 0.51,
+  "group": "xstick",
+  "layer": 3
  },
  {
   "id": "vd:hhclosed-1",
   "file": "hhclosed_1.ogg",
   "name": "Hi-hat Closed 1",
   "category": "hihat",
-  "duration": 0.54,
+  "duration": 0.16,
   "group": "hhclosed",
   "layer": 1
  },
@@ -148,7 +184,7 @@
   "file": "hhclosed_2.ogg",
   "name": "Hi-hat Closed 2",
   "category": "hihat",
-  "duration": 0.46,
+  "duration": 0.25,
   "group": "hhclosed",
   "layer": 2
  },
@@ -157,7 +193,7 @@
   "file": "hhclosed_3.ogg",
   "name": "Hi-hat Closed 3",
   "category": "hihat",
-  "duration": 0.53,
+  "duration": 0.3,
   "group": "hhclosed",
   "layer": 3
  },
@@ -166,7 +202,7 @@
   "file": "hhclosed_4.ogg",
   "name": "Hi-hat Closed 4",
   "category": "hihat",
-  "duration": 0.67,
+  "duration": 0.52,
   "group": "hhclosed",
   "layer": 4
  },
@@ -175,7 +211,7 @@
   "file": "hhhalf_1.ogg",
   "name": "Hi-hat Half 1",
   "category": "hihat",
-  "duration": 1.54,
+  "duration": 1.04,
   "group": "hhhalf",
   "layer": 1
  },
@@ -184,7 +220,7 @@
   "file": "hhhalf_2.ogg",
   "name": "Hi-hat Half 2",
   "category": "hihat",
-  "duration": 1.81,
+  "duration": 1.17,
   "group": "hhhalf",
   "layer": 2
  },
@@ -337,7 +373,7 @@
   "file": "bell_1.ogg",
   "name": "Ride Bell 1",
   "category": "cym",
-  "duration": 5.53,
+  "duration": 5.06,
   "group": "bell",
   "layer": 1
  },
@@ -346,7 +382,7 @@
   "file": "bell_2.ogg",
   "name": "Ride Bell 2",
   "category": "cym",
-  "duration": 5.57,
+  "duration": 5.56,
   "group": "bell",
   "layer": 2
  },
@@ -355,7 +391,7 @@
   "file": "bell_3.ogg",
   "name": "Ride Bell 3",
   "category": "cym",
-  "duration": 6.82,
+  "duration": 6.56,
   "group": "bell",
   "layer": 3
  },
@@ -364,7 +400,7 @@
   "file": "ltomrim_1.ogg",
   "name": "Low Tom Rimshot 1",
   "category": "tom",
-  "duration": 2.25,
+  "duration": 2.09,
   "group": "ltomrim",
   "layer": 1
  },
@@ -373,7 +409,7 @@
   "file": "ltomrim_2.ogg",
   "name": "Low Tom Rimshot 2",
   "category": "tom",
-  "duration": 3.98,
+  "duration": 3.8,
   "group": "ltomrim",
   "layer": 2
  },
@@ -382,7 +418,7 @@
   "file": "ltomrim_3.ogg",
   "name": "Low Tom Rimshot 3",
   "category": "tom",
-  "duration": 3.57,
+  "duration": 3.47,
   "group": "ltomrim",
   "layer": 3
  }

@@ -49,7 +49,7 @@
   "file": "avl/Sidestick2_1.ogg",
   "name": "Side Stick 1",
   "category": "snare",
-  "duration": 0.34,
+  "duration": 0.28,
   "source": "avl",
   "group": "Sidestick2"
  },
@@ -58,7 +58,7 @@
   "file": "avl/Sidestick2_2.ogg",
   "name": "Side Stick 2",
   "category": "snare",
-  "duration": 0.35,
+  "duration": 0.3,
   "source": "avl",
   "group": "Sidestick2"
  },
@@ -67,7 +67,7 @@
   "file": "avl/Sidestick2_3.ogg",
   "name": "Side Stick 3",
   "category": "snare",
-  "duration": 0.39,
+  "duration": 0.3,
   "source": "avl",
   "group": "Sidestick2"
  },
@@ -76,7 +76,7 @@
   "file": "avl/Sidestick2_4.ogg",
   "name": "Side Stick 4",
   "category": "snare",
-  "duration": 0.38,
+  "duration": 0.31,
   "source": "avl",
   "group": "Sidestick2"
  },
@@ -85,7 +85,7 @@
   "file": "avl/Sidestick2_5.ogg",
   "name": "Side Stick 5",
   "category": "snare",
-  "duration": 0.4,
+  "duration": 0.37,
   "source": "avl",
   "group": "Sidestick2"
  },
