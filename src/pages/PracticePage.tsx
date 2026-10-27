@@ -233,15 +233,21 @@ export function PracticePage() {
   });
 
   // notation width
-  const wrap = useRef<HTMLDivElement>(null);
+  // The sheet unmounts while the score editor is open, so observe whichever element is mounted now
+  // and ignore the 0-width report a detached element gives.
   const [w, setW] = useState(900);
-  useEffect(() => {
-    const el = wrap.current;
+  const roRef = useRef<ResizeObserver | null>(null);
+  const wrap = useCallback((el: HTMLDivElement | null) => {
+    roRef.current?.disconnect();
+    roRef.current = null;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setW(Math.floor(e.contentRect.width)));
+    const measure = (cw: number) => { if (cw >= 200) setW(Math.floor(cw)); };
+    measure(el.clientWidth);
+    const ro = new ResizeObserver(([e]) => measure(e.contentRect.width));
     ro.observe(el);
-    return () => ro.disconnect();
+    roRef.current = ro;
   }, []);
+  useEffect(() => () => roRef.current?.disconnect(), []);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const onImport = async (files: FileList | null) => {
