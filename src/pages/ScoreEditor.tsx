@@ -217,15 +217,15 @@ export function ScoreEditor({ initial, onSave, onCancel }: { initial: Score; onS
           </select>
         </label>
         <label className="ed-f">
-          <span className="label">ตาราง</span>
+          <span className="label">ความละเอียด</span>
           <select className="input sm" value={grid} disabled={compound} onChange={(e) => setGrid(e.target.value as Grid)}>
             <option value="straight">เขบ็ต 2 ชั้น (16th)</option>
-            <option value="triplet">สามพยางค์ (triplet)</option>
+            <option value="triplet">โน้ตสามพยางค์ (triplet)</option>
           </select>
         </label>
         <div className="spacer" />
         {dirty && <span className="faint" style={{ fontSize: 12 }}>ยังไม่ได้บันทึก</span>}
-        <button type="button" className="btn sm ghost" onClick={() => { if (!dirty || confirm('ออกโดยไม่บันทึก?')) { player.stop(); onCancel(); } }}>ปิด</button>
+        <button type="button" className="btn sm ghost" onClick={() => { if (!dirty || confirm('ต้องการปิดโดยไม่บันทึกหรือไม่?')) { player.stop(); onCancel(); } }}>ปิด</button>
         <button type="button" className="btn sm primary" onClick={save}>บันทึก</button>
       </div>
 
@@ -235,7 +235,7 @@ export function ScoreEditor({ initial, onSave, onCancel }: { initial: Score; onS
         <button type="button" className="btn sm" disabled={bar >= s.measures - 1} onClick={() => setBar(bar + 1)} aria-label="ห้องถัดไป">→</button>
         <input className="input sm" style={{ width: 130 }} placeholder="ชื่อท่อน (Verse…)" value={section} onChange={(e) => setSection(e.target.value)} aria-label="ชื่อท่อนที่เริ่มห้องนี้" />
         <span className="vsep" aria-hidden="true" />
-        <button type="button" className="btn sm" onClick={() => { insertBars(bar + 1, [[]]); setBar(bar + 1); }}><Plus /> ห้องว่าง</button>
+        <button type="button" className="btn sm" onClick={() => { insertBars(bar + 1, [[]]); setBar(bar + 1); }}><Plus /> เพิ่มห้องว่าง</button>
         <button type="button" className="btn sm" onClick={() => { insertBars(bar + 1, [barNotes(bar)]); setBar(bar + 1); }}>ทำสำเนาห้องนี้</button>
         <span className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
           <button type="button" className="btn sm" onClick={() => insertBars(bar + 1, Array.from({ length: repeatN }, () => barNotes(bar)))}>ซ้ำห้องนี้ ×</button>
@@ -282,8 +282,8 @@ export function ScoreEditor({ initial, onSave, onCancel }: { initial: Score; onS
         ))}
       </div>
       <p className="faint ed-help">
-        คลิกช่องเพื่อใส่โน้ต · คลิกซ้ำเพื่อเปลี่ยนแบบ (ตี → เน้น &gt; → … ) · คลิกขวาเพื่อลบ · ← → เปลี่ยนห้อง ·
-        สแนร์: R = rimshot, C = cross-stick · ไฮแฮท: o = เปิด, ø = ครึ่งเปิด · ไรด์: ◆ = bell
+        คลิกช่องเพื่อใส่โน้ต คลิกซ้ำเพื่อเปลี่ยนรูปแบบการตี (ตีปกติ เน้น และแบบอื่น ๆ) คลิกขวาเพื่อลบ และกดลูกศรซ้ายหรือขวาเพื่อเปลี่ยนห้อง
+        สัญลักษณ์: สแนร์ R = rimshot, C = cross-stick / ไฮแฮท o = เปิด, ø = ครึ่งเปิด / ไรด์ ◆ = bell
       </p>
 
       <div className="ed-preview" ref={wrap}>

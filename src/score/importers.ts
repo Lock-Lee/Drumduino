@@ -50,7 +50,7 @@ export function parseMidi(buf: ArrayBuffer, fileName = 'MIDI'): Score {
   const ntrks = u16();
   const division = u16();
   p = 8 + hlen;
-  if (division & 0x8000) throw new Error('ไฟล์ MIDI แบบ SMPTE ยังไม่รองรับ');
+  if (division & 0x8000) throw new Error('ยังไม่รองรับไฟล์ MIDI แบบ SMPTE');
   const scale = PPQ / division;
 
   let bpm = 0;
@@ -133,7 +133,7 @@ function guessFromName(name: string): [PadId, Art] | null {
 export function parseMusicXml(text: string, fileName = 'MusicXML'): Score {
   const doc = new DOMParser().parseFromString(text, 'application/xml');
   if (doc.querySelector('parsererror')) throw new Error('อ่านไฟล์ MusicXML ไม่ได้');
-  if (doc.documentElement.nodeName === 'score-timewise') throw new Error('MusicXML แบบ timewise ยังไม่รองรับ — export แบบ partwise');
+  if (doc.documentElement.nodeName === 'score-timewise') throw new Error('ยังไม่รองรับ MusicXML แบบ timewise กรุณาบันทึกเป็นแบบ partwise');
 
   const txt = (el: Element | null | undefined, sel: string) => el?.querySelector(sel)?.textContent?.trim() ?? '';
   const title = txt(doc.documentElement, 'work > work-title') || txt(doc.documentElement, 'movement-title') || fileName.replace(/\.(musicxml|xml)$/i, '');
@@ -234,8 +234,8 @@ export function parseMusicXml(text: string, fileName = 'MusicXML'): Score {
 
 export async function importScoreFile(f: File): Promise<Score> {
   const name = f.name.toLowerCase();
-  if (name.endsWith('.mxl')) throw new Error('ไฟล์ .mxl เป็นแบบบีบอัด — export เป็น .musicxml (Uncompressed) แทน');
+  if (name.endsWith('.mxl')) throw new Error('ไฟล์ .mxl เป็นไฟล์บีบอัด กรุณาบันทึกเป็น .musicxml แบบไม่บีบอัด');
   if (name.endsWith('.mid') || name.endsWith('.midi')) return parseMidi(await f.arrayBuffer(), f.name);
   if (name.endsWith('.musicxml') || name.endsWith('.xml')) return parseMusicXml(await f.text(), f.name);
-  throw new Error('รองรับไฟล์ .mid และ .musicxml');
+  throw new Error('รองรับเฉพาะไฟล์ .mid และ .musicxml');
 }

@@ -10,7 +10,7 @@ export function PortPicker() {
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="pp-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="pp-title">เลือกพอร์ตของ Arduino</h2>
         {sorted.length === 0 ? (
-          <p className="empty">ไม่พบอุปกรณ์ — ลองเสียบสาย USB ใหม่ แล้วกดเชื่อมต่ออีกครั้ง</p>
+          <p className="empty">ไม่พบบอร์ด Arduino กรุณาถอดสาย USB แล้วเสียบใหม่ จากนั้นกดเชื่อมต่ออีกครั้ง</p>
         ) : (
           <div className="stack" style={{ gap: 8 }}>
             {sorted.map((p) => (

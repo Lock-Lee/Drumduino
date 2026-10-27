@@ -10,9 +10,9 @@ import { SOURCE_LABELS } from '../kits';
 import { Close, Down, Move, Plus, PlayIcon, Trash, Up } from '../components/Icons';
 
 const MODES: { id: PlayMode; label: string; help: string }[] = [
-  { id: 'vel', label: 'ตามแรงตี', help: 'ตีเบาได้ไฟล์แรก ตีแรงได้ไฟล์ท้าย' },
-  { id: 'rr', label: 'วนลำดับ', help: 'ตีแต่ละครั้งเล่นไฟล์ถัดไป' },
-  { id: 'rand', label: 'สุ่ม', help: 'สุ่มไฟล์ทุกครั้งที่ตี' }
+  { id: 'vel', label: 'ตามแรงตี', help: 'ตีเบาจะเล่นไฟล์แรก ตีแรงจะเล่นไฟล์ท้าย' },
+  { id: 'rr', label: 'ตามลำดับ', help: 'ตีแต่ละครั้งจะเล่นไฟล์ถัดไป' },
+  { id: 'rand', label: 'สุ่ม', help: 'สุ่มเลือกไฟล์ทุกครั้งที่ตี' }
 ];
 
 const STAGE_RATIO = 16 / 10;
@@ -99,22 +99,22 @@ export function KitPage({ goLibrary }: { goLibrary: () => void }) {
             </>
           )}
           <div className="kit-desc" title={store.preset ? `${store.preset.description} · ${store.preset.credit}` : ''}>
-            {store.kitLoading ? 'กำลังโหลดเสียง…' : store.preset ? store.preset.description : 'ชุดของคุณเอง · บันทึกอัตโนมัติ'}
+            {store.kitLoading ? 'กำลังโหลดเสียง…' : store.preset ? store.preset.description : 'ชุดที่คุณสร้างเอง แอปจะบันทึกให้อัตโนมัติ'}
             {store.preset && <span className="faint"> · {store.preset.credit}</span>}
           </div>
           <div className="kit-actions">
             <button type="button" className="btn sm" onClick={store.duplicateKit} title="ทำสำเนาเป็นชุดของฉัน">ทำสำเนา</button>
             {store.preset ? (
-              <button type="button" className="btn sm ghost" onClick={() => { if (confirm(`คืนค่าเสียงของ "${kit.name}" เป็นแบบเดิม?`)) store.resetKitSounds(); }}>คืนค่าเดิม</button>
+              <button type="button" className="btn sm ghost" onClick={() => { if (confirm(`คืนค่าเสียงของ "${kit.name}" เป็นค่าเริ่มต้นหรือไม่?`)) store.resetKitSounds(); }}>คืนค่าเดิม</button>
             ) : (
               <button type="button" className="btn sm ghost danger" onClick={() => { if (confirm(`ลบชุด "${kit.name}"?`)) store.deleteKit(kit.id); }}><Trash /> ลบชุด</button>
             )}
             <span className="vsep" aria-hidden="true" />
             <button type="button" className={'btn sm' + (arrange ? ' outline' : '')} aria-pressed={arrange} onClick={() => setArrange((a) => !a)}>
-              <Move /> {arrange ? 'เสร็จ' : 'จัดวาง'}
+              <Move /> {arrange ? 'เสร็จแล้ว' : 'จัดตำแหน่ง'}
             </button>
-            <button type="button" className="btn sm" onClick={store.addPad}><Plus /> เพิ่มชิ้น</button>
-            <button type="button" className="btn sm ghost" onClick={store.exportKit}>ส่งออก</button>
+            <button type="button" className="btn sm" onClick={store.addPad}><Plus /> เพิ่มชิ้นกลอง</button>
+            <button type="button" className="btn sm ghost" onClick={store.exportKit}>ส่งออกไฟล์</button>
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export function KitPage({ goLibrary }: { goLibrary: () => void }) {
             <span className="stage-hint">
               {arrange
                 ? 'ลากชิ้นกลองเพื่อย้ายตำแหน่ง'
-                : 'คลิก/กดคีย์ตามตัวอักษร · Shift = เบา · Option = ขอบ · X ค้าง = ไฮแฮทเปิด · Z = เหยียบ'}
+                : 'คลิกที่กลองหรือกดแป้นตามตัวอักษรเพื่อตี  กด Shift ค้างเพื่อตีเบา, Option เพื่อตีขอบ, X ค้างเพื่อเปิดไฮแฮท และ Z เพื่อเหยียบแป้น'}
             </span>
             {kit.pads.map((p) => {
               const on = p.id === sel?.id;
@@ -205,9 +205,9 @@ function PadPanel({ pad, goLibrary }: { pad: Pad; goLibrary: () => void }) {
 
   const isHat = isHatPad(pad);
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'head', label: `${isHat ? 'ปิด' : 'หนัง'} ${pad.samples.length}` },
+    { id: 'head', label: `${isHat ? 'ไฮแฮทปิด' : 'เสียงหนัง'} ${pad.samples.length}` },
     ...(isHat ? [{ id: 'hat' as Tab, label: 'แป้นไฮแฮท' }] : []),
-    { id: 'rim', label: `ขอบ ${pad.rimSamples.length}` },
+    { id: 'rim', label: `เสียงขอบ ${pad.rimSamples.length}` },
     { id: 'setup', label: 'ตั้งค่า' }
   ];
 
@@ -236,7 +236,7 @@ function PadPanel({ pad, goLibrary }: { pad: Pad; goLibrary: () => void }) {
             </select>
           </div>
           <div className="field">
-            <span id="modeL" className="label">หลายเสียง</span>
+            <span id="modeL" className="label">การเล่นหลายไฟล์</span>
             <select aria-labelledby="modeL" className="input sm" value={pad.mode} onChange={(e) => updatePad(pad.id, { mode: e.target.value as PlayMode })} title={MODES.find((m) => m.id === pad.mode)?.help}>
               {MODES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
             </select>
@@ -256,7 +256,7 @@ function PadPanel({ pad, goLibrary }: { pad: Pad; goLibrary: () => void }) {
         {tab === 'rim' && (
           <>
             {pad.rimChannel < 0 && (
-              <p className="note" style={{ margin: 0 }}>ชิ้นนี้ยังเป็นโซนเดียว — ตั้ง “ขาขอบ” ด้านบนเมื่อติด piezo ที่ขอบแล้ว (ลองฟังด้วยคีย์ Option + ตัวอักษรได้เลย)</p>
+              <p className="note" style={{ margin: 0 }}>ชิ้นกลองนี้ยังรับสัญญาณได้โซนเดียว เมื่อติด piezo ที่ขอบแล้ว ให้ตั้งค่า “ขาขอบ” ด้านบน (ระหว่างนี้ลองฟังเสียงขอบได้โดยกด Option พร้อมตัวอักษรของกลอง)</p>
             )}
             <SoundList pad={pad} field="rimSamples" zone="rim" goLibrary={goLibrary} />
           </>
@@ -297,7 +297,7 @@ function HatPedal({ pad }: { pad: Pad }) {
       </div>
 
       <div className="field">
-        <label htmlFor="pedsim" className="label">ลองขยับแป้น (ไม่ต้องมีฮาร์ดแวร์) · หรือกด X ค้าง = เปิด, ปล่อย = ปิด, Z = เหยียบ</label>
+        <label htmlFor="pedsim" className="label">ลองขยับแป้นได้โดยไม่ต้องมีฮาร์ดแวร์ หรือกด X ค้างเพื่อเปิด ปล่อยเพื่อปิด และกด Z เพื่อเหยียบ</label>
         <input id="pedsim" type="range" min={0} max={100} value={Math.round(o * 100)} onChange={(e) => hw.setPedalUI(pad.id, Number(e.target.value) / 100)} />
       </div>
 
@@ -314,13 +314,13 @@ function HatPedal({ pad }: { pad: Pad }) {
       </div>
       {pad.pedalChannel >= 0 && (
         <span className="faint mono" style={{ fontSize: 12 }}>
-          ค่าเซนเซอร์ตอนนี้ {raw ?? '— (ยังไม่ได้รับสัญญาณ)'} · ปิด {pad.pedalClosed} · เปิด {pad.pedalOpen}
+          ค่าจากเซนเซอร์ขณะนี้ {raw ?? '(ยังไม่ได้รับสัญญาณ)'}, จุดปิด {pad.pedalClosed}, จุดเปิด {pad.pedalOpen}
         </span>
       )}
 
-      <SoundList pad={pad} field="halfSamples" zone="head" title="เสียงตีตอนครึ่งเปิด" emptyText="ไม่มี — ใช้เสียงตอนปิดแทน" />
-      <SoundList pad={pad} field="openSamples" zone="head" title="เสียงตีตอนเปิด" emptyText="ไม่มี — ใช้เสียงตอนครึ่งเปิด/ปิดแทน" />
-      <SoundList pad={pad} field="chickSamples" zone="pedal" title="เสียงเหยียบแป้น (chick)" emptyText="ไม่มี — เหยียบแล้วเงียบ" />
+      <SoundList pad={pad} field="halfSamples" zone="head" title="เสียงตีตอนครึ่งเปิด" emptyText="ยังไม่มีเสียง แอปจะใช้เสียงตอนปิดแทน" />
+      <SoundList pad={pad} field="openSamples" zone="head" title="เสียงตีตอนเปิด" emptyText="ยังไม่มีเสียง แอปจะใช้เสียงตอนครึ่งเปิดหรือตอนปิดแทน" />
+      <SoundList pad={pad} field="chickSamples" zone="pedal" title="เสียงเหยียบแป้น (chick)" emptyText="ยังไม่มีเสียง เมื่อเหยียบแป้นจะไม่มีเสียง" />
     </div>
   );
 }
@@ -337,12 +337,12 @@ function Setup({ pad }: { pad: Pad }) {
   return (
     <div className="stack" style={{ gap: 14 }}>
       {slider('vol', 'ความดัง', pad.volume, 0, 100, '%', (v) => updatePad(pad.id, { volume: v }))}
-      {slider('pitch', 'ระดับเสียง (Pitch)', pad.pitch, -12, 12, ' st', (v) => updatePad(pad.id, { pitch: v }))}
+      {slider('pitch', 'ระดับเสียงสูงต่ำ (Pitch)', pad.pitch, -12, 12, ' st', (v) => updatePad(pad.id, { pitch: v }))}
       {slider('sens', 'ความไวเซนเซอร์', pad.sensitivity, 1, 100, '', (v) => updatePad(pad.id, { sensitivity: v }))}
-      {pad.rimChannel >= 0 && slider('rimratio', 'ตีขอบเมื่อขอบแรง ≥ หนัง ×', pad.rimRatio, 20, 300, '%', (v) => updatePad(pad.id, { rimRatio: v }), 5)}
+      {pad.rimChannel >= 0 && slider('rimratio', 'นับเป็นตีขอบเมื่อแรงที่ขอบ ≥ แรงที่หนัง ×', pad.rimRatio, 20, 300, '%', (v) => updatePad(pad.id, { rimRatio: v }), 5)}
       <div className="grid3">
         <div className="field">
-          <label htmlFor="th" className="label">ชื่อไทย</label>
+          <label htmlFor="th" className="label">ชื่อภาษาไทย</label>
           <input id="th" className="input sm" value={pad.th} onChange={(e) => updatePad(pad.id, { th: e.target.value })} />
         </div>
         <div className="field">
@@ -350,7 +350,7 @@ function Setup({ pad }: { pad: Pad }) {
           <input id="key" className="input sm mono" value={pad.key} onChange={(e) => updatePad(pad.id, { key: e.target.value.toLowerCase().slice(-1) })} />
         </div>
         <div className="field">
-          <label htmlFor="size" className="label">ขนาดบนจอ</label>
+          <label htmlFor="size" className="label">ขนาดบนหน้าจอ</label>
           <input id="size" type="range" min={8} max={30} value={pad.w} onChange={(e) => updatePad(pad.id, { w: Number(e.target.value) })} />
         </div>
         <div className="field">
@@ -363,11 +363,11 @@ function Setup({ pad }: { pad: Pad }) {
         </div>
         <label className="field" style={{ justifyContent: 'flex-end' }}>
           <span className="row" style={{ gap: 8, minHeight: 36 }}>
-            <input type="checkbox" checked={pad.cymbal} onChange={(e) => updatePad(pad.id, { cymbal: e.target.checked })} /> ฉาบ
+            <input type="checkbox" checked={pad.cymbal} onChange={(e) => updatePad(pad.id, { cymbal: e.target.checked })} /> แสดงเป็นฉาบ
           </span>
         </label>
       </div>
-      <button type="button" className="btn sm ghost danger" style={{ alignSelf: 'flex-start' }} onClick={() => { if (confirm(`ลบ "${pad.name}" ออกจากชุดกลอง?`)) store.removePad(pad.id); }}>
+      <button type="button" className="btn sm ghost danger" style={{ alignSelf: 'flex-start' }} onClick={() => { if (confirm(`ลบ "${pad.name}" ออกจากชุดกลองหรือไม่?`)) store.removePad(pad.id); }}>
         <Trash /> ลบชิ้นกลองนี้
       </button>
     </div>
@@ -421,7 +421,7 @@ function SoundList({ pad, field, zone, goLibrary, title, emptyText }: { pad: Pad
         </div>
       )}
       {n === 0 ? (
-        <p className="empty">{emptyText ?? (zone === 'rim' ? 'ยังไม่มีเสียงขอบ — ตีขอบจะใช้เสียงหนังแทน' : 'ยังไม่มีเสียง — เพิ่มอย่างน้อย 1 ไฟล์')}</p>
+        <p className="empty">{emptyText ?? (zone === 'rim' ? 'ยังไม่มีเสียงขอบ เมื่อตีขอบแอปจะใช้เสียงหนังแทน' : 'ยังไม่มีเสียง กรุณาเพิ่มอย่างน้อย 1 ไฟล์')}</p>
       ) : (
         <ul className="sound-list">
           {list.map((id, i) => {
@@ -447,19 +447,19 @@ function SoundList({ pad, field, zone, goLibrary, title, emptyText }: { pad: Pad
       <div className="row add-row">
         <label htmlFor={'lib-' + idp} className="sr-only">เพิ่มจากคลังเสียง</label>
         <select id={'lib-' + idp} className="input sm" value="" onChange={(e) => e.target.value && set([...list, e.target.value])}>
-          <option value="">+ เพิ่มจากคลังเสียง…</option>
+          <option value="">+ เลือกเสียงจากคลัง…</option>
           {Object.entries(SOURCE_LABELS).map(([src, label]) => (
             <optgroup key={src} label={label}>
               {samples.filter((s) => s.source === src).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </optgroup>
           ))}
         </select>
-        <button type="button" className="btn sm primary" onClick={() => fileRef.current?.click()}><Plus /> ไฟล์</button>
+        <button type="button" className="btn sm primary" onClick={() => fileRef.current?.click()}><Plus /> เพิ่มไฟล์</button>
         <input ref={fileRef} type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.aif,.aiff" multiple hidden onChange={(e) => { if (e.target.files) void doImport(e.target.files); e.target.value = ''; }} />
       </div>
       {goLibrary && (
         <span className="faint" style={{ fontSize: 12 }}>
-          ลากไฟล์ .wav / .mp3 มาวางในกรอบนี้ได้ · <button type="button" className="linkish" onClick={goLibrary}>เปิดคลังเสียง</button>
+          ลากไฟล์ .wav หรือ .mp3 มาวางในกรอบนี้ได้ หรือ <button type="button" className="linkish" onClick={goLibrary}>เปิดคลังเสียง</button>
         </span>
       )}
       {msg && <span className="muted" style={{ fontSize: 13 }} role="status">{msg}</span>}

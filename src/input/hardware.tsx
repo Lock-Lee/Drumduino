@@ -148,7 +148,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
         onClose(err) {
           setSerialStatus('idle');
           setBoardInfo('');
-          if (err) setError('การเชื่อมต่อหลุด: ' + err);
+          if (err) setError('การเชื่อมต่อกับบอร์ดขาดหาย: ' + err);
         }
       }),
     [setChannelLevel, pedalMove]
@@ -225,7 +225,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
         refresh();
         acc.onstatechange = refresh;
       })
-      .catch((e) => setError('เปิด MIDI ไม่ได้: ' + String(e?.message || e)));
+      .catch((e) => setError('ไม่สามารถเปิดใช้ MIDI ได้: ' + String(e?.message || e)));
   }, [mode, midiSupported, midiAccess]);
 
   useEffect(() => {

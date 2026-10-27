@@ -13,7 +13,7 @@ const CATS: { id: 'all' | SampleCategory; label: string }[] = [
   { id: 'hihat', label: 'Hi-hat' },
   { id: 'tom', label: 'Tom' },
   { id: 'cym', label: 'ฉาบ (Cymbal)' },
-  { id: 'mine', label: 'อื่นๆ / เพอร์คัสชัน' }
+  { id: 'mine', label: 'เครื่องเคาะอื่น ๆ' }
 ];
 
 function WaveThumb({ id }: { id: string }) {
@@ -107,7 +107,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
           <div className="stack" style={{ gap: 2, marginRight: 'auto' }}>
             <h1 style={{ fontSize: 22 }}>คลังเสียง</h1>
             <span className="muted" style={{ fontSize: 14 }}>
-              นำเข้าไฟล์เสียงของคุณ แล้วเพิ่มให้ชิ้นกลองที่เลือก{target ? ` (ตอนนี้: ${target.name})` : ''}
+              นำเข้าไฟล์เสียงของคุณ แล้วเพิ่มให้กับชิ้นกลองที่เลือกไว้{target ? ` (ตอนนี้: ${target.name})` : ''}
             </span>
           </div>
           <div className="field" style={{ minWidth: 200 }}>
@@ -133,7 +133,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
           <Upload />
           <div className="stack" style={{ gap: 2, textAlign: 'left' }}>
             <span style={{ fontWeight: 600 }}>ลากไฟล์เสียงมาวางที่นี่</span>
-            <span className="faint" style={{ fontSize: 13 }}>รองรับ .wav .mp3 .ogg .flac .aiff · เก็บไว้ในเครื่อง</span>
+            <span className="faint" style={{ fontSize: 13 }}>รองรับไฟล์ .wav .mp3 .ogg .flac และ .aiff โดยไฟล์จะเก็บไว้ในเครื่องนี้</span>
           </div>
           <button type="button" className="btn primary" onClick={() => fileRef.current?.click()}>นำเข้าไฟล์</button>
           <input ref={fileRef} type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.aif,.aiff" multiple hidden onChange={(e) => { if (e.target.files) void doImport(e.target.files); e.target.value = ''; }} />
@@ -191,7 +191,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
                           type="button"
                           className="icon-btn"
                           aria-label={'ลบ ' + s.name}
-                          onClick={() => { if (confirm(`ลบ "${s.name}" ออกจากคลัง? ชิ้นกลองที่ใช้เสียงนี้จะไม่มีเสียงนี้อีก`)) void store.removeSample(s.id); }}
+                          onClick={() => { if (confirm(`ลบ "${s.name}" ออกจากคลังหรือไม่? ชิ้นกลองที่ใช้เสียงนี้จะไม่มีเสียงนี้อีกต่อไป`)) void store.removeSample(s.id); }}
                         >
                           <Trash />
                         </button>

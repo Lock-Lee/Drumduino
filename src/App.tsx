@@ -18,7 +18,7 @@ function StatusPill() {
     return (
       <div className={'status-pill' + (name ? ' ok' : '')}>
         <span className={'dot' + (name ? ' ok' : '')} aria-hidden="true" />
-        <span>{name ? 'MIDI · ' + name : 'MIDI · ยังไม่ได้เลือกอุปกรณ์'}</span>
+        <span>{name ? 'MIDI · ' + name : 'MIDI: ยังไม่ได้เลือกอุปกรณ์'}</span>
       </div>
     );
   }
@@ -27,7 +27,7 @@ function StatusPill() {
     <div className={'status-pill' + (st === 'connected' ? ' ok' : '')}>
       <span className={'dot' + (st === 'connected' ? ' ok' : st === 'connecting' ? ' wait' : '')} aria-hidden="true" />
       <span>
-        {st === 'connected' ? 'Arduino · เชื่อมต่อแล้ว' : st === 'connecting' ? 'กำลังเชื่อมต่อ…' : 'ยังไม่ได้เชื่อมต่อ Arduino'}
+        {st === 'connected' ? 'เชื่อมต่อ Arduino แล้ว' : st === 'connecting' ? 'กำลังเชื่อมต่อ…' : 'ยังไม่ได้เชื่อมต่อ Arduino'}
       </span>
     </div>
   );
@@ -58,13 +58,13 @@ export function App() {
         <div className="spacer" />
         <StatusPill />
         <div className="master">
-          <label htmlFor="master" className="label">มาสเตอร์</label>
+          <label htmlFor="master" className="label">เสียงรวม</label>
           <input id="master" type="range" min={0} max={100} value={kit.master} onChange={(e) => setMaster(Number(e.target.value))} />
           <span className="mono" style={{ fontSize: 13, width: 28 }}>{kit.master}</span>
         </div>
       </header>
       {!ready ? (
-        <div className="loading">กำลังเตรียมเสียง…</div>
+        <div className="loading">กำลังโหลดเสียงกลอง…</div>
       ) : tab === 'kit' ? (
         <KitPage goLibrary={() => setTab('library')} />
       ) : tab === 'practice' ? (

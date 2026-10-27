@@ -263,6 +263,7 @@ export function Notation({
   useEffect(() => {
     if (!layout) return;
     let raf = 0;
+    let lastRowY = -1;
     const tpm = ticksPerMeasure(score);
     const draw = () => {
       raf = requestAnimationFrame(draw);
@@ -286,11 +287,19 @@ export function Notation({
       }
       c.style.opacity = '1';
       c.style.transform = `translate(${x}px, ${L.y + 18}px)`;
-      // keep the playing row in view
-      const sc = host.current?.parentElement?.parentElement;
-      if (sc) {
-        const top = L.y - 10;
-        if (top < sc.scrollTop + 10 || top + 130 > sc.scrollTop + sc.clientHeight) sc.scrollTo({ top: Math.max(0, top - 40), behavior: 'smooth' });
+      // keep the playing row in view: when the cursor moves to a new row, scroll that row near the top
+      if (L.y !== lastRowY) {
+        lastRowY = L.y;
+        const sheet = host.current?.parentElement;
+        let sc = sheet?.parentElement ?? null;
+        while (sc && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+        if (sheet && sc) {
+          const sheetTop = sheet.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+          const rowTop = sheetTop + L.y - 40;
+          const view = sc.clientHeight;
+          // follow when the row is not comfortably visible (keep one row of look-ahead below it)
+          if (rowTop < sc.scrollTop || rowTop + 300 > sc.scrollTop + view) sc.scrollTo({ top: Math.max(0, rowTop - Math.min(60, view * 0.1)), behavior: 'smooth' });
+        }
       }
     };
     raf = requestAnimationFrame(draw);
@@ -321,7 +330,7 @@ export function Notation({
           return <span key={i} className={'mark ' + mk.status} style={{ left: p.x - 7, top: p.y - 7 }} />;
         })}
       <div ref={cursor} className="playhead" aria-hidden="true" />
-      {approx && <div className="sheet-note">บางโน้ตแสดงแบบปัดเศษ (ไฟล์มีจังหวะละเอียดกว่าเขบ็ต 2 ชั้น/triplet) — ตอนเล่นยังตรงตามไฟล์</div>}
+      {approx && <div className="sheet-note">โน้ตบางตัวแสดงแบบปัดค่า เพราะไฟล์มีจังหวะละเอียดกว่าที่แสดงได้ แต่เสียงที่เล่นยังตรงตามไฟล์</div>}
     </div>
   );
 }

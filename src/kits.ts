@@ -35,7 +35,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'studio',
     name: 'Studio Maple',
-    description: 'กลองอะคูสติกห้องอัด เสียงเปิดกว้าง แรงตีละเอียด',
+    description: 'กลองอะคูสติกที่บันทึกในห้องอัด เสียงกว้าง ตอบสนองแรงตีได้ละเอียด',
     credit: 'Virtuosity Drums — Versilian Studios (CC0)',
     sounds: {
       crash: vd('crash', 3),
@@ -52,7 +52,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'blackpearl',
     name: 'Black Pearl',
-    description: 'Pearl + ฉาบ Sabian — ร็อก/ป๊อป เสียงแน่น สะอาด',
+    description: 'กลอง Pearl กับฉาบ Sabian เสียงแน่นและสะอาด เหมาะกับเพลงร็อกและป๊อป',
     credit: 'AVL Drumkits “Black Pearl” — Glen MacArthur (CC BY-SA 3.0)',
     sounds: {
       crash: avl('SabianAA16Crash'),
@@ -69,7 +69,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'redzep',
     name: 'Red Zeppelin',
-    description: 'Ludwig วินเทจ + ฉาบ Zildjian — กลองใหญ่ เสียงก้องแบบยุค 70',
+    description: 'กลอง Ludwig รุ่นเก่ากับฉาบ Zildjian กลองใบใหญ่ เสียงก้องแบบยุค 70',
     credit: 'AVL Drumkits “Red Zeppelin” — Glen MacArthur (CC BY-SA 3.0)',
     sounds: {
       crash: avl('ZildjianA20Crash'),
@@ -85,8 +85,8 @@ export const PRESETS: Preset[] = [
   {
     id: 'synth',
     name: 'Synth Kit',
-    description: 'เสียงกลองสังเคราะห์แบบเครื่องตีจังหวะ',
-    credit: 'สร้างขึ้นในแอป',
+    description: 'เสียงกลองสังเคราะห์ คล้ายเครื่องตีจังหวะ',
+    credit: 'สร้างโดยแอป',
     sounds: {
       crash: s(['bi:crash-soft', 'bi:crash-hard']),
       tom1: s(['bi:tom-high']),

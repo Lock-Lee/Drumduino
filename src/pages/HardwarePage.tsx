@@ -14,21 +14,21 @@ export function HardwarePage() {
           <h2 id="connH" style={{ fontSize: 19 }}>การเชื่อมต่อ</h2>
 
           <div className="stack" style={{ gap: 8 }}>
-            <span id="modeL" className="label">รับสัญญาณผ่าน</span>
+            <span id="modeL" className="label">ช่องทางรับสัญญาณ</span>
             <div className="seg" role="group" aria-labelledby="modeL" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
               <button type="button" aria-pressed={hw.mode === 'serial'} onClick={() => hw.setMode('serial')}>USB Serial</button>
               <button type="button" aria-pressed={hw.mode === 'midi'} onClick={() => hw.setMode('midi')}>USB MIDI</button>
             </div>
             <span className="faint" style={{ fontSize: 13 }}>
               {hw.mode === 'serial'
-                ? 'ใช้กับทุกบอร์ด (Mega, Nano, Uno, Leonardo) ปรับความไว/เวลา และตีขอบจากแอปได้'
-                : 'สำหรับ Leonardo / Pro Micro ที่ลงเฟิร์มแวร์แบบ MIDI — บอร์ดจะใช้กับโปรแกรมดนตรีอื่นได้ด้วย'}
+                ? 'ใช้ได้กับทุกบอร์ด (Mega, Nano, Uno, Leonardo) และปรับความไว เวลา และการตีขอบจากแอปได้'
+                : 'สำหรับบอร์ด Leonardo หรือ Pro Micro ที่ลงเฟิร์มแวร์แบบ MIDI ซึ่งใช้กับโปรแกรมดนตรีอื่นได้ด้วย'}
             </span>
           </div>
 
           {hw.mode === 'serial' ? (
             <>
-              {!hw.serialSupported && <div className="alert">ระบบนี้ไม่รองรับ Web Serial — ใช้แอป DrumDuino หรือ Chrome/Edge</div>}
+              {!hw.serialSupported && <div className="alert">ระบบนี้ไม่รองรับการเชื่อมต่อแบบ Serial กรุณาใช้แอป DrumDuino หรือเบราว์เซอร์ Chrome หรือ Edge</div>}
               <div className="row">
                 {hw.serialStatus === 'connected' ? (
                   <button type="button" className="btn" onClick={() => void hw.disconnectSerial()}>ตัดการเชื่อมต่อ</button>
@@ -47,11 +47,11 @@ export function HardwarePage() {
                 </div>
                 <div className="row" style={{ justifyContent: 'space-between' }}>
                   <span>เฟิร์มแวร์</span>
-                  <span className="mono">{hw.boardInfo || (hw.serialStatus === 'connected' ? 'รอคำตอบจากบอร์ด…' : '—')}</span>
+                  <span className="mono">{hw.boardInfo || (hw.serialStatus === 'connected' ? 'กำลังรอข้อมูลจากบอร์ด…' : '—')}</span>
                 </div>
                 {Number.isFinite(boardChannels) && (
                   <div className="row" style={{ justifyContent: 'space-between' }}>
-                    <span>ช่องที่บอร์ดรองรับ</span>
+                    <span>จำนวนช่องของบอร์ด</span>
                     <span className="mono">{boardChannels} ช่อง</span>
                   </div>
                 )}
@@ -63,7 +63,7 @@ export function HardwarePage() {
             </>
           ) : (
             <>
-              {!hw.midiSupported && <div className="alert">ระบบนี้ไม่รองรับ Web MIDI</div>}
+              {!hw.midiSupported && <div className="alert">ระบบนี้ไม่รองรับ MIDI</div>}
               <div className="field">
                 <label htmlFor="midiIn" className="label">อุปกรณ์ MIDI</label>
                 <select id="midiIn" className="input" value={hw.midiInputId} onChange={(e) => hw.setMidiInput(e.target.value)}>
@@ -73,53 +73,53 @@ export function HardwarePage() {
                   ))}
                 </select>
               </div>
-              <div className="note">โหมด MIDI จะจับคู่ชิ้นกลองด้วย “โน้ต MIDI” ที่ตั้งไว้ในหน้าชุดกลอง ค่าความไวต้องตั้งในเฟิร์มแวร์</div>
+              <div className="note">ในโหมด MIDI แอปจะจับคู่ชิ้นกลองจาก “โน้ต MIDI” ที่ตั้งไว้ในหน้าชุดกลอง ส่วนความไวของเซนเซอร์ต้องตั้งในเฟิร์มแวร์</div>
             </>
           )}
           {hw.error && <div className="alert" role="alert">{hw.error}</div>}
         </section>
 
         <section className="card stack" aria-labelledby="fwH">
-          <h2 id="fwH" style={{ fontSize: 19 }}>ลงเฟิร์มแวร์ในบอร์ด</h2>
+          <h2 id="fwH" style={{ fontSize: 19 }}>วิธีลงเฟิร์มแวร์</h2>
           <ol className="steps">
             <li>ติดตั้ง <a href="https://www.arduino.cc/en/software" target="_blank" rel="noreferrer">Arduino IDE</a></li>
-            <li>เปิดไฟล์ <code>firmware/DrumDuino/DrumDuino.ino</code> จากโปรเจกต์</li>
-            <li>ถ้าใช้ Leonardo / Pro Micro: ติดตั้งไลบรารี <code>MIDIUSB</code> ใน Library Manager</li>
+            <li>เปิดไฟล์ <code>firmware/DrumDuino/DrumDuino.ino</code> ในโฟลเดอร์โปรเจกต์</li>
+            <li>หากใช้บอร์ด Leonardo หรือ Pro Micro ให้ติดตั้งไลบรารี <code>MIDIUSB</code> จาก Library Manager</li>
             <li>เลือกบอร์ดและพอร์ต แล้วกด Upload</li>
-            <li>ปิด Serial Monitor ใน Arduino IDE ก่อนเชื่อมต่อจากแอปนี้</li>
+            <li>ปิดหน้าต่าง Serial Monitor ใน Arduino IDE ก่อนเชื่อมต่อกับแอปนี้</li>
           </ol>
         </section>
 
         <section className="card stack" aria-labelledby="wireH">
           <h2 id="wireH" style={{ fontSize: 19 }}>วิธีต่อสาย</h2>
           <ol className="steps">
-            <li>ขา + (สายแดง) ของ piezo → ขาอนาล็อกตามชิ้นกลอง (A0–A15 บน Mega)</li>
-            <li>ขา − (สายดำ) ของ piezo → GND</li>
-            <li>ตัวต้านทาน 1 MΩ คร่อมระหว่างขาอนาล็อกกับ GND ทุกช่อง</li>
-            <li>แนะนำ: ไดโอดซีเนอร์ 5.1V คร่อมอีกตัว กันแรงดันเกินเวลาตีแรง</li>
+            <li>ต่อขาบวก (สายแดง) ของ piezo เข้ากับขาอนาล็อกของชิ้นกลองนั้น (บอร์ด Mega มีขา A0–A15)</li>
+            <li>ต่อขาลบ (สายดำ) ของ piezo เข้ากับ GND</li>
+            <li>ใส่ตัวต้านทาน 1 MΩ คร่อมระหว่างขาอนาล็อกกับ GND ทุกช่อง</li>
+            <li>แนะนำให้ใส่ไดโอดซีเนอร์ 5.1V คร่อมเพิ่มอีกตัว เพื่อป้องกันแรงดันเกินเมื่อตีแรง</li>
           </ol>
-          <h3 style={{ fontSize: 15 }}>กลองตีขอบได้ (dual-zone)</h3>
+          <h3 style={{ fontSize: 15 }}>กลองที่ตีขอบได้ (dual-zone)</h3>
           <ol className="steps">
-            <li>piezo ตัวที่ 1 ติดใต้หนังกลอง (ตรงกลาง) → ขาหนัง</li>
-            <li>piezo ตัวที่ 2 ติดที่ขอบหรือตัวถัง รองด้วยโฟมบางๆ → ขาขอบ (เช่น A8)</li>
-            <li>ในหน้าชุดกลอง เลือกชิ้นนั้น แล้วตั้ง “ขาขอบ (Rim)”</li>
-            <li>ตีหนังและตีขอบสลับกัน แล้วปรับเปอร์เซ็นต์ตีขอบจนแยกได้ถูก</li>
+            <li>ติด piezo ตัวที่ 1 ไว้ใต้หนังกลองบริเวณกลาง แล้วต่อเข้าขาหนัง</li>
+            <li>ติด piezo ตัวที่ 2 ไว้ที่ขอบหรือตัวถัง โดยรองด้วยโฟมบาง ๆ แล้วต่อเข้าขาขอบ (เช่น A8)</li>
+            <li>ในหน้าชุดกลอง ให้เลือกชิ้นกลองนั้น แล้วตั้งค่า “ขาขอบ”</li>
+            <li>ลองตีหนังและตีขอบสลับกัน แล้วปรับค่าเปอร์เซ็นต์การตีขอบจนแอปแยกได้ถูกต้อง</li>
           </ol>
           <h3 style={{ fontSize: 15 }}>แป้นไฮแฮท</h3>
           <ol className="steps">
-            <li>ใช้ตัวต้านทานปรับค่า (pot) 10 kΩ: ขาข้าง → 5V และ GND, ขากลาง → ขาอนาล็อก (เช่น A9)</li>
-            <li>หรือเซนเซอร์แรงกด (FSR): FSR ต่อ 5V กับขาอนาล็อก + ตัวต้านทาน 10 kΩ จากขานั้นลง GND</li>
-            <li>ขานี้ <b>ไม่ต้อง</b> ใส่ตัวต้านทาน 1 MΩ</li>
-            <li>เลือกไฮแฮท → แท็บ “แป้นไฮแฮท” → ตั้งขาแป้น แล้วเหยียบสุดกด “ตั้งจุดปิด” ปล่อยสุดกด “ตั้งจุดเปิด”</li>
+            <li>ใช้ตัวต้านทานปรับค่า (pot) 10 kΩ โดยต่อขาด้านข้างเข้ากับ 5V และ GND แล้วต่อขากลางเข้ากับขาอนาล็อก (เช่น A9)</li>
+            <li>หรือใช้เซนเซอร์แรงกด (FSR) โดยต่อ FSR ระหว่าง 5V กับขาอนาล็อก และใส่ตัวต้านทาน 10 kΩ จากขานั้นลง GND</li>
+            <li>ขาของแป้น<b>ไม่ต้อง</b> ใส่ตัวต้านทาน 1 MΩ</li>
+            <li>เลือกไฮแฮท แล้วเปิดแท็บ “แป้นไฮแฮท” ตั้งค่าขาแป้น จากนั้นเหยียบแป้นจนสุดแล้วกด “ตั้งจุดปิด” และปล่อยแป้นจนสุดแล้วกด “ตั้งจุดเปิด”</li>
           </ol>
-          <div className="note">Mega: 16 ขา (A0–A15) · Nano: 8 ขา · Uno: 6 ขา — ขาที่ไม่ได้ตั้งในแอปจะถูกปิดไว้ กันสัญญาณมั่ว</div>
+          <div className="note">บอร์ด Mega มี 16 ขา (A0–A15) Nano มี 8 ขา และ Uno มี 6 ขา ขาที่ไม่ได้ตั้งค่าในแอปจะถูกปิดไว้เพื่อป้องกันสัญญาณรบกวน</div>
         </section>
       </div>
 
       <section className="card hw-main" aria-labelledby="inH">
         <div className="row" style={{ alignItems: 'baseline', gap: '8px 16px' }}>
           <h2 id="inH" style={{ fontSize: 19 }}>ช่องสัญญาณเข้า</h2>
-          <span className="faint" style={{ fontSize: 13 }}>ตีแต่ละชิ้นเพื่อดูสัญญาณ แล้วปรับให้พอดี — ส่งค่าไปบอร์ดอัตโนมัติ</span>
+          <span className="faint" style={{ fontSize: 13 }}>ลองตีกลองทีละชิ้นเพื่อดูสัญญาณ แล้วปรับค่าให้เหมาะสม แอปจะส่งค่าไปยังบอร์ดให้อัตโนมัติ</span>
         </div>
         <div className="tbl">
           <table style={{ minWidth: 700 }}>
@@ -127,7 +127,7 @@ export function HardwarePage() {
               <tr>
                 <th>ขา</th>
                 <th>ชิ้นกลอง</th>
-                <th style={{ width: '30%' }}>สัญญาณล่าสุด / เกณฑ์</th>
+                <th style={{ width: '30%' }}>สัญญาณล่าสุดและเกณฑ์</th>
                 <th>ความไว</th>
                 <th>Scan (ms)</th>
                 <th>Mask (ms)</th>
@@ -147,8 +147,8 @@ export function HardwarePage() {
                   <tr key={ch} style={off ? { opacity: 0.45 } : !p ? { opacity: 0.7 } : undefined}>
                     <td className="mono" style={{ fontWeight: 500 }}>{PIN_LABELS[ch]}</td>
                     <td>
-                      {head ? head.name + (head.rimChannel >= 0 ? ' · หนัง' : '') : rimOf ? <span>{rimOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>ขอบ</b></span> : pedalOf ? <span>{pedalOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>แป้น</b></span> : <span className="faint">ว่าง (ปิดอยู่)</span>}
-                      {off && <span className="faint"> · บอร์ดไม่มีขานี้</span>}
+                      {head ? head.name + (head.rimChannel >= 0 ? ' · หนัง' : '') : rimOf ? <span>{rimOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>ขอบ</b></span> : pedalOf ? <span>{pedalOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>แป้น</b></span> : <span className="faint">ไม่ได้ใช้ (ปิดอยู่)</span>}
+                      {off && <span className="faint"> (บอร์ดไม่มีขานี้)</span>}
                     </td>
                     <td>
                       <div className="lvl">
@@ -175,15 +175,15 @@ export function HardwarePage() {
                     {rimOf && (
                       <td colSpan={3}>
                         <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
-                          <label htmlFor={'r' + ch} className="faint" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>ตีขอบเมื่อขอบ ≥</label>
+                          <label htmlFor={'r' + ch} className="faint" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>นับเป็นตีขอบเมื่อแรงที่ขอบ ≥</label>
                           <input id={'r' + ch} className="num" type="number" min={20} max={300} step={5} value={rimOf.rimRatio} onChange={(e) => updatePad(rimOf.id, { rimRatio: clamp(e.target.value, 20, 300) })} />
-                          <span className="faint" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>% ของหนัง</span>
+                          <span className="faint" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>% ของแรงที่หนัง</span>
                         </div>
                       </td>
                     )}
                     {pedalOf && (
                       <td colSpan={3} className="faint" style={{ fontSize: 13 }}>
-                        ค่าเซนเซอร์ <span className="mono">{raw ?? '—'}</span> · ปรับจุดปิด/เปิดในแท็บ “แป้นไฮแฮท”
+                        ค่าเซนเซอร์ <span className="mono">{raw ?? '—'}</span> (ปรับจุดปิดและจุดเปิดได้ในแท็บ “แป้นไฮแฮท”)
                       </td>
                     )}
                     {!p && !pedalOf && <td colSpan={3} />}
@@ -196,11 +196,11 @@ export function HardwarePage() {
         <div className="row faint" style={{ fontSize: 13, gap: '8px 20px' }}>
           <span className="row" style={{ gap: 6 }}><span style={{ width: 14, height: 8, background: 'var(--accent)', borderRadius: 2 }} aria-hidden="true" />แรงตีล่าสุด</span>
           <span className="row" style={{ gap: 6 }}><span style={{ width: 2, height: 12, background: 'var(--text)' }} aria-hidden="true" />เกณฑ์ขั้นต่ำ</span>
-          <span>Scan = เวลาหาค่าสูงสุดหลังตี · Mask = เวลากันตีซ้ำ (เพิ่มถ้าตีครั้งเดียวแต่ดังสองที)</span>
+          <span>Scan คือเวลาที่ใช้หาแรงตีสูงสุด ส่วน Mask คือเวลาที่ป้องกันการนับซ้ำ (เพิ่มค่านี้หากตีครั้งเดียวแต่มีเสียงสองครั้ง)</span>
         </div>
         <div>
-          <button type="button" className="btn ghost danger" onClick={() => { if (confirm('รีเซ็ตตำแหน่งชิ้นกลอง ขา Arduino และความไว กลับเป็นค่าเริ่มต้น? (เสียงของแต่ละชุดไม่เปลี่ยน)')) resetLayout(); }}>
-            รีเซ็ตตำแหน่งและการตั้งค่าขา
+          <button type="button" className="btn ghost danger" onClick={() => { if (confirm('ต้องการคืนค่าตำแหน่งชิ้นกลอง ขา Arduino และความไวเป็นค่าเริ่มต้นหรือไม่ (เสียงของแต่ละชุดจะไม่เปลี่ยน)')) resetLayout(); }}>
+            คืนค่าตำแหน่งและการตั้งค่าขา
           </button>
         </div>
       </section>

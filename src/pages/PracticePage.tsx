@@ -158,7 +158,7 @@ export function PracticePage() {
         }
         if (!best) {
           setStats((s) => ({ ...s, extra: s.extra + 1 }));
-          setLast({ text: `เกิน (${PAD_LABEL[padId as PadId] ?? padId})`, cls: 'miss' });
+          setLast({ text: `ตีเกิน (${PAD_LABEL[padId as PadId] ?? padId})`, cls: 'miss' });
           return;
         }
         best.done = true;
@@ -167,7 +167,7 @@ export function PracticePage() {
         const st: NoteMark['status'] = Math.abs(diff) <= WIN.ok ? 'ok' : diff < 0 ? 'early' : 'late';
         mark(best.idx, st);
         setStats((s) => ({ ...s, [st]: s[st] + 1, offsets: [...s.offsets.slice(-199), ms] }));
-        setLast(st === 'ok' ? { text: `ตรง (${ms > 0 ? '+' : ''}${ms} ms)`, cls: 'ok' } : st === 'early' ? { text: `เร็วไป ${-ms} ms`, cls: 'early' } : { text: `ช้าไป ${ms} ms`, cls: 'late' });
+        setLast(st === 'ok' ? { text: `ตรงจังหวะ (${ms > 0 ? '+' : ''}${ms} ms)`, cls: 'ok' } : st === 'early' ? { text: `เร็วไป ${-ms} ms`, cls: 'early' } : { text: `ช้าไป ${ms} ms`, cls: 'late' });
       }),
     [player, mark]
   );
@@ -276,7 +276,7 @@ export function PracticePage() {
         {q.trim() && !builtIn.length && !mine.length && (
           <div className="pr-online">
             <span>ไม่พบ “{q.trim()}” ในแอป</span>
-            <span className="faint">หาโน้ตกลองออนไลน์ แล้ว export เป็น MIDI / MusicXML มานำเข้า:</span>
+            <span className="faint">ลองค้นหาโน้ตกลองจากเว็บไซต์ แล้วบันทึกเป็นไฟล์ MIDI หรือ MusicXML เพื่อนำเข้าแอป</span>
             <a href={`https://www.songsterr.com/?pattern=${encodeURIComponent(q.trim())}`} target="_blank" rel="noreferrer">ค้นบน Songsterr ↗</a>
             <a href={`https://musescore.com/sheetmusic?text=${encodeURIComponent(q.trim() + ' drums')}`} target="_blank" rel="noreferrer">ค้นบน MuseScore ↗</a>
           </div>
@@ -289,7 +289,7 @@ export function PracticePage() {
           </button>
         ))}
         <span className="label" style={{ padding: '12px 10px 6px' }}>นำเข้าเอง</span>
-        {q.trim() && imported.length > 0 && !mine.length && <span className="faint" style={{ fontSize: 12, padding: '0 10px' }}>ไม่มีเพลงที่นำเข้าตรงกับคำค้น</span>}
+        {q.trim() && imported.length > 0 && !mine.length && <span className="faint" style={{ fontSize: 12, padding: '0 10px' }}>ไม่มีเพลงที่นำเข้าซึ่งตรงกับคำค้นหา</span>}
         {mine.map((s) => (
           <div key={s.id} className="row" style={{ gap: 2, flexWrap: 'nowrap' }}>
             <button type="button" className="pr-item" style={{ flex: '1 1 0' }} aria-pressed={s.id === score.id} onClick={() => { stop(); setScoreId(s.id); }}>
@@ -311,7 +311,7 @@ export function PracticePage() {
         <input ref={fileRef} type="file" accept=".mid,.midi,.musicxml,.xml" multiple hidden onChange={(e) => { void onImport(e.target.files); e.target.value = ''; }} />
         {msg && <span className="faint" style={{ fontSize: 12, padding: '0 8px' }} role="status">{msg}</span>}
         <p className="faint" style={{ fontSize: 11.5, padding: '6px 8px', lineHeight: 1.5 }}>
-          มีชีตกลองใน MuseScore / Guitar Pro? Export เป็น MIDI หรือ MusicXML แล้วนำเข้าได้เลย
+          หากมีโน้ตกลองใน MuseScore หรือ Guitar Pro ให้บันทึกเป็นไฟล์ MIDI หรือ MusicXML แล้วนำเข้าได้ทันที
         </p>
       </aside>
 
@@ -334,7 +334,7 @@ export function PracticePage() {
           </button>
           <div className="seg pr-seg" role="group" aria-label="โหมด">
             <button type="button" aria-pressed={prefs.mode === 'listen'} onClick={() => setPrefs((p) => ({ ...p, mode: 'listen' }))}>แอปตีให้ฟัง</button>
-            <button type="button" aria-pressed={prefs.mode === 'practice'} onClick={() => setPrefs((p) => ({ ...p, mode: 'practice' }))}>ฉันตีเอง (ให้คะแนน)</button>
+            <button type="button" aria-pressed={prefs.mode === 'practice'} onClick={() => setPrefs((p) => ({ ...p, mode: 'practice' }))}>ฉันตีเอง (มีคะแนน)</button>
           </div>
           <div className="pr-bpm">
             <label htmlFor="bpm" className="label">ความเร็ว</label>
@@ -344,8 +344,8 @@ export function PracticePage() {
           </div>
           <div className="pr-toggles">
             <label><input type="checkbox" checked={prefs.metronome} onChange={(e) => setPrefs((p) => ({ ...p, metronome: e.target.checked }))} /> เมโทรนอม</label>
-            <label><input type="checkbox" checked={prefs.countIn} onChange={(e) => setPrefs((p) => ({ ...p, countIn: e.target.checked }))} /> นับก่อนเริ่ม</label>
-            {prefs.mode === 'practice' && <label><input type="checkbox" checked={prefs.guide} onChange={(e) => setPrefs((p) => ({ ...p, guide: e.target.checked }))} /> เสียงนำเบาๆ</label>}
+            <label><input type="checkbox" checked={prefs.countIn} onChange={(e) => setPrefs((p) => ({ ...p, countIn: e.target.checked }))} /> นับจังหวะก่อนเริ่ม</label>
+            {prefs.mode === 'practice' && <label><input type="checkbox" checked={prefs.guide} onChange={(e) => setPrefs((p) => ({ ...p, guide: e.target.checked }))} /> เปิดเสียงนำเบา ๆ</label>}
             <label><input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> วนซ้ำ</label>
             <span className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
               <span className="faint">ห้อง</span>
@@ -361,7 +361,7 @@ export function PracticePage() {
           <div className="pr-sheet-head">
             <h2>{score.title}</h2>
             <span className="faint">{score.subtitle}{score.sections ? ' · ' + score.sections.map((s) => s.name).join(' → ') : ''}</span>
-            <span className="faint" style={{ marginLeft: 'auto' }}>คลิกที่ห้องเพื่อเริ่มเล่นจากตรงนั้น</span>
+            <span className="faint" style={{ marginLeft: 'auto' }}>คลิกที่ห้องใดก็ได้เพื่อเริ่มเล่นจากห้องนั้น</span>
           </div>
           <div ref={wrap} className="pr-sheet-wrap">
             <Notation
@@ -381,26 +381,26 @@ export function PracticePage() {
         <div className="pr-stats">
           {prefs.mode === 'practice' ? (
             <>
-              <div className={'pr-last ' + (last?.cls ?? '')} role="status">{last?.text ?? (playing ? 'ตีตามโน้ตได้เลย' : 'กดเล่น แล้วตีตามโน้ต (หรือกดคีย์บอร์ด)')}</div>
+              <div className={'pr-last ' + (last?.cls ?? '')} role="status">{last?.text ?? (playing ? 'ตีตามโน้ตได้เลย' : 'กดปุ่มเล่น แล้วตีตามโน้ต (ใช้คีย์บอร์ดแทนกลองได้)')}</div>
               <div className="pr-score"><b>{acc ?? '—'}</b><span>%</span></div>
               <div className="pr-counts">
                 <span className="c ok">ตรง {stats.ok}</span>
-                <span className="c early">เร็ว {stats.early}</span>
-                <span className="c late">ช้า {stats.late}</span>
+                <span className="c early">เร็วไป {stats.early}</span>
+                <span className="c late">ช้าไป {stats.late}</span>
                 <span className="c miss">พลาด {stats.miss}</span>
-                <span className="c">เกิน {stats.extra}</span>
-                {avg !== null && <span className="c">เฉลี่ย {avg > 0 ? '+' : ''}{avg} ms</span>}
+                <span className="c">ตีเกิน {stats.extra}</span>
+                {avg !== null && <span className="c">คลาดเคลื่อนเฉลี่ย {avg > 0 ? '+' : ''}{avg} ms</span>}
                 {loop && pass > 0 && <span className="c">รอบที่ {pass + 1}</span>}
               </div>
               <div className="pr-lat">
-                <label htmlFor="lat" className="label">ชดเชยดีเลย์</label>
+                <label htmlFor="lat" className="label">ชดเชยความหน่วง</label>
                 <input id="lat" type="range" min={0} max={150} value={prefs.latency} onChange={(e) => setPrefs((p) => ({ ...p, latency: Number(e.target.value) }))} />
                 <span className="mono" style={{ fontSize: 12 }}>{prefs.latency} ms</span>
               </div>
             </>
           ) : (
             <div className="faint" style={{ fontSize: 13 }}>
-              โหมดฟัง: แอปตีตามโน้ตด้วยชุดกลอง “{kit.name}” · Space = เล่น/หยุด · สลับเป็น “ฉันตีเอง” เพื่อฝึกและดูคะแนน
+              โหมดฟัง: แอปจะตีตามโน้ตด้วยชุดกลอง “{kit.name}” กด Space เพื่อเล่นหรือหยุด และเลือก “ฉันตีเอง” เมื่อต้องการฝึกและดูคะแนน
               <span className="legend"><span className="mark ok" /> ตรง <span className="mark early" /> เร็ว <span className="mark late" /> ช้า <span className="mark miss" /> พลาด</span>
             </div>
           )}
