@@ -211,7 +211,7 @@
   "file": "hhhalf_1.ogg",
   "name": "Hi-hat Half 1",
   "category": "hihat",
-  "duration": 1.04,
+  "duration": 1.67,
   "group": "hhhalf",
   "layer": 1
  },
@@ -220,16 +220,34 @@
   "file": "hhhalf_2.ogg",
   "name": "Hi-hat Half 2",
   "category": "hihat",
-  "duration": 1.17,
+  "duration": 1.04,
   "group": "hhhalf",
   "layer": 2
+ },
+ {
+  "id": "vd:hhhalf-3",
+  "file": "hhhalf_3.ogg",
+  "name": "Hi-hat Half 3",
+  "category": "hihat",
+  "duration": 1.05,
+  "group": "hhhalf",
+  "layer": 3
+ },
+ {
+  "id": "vd:hhhalf-4",
+  "file": "hhhalf_4.ogg",
+  "name": "Hi-hat Half 4",
+  "category": "hihat",
+  "duration": 1.17,
+  "group": "hhhalf",
+  "layer": 4
  },
  {
   "id": "vd:hhopen-1",
   "file": "hhopen_1.ogg",
   "name": "Hi-hat Open 1",
   "category": "hihat",
-  "duration": 5.14,
+  "duration": 5.81,
   "group": "hhopen",
   "layer": 1
  },
@@ -238,9 +256,27 @@
   "file": "hhopen_2.ogg",
   "name": "Hi-hat Open 2",
   "category": "hihat",
-  "duration": 8.93,
+  "duration": 5.14,
   "group": "hhopen",
   "layer": 2
+ },
+ {
+  "id": "vd:hhopen-3",
+  "file": "hhopen_3.ogg",
+  "name": "Hi-hat Open 3",
+  "category": "hihat",
+  "duration": 7.58,
+  "group": "hhopen",
+  "layer": 3
+ },
+ {
+  "id": "vd:hhopen-4",
+  "file": "hhopen_4.ogg",
+  "name": "Hi-hat Open 4",
+  "category": "hihat",
+  "duration": 8.93,
+  "group": "hhopen",
+  "layer": 4
  },
  {
   "id": "vd:htom-1",
@@ -421,5 +457,41 @@
   "duration": 3.47,
   "group": "ltomrim",
   "layer": 3
+ },
+ {
+  "id": "vd:hhpedal-1",
+  "file": "hhpedal_1.ogg",
+  "name": "Hi-hat Pedal 1",
+  "category": "hihat",
+  "duration": 1.45,
+  "group": "hhpedal",
+  "layer": 1
+ },
+ {
+  "id": "vd:hhpedal-2",
+  "file": "hhpedal_2.ogg",
+  "name": "Hi-hat Pedal 2",
+  "category": "hihat",
+  "duration": 0.83,
+  "group": "hhpedal",
+  "layer": 2
+ },
+ {
+  "id": "vd:hhpedal-3",
+  "file": "hhpedal_3.ogg",
+  "name": "Hi-hat Pedal 3",
+  "category": "hihat",
+  "duration": 1.6,
+  "group": "hhpedal",
+  "layer": 3
+ },
+ {
+  "id": "vd:hhsplash-1",
+  "file": "hhsplash_1.ogg",
+  "name": "Hi-hat Foot Splash",
+  "category": "hihat",
+  "duration": 3.79,
+  "group": "hhsplash",
+  "layer": 1
  }
 ]

@@ -3,7 +3,8 @@ import type { DragEvent, PointerEvent as RPointerEvent } from 'react';
 import { useStore } from '../store';
 import { useHardware } from '../input/hardware';
 import { engine } from '../audio/engine';
-import type { Pad, PlayMode, Zone } from '../types';
+import type { Pad, PlayMode, SampleField, Zone } from '../types';
+import { HH_HALF, HH_OPEN } from '../types';
 import { CHANNEL_COUNT, PIN_LABELS } from '../types';
 import { SOURCE_LABELS } from '../kits';
 import { Close, Down, Move, Plus, PlayIcon, Trash, Up } from '../components/Icons';
@@ -126,7 +127,7 @@ export function KitPage({ goLibrary }: { goLibrary: () => void }) {
             <span className="stage-hint">
               {arrange
                 ? 'ลากชิ้นกลองเพื่อย้ายตำแหน่ง'
-                : 'คลิกหรือกดคีย์ตามตัวอักษร · Shift = ตีเบา · Option = ตีขอบ · Shift+Option = cross-stick'}
+                : 'คลิก/กดคีย์ตามตัวอักษร · Shift = เบา · Option = ขอบ · X ค้าง = ไฮแฮทเปิด · Z = เหยียบ'}
             </span>
             {kit.pads.map((p) => {
               const on = p.id === sel?.id;
@@ -155,6 +156,7 @@ export function KitPage({ goLibrary }: { goLibrary: () => void }) {
                   <span className="n">{p.name}</span>
                   <span className="t">{p.th}</span>
                   <span className="m">{pins}</span>
+                  {isHatPad(p) && <span className="hat-dot" style={{ ['--o' as string]: hw.pedal[p.id] ?? 0 }} aria-hidden="true" />}
                 </button>
               );
             })}
@@ -184,12 +186,14 @@ export function KitPage({ goLibrary }: { goLibrary: () => void }) {
   );
 }
 
-type Tab = 'head' | 'rim' | 'setup';
+type Tab = 'head' | 'rim' | 'hat' | 'setup';
+
+const isHatPad = (p: Pad) => p.pedalChannel >= 0 || p.id === 'hihat' || p.halfSamples.length > 0 || p.openSamples.length > 0 || p.chickSamples.length > 0;
 
 function PadPanel({ pad, goLibrary }: { pad: Pad; goLibrary: () => void }) {
   const store = useStore();
   const { kit, updatePad } = store;
-  const [tab, setTab] = useState<Tab>('head');
+  const [tab, setTab] = useState<Tab>(isHatPad(pad) ? 'hat' : 'head');
   const usedBy = new Map<number, string>();
   for (const p of kit.pads) {
     if (p.id === pad.id) continue;
@@ -199,9 +203,11 @@ function PadPanel({ pad, goLibrary }: { pad: Pad; goLibrary: () => void }) {
   const pinOptions = (exclude: number) =>
     PIN_LABELS.map((l, i) => (i === exclude ? null : <option key={l} value={i}>{l}{usedBy.has(i) ? ` · ${usedBy.get(i)}` : ''}</option>));
 
+  const isHat = isHatPad(pad);
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'head', label: `เสียงหนัง ${pad.samples.length}` },
-    { id: 'rim', label: `เสียงขอบ ${pad.rimSamples.length}` },
+    { id: 'head', label: `${isHat ? 'ปิด' : 'หนัง'} ${pad.samples.length}` },
+    ...(isHat ? [{ id: 'hat' as Tab, label: 'แป้นไฮแฮท' }] : []),
+    { id: 'rim', label: `ขอบ ${pad.rimSamples.length}` },
     { id: 'setup', label: 'ตั้งค่า' }
   ];
 
@@ -246,18 +252,76 @@ function PadPanel({ pad, goLibrary }: { pad: Pad; goLibrary: () => void }) {
       </div>
 
       <div className="panel-body" id="panel-body" role="tabpanel" aria-labelledby={'tab-' + tab}>
-        {tab === 'head' && <SoundList pad={pad} zone="head" goLibrary={goLibrary} />}
+        {tab === 'head' && <SoundList pad={pad} field="samples" zone="head" goLibrary={goLibrary} title={isHat ? 'เสียงตีตอนปิด' : undefined} />}
         {tab === 'rim' && (
           <>
             {pad.rimChannel < 0 && (
               <p className="note" style={{ margin: 0 }}>ชิ้นนี้ยังเป็นโซนเดียว — ตั้ง “ขาขอบ” ด้านบนเมื่อติด piezo ที่ขอบแล้ว (ลองฟังด้วยคีย์ Option + ตัวอักษรได้เลย)</p>
             )}
-            <SoundList pad={pad} zone="rim" goLibrary={goLibrary} />
+            <SoundList pad={pad} field="rimSamples" zone="rim" goLibrary={goLibrary} />
           </>
         )}
+        {tab === 'hat' && <HatPedal pad={pad} />}
         {tab === 'setup' && <Setup pad={pad} />}
       </div>
     </aside>
+  );
+}
+
+function HatPedal({ pad }: { pad: Pad }) {
+  const { kit, updatePad } = useStore();
+  const hw = useHardware();
+  const o = hw.pedal[pad.id] ?? 0;
+  const state = o >= HH_OPEN ? 'เปิด' : o >= HH_HALF ? 'ครึ่งเปิด' : 'ปิด';
+  const raw = pad.pedalChannel >= 0 ? hw.pedalRaw[pad.pedalChannel] : undefined;
+  const usedBy = new Map<number, string>();
+  for (const p of kit.pads) {
+    if (p.channel >= 0) usedBy.set(p.channel, p.name);
+    if (p.rimChannel >= 0) usedBy.set(p.rimChannel, p.name + ' ขอบ');
+    if (p.pedalChannel >= 0 && p.id !== pad.id) usedBy.set(p.pedalChannel, p.name + ' แป้น');
+  }
+  return (
+    <div className="stack" style={{ gap: 12 }}>
+      <div className="hat-meter" aria-label={`แป้นไฮแฮท: ${state}`}>
+        <div className="hat-track">
+          <div className="hat-zone" style={{ left: 0, width: HH_HALF * 100 + '%' }}>ปิด</div>
+          <div className="hat-zone" style={{ left: HH_HALF * 100 + '%', width: (HH_OPEN - HH_HALF) * 100 + '%' }}>ครึ่งเปิด</div>
+          <div className="hat-zone" style={{ left: HH_OPEN * 100 + '%', width: (1 - HH_OPEN) * 100 + '%' }}>เปิด</div>
+          <div className="hat-needle" style={{ left: o * 100 + '%' }} />
+        </div>
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <span className="faint" style={{ fontSize: 12 }}>เหยียบสุด</span>
+          <b style={{ color: 'var(--accent)', fontSize: 13 }}>{state}</b>
+          <span className="faint" style={{ fontSize: 12 }}>ปล่อยสุด</span>
+        </div>
+      </div>
+
+      <div className="field">
+        <label htmlFor="pedsim" className="label">ลองขยับแป้น (ไม่ต้องมีฮาร์ดแวร์) · หรือกด X ค้าง = เปิด, ปล่อย = ปิด, Z = เหยียบ</label>
+        <input id="pedsim" type="range" min={0} max={100} value={Math.round(o * 100)} onChange={(e) => hw.setPedalUI(pad.id, Number(e.target.value) / 100)} />
+      </div>
+
+      <div className="grid3" style={{ alignItems: 'end' }}>
+        <div className="field">
+          <label htmlFor="pedpin" className="label">ขาแป้น</label>
+          <select id="pedpin" className="input sm" value={pad.pedalChannel} onChange={(e) => updatePad(pad.id, { pedalChannel: Number(e.target.value) })}>
+            <option value={-1}>ไม่มี</option>
+            {PIN_LABELS.map((l, i) => <option key={l} value={i}>{l}{usedBy.has(i) ? ` · ${usedBy.get(i)}` : ''}</option>)}
+          </select>
+        </div>
+        <button type="button" className="btn sm" disabled={raw === undefined} onClick={() => raw !== undefined && updatePad(pad.id, { pedalClosed: raw })} title="เหยียบแป้นสุดแล้วกด">ตั้งจุดปิด</button>
+        <button type="button" className="btn sm" disabled={raw === undefined} onClick={() => raw !== undefined && updatePad(pad.id, { pedalOpen: raw })} title="ปล่อยแป้นสุดแล้วกด">ตั้งจุดเปิด</button>
+      </div>
+      {pad.pedalChannel >= 0 && (
+        <span className="faint mono" style={{ fontSize: 12 }}>
+          ค่าเซนเซอร์ตอนนี้ {raw ?? '— (ยังไม่ได้รับสัญญาณ)'} · ปิด {pad.pedalClosed} · เปิด {pad.pedalOpen}
+        </span>
+      )}
+
+      <SoundList pad={pad} field="halfSamples" zone="head" title="เสียงตีตอนครึ่งเปิด" emptyText="ไม่มี — ใช้เสียงตอนปิดแทน" />
+      <SoundList pad={pad} field="openSamples" zone="head" title="เสียงตีตอนเปิด" emptyText="ไม่มี — ใช้เสียงตอนครึ่งเปิด/ปิดแทน" />
+      <SoundList pad={pad} field="chickSamples" zone="pedal" title="เสียงเหยียบแป้น (chick)" emptyText="ไม่มี — เหยียบแล้วเงียบ" />
+    </div>
   );
 }
 
@@ -310,20 +374,20 @@ function Setup({ pad }: { pad: Pad }) {
   );
 }
 
-function SoundList({ pad, zone, goLibrary }: { pad: Pad; zone: Zone; goLibrary: () => void }) {
+function SoundList({ pad, field, zone, goLibrary, title, emptyText }: { pad: Pad; field: SampleField; zone: Zone; goLibrary?: () => void; title?: string; emptyText?: string }) {
   const store = useStore();
   const { samples, updatePad } = store;
   const [over, setOver] = useState(false);
   const [msg, setMsg] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-  const key = zone === 'rim' ? 'rimSamples' : 'samples';
+  const key = field;
   const list = pad[key];
   const n = list.length;
   const nameOf = (id: string) => samples.find((s) => s.id === id)?.name ?? '(ไฟล์หาย)';
   const set = (next: string[]) => updatePad(pad.id, { [key]: next });
 
   const doImport = async (files: FileList | File[]) => {
-    const res = await store.importFiles(files, pad.id, zone);
+    const res = await store.importFiles(files, pad.id, field);
     setMsg((res.ok ? `เพิ่ม ${res.ok} ไฟล์แล้ว` : '') + (res.failed.length ? `${res.ok ? ' · ' : ''}เปิดไม่ได้: ${res.failed.join(', ')}` : ''));
   };
   const move = (i: number, d: number) => {
@@ -338,7 +402,7 @@ function SoundList({ pad, zone, goLibrary }: { pad: Pad; zone: Zone; goLibrary: 
     setOver(false);
     if (e.dataTransfer.files.length) void doImport(e.dataTransfer.files);
   };
-  const idp = zone + '-' + pad.id;
+  const idp = field + '-' + pad.id;
 
   return (
     <div
@@ -348,8 +412,16 @@ function SoundList({ pad, zone, goLibrary }: { pad: Pad; zone: Zone; goLibrary: 
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
     >
+      {title && (
+        <div className="row" style={{ gap: 8 }}>
+          <h3 style={{ fontSize: 14 }}>{title}</h3>
+          <span className="mono faint" style={{ fontSize: 12 }}>{n}</span>
+          <div className="spacer" />
+          <button type="button" className="btn sm ghost" onClick={() => list[0] && engine.preview(list[list.length - 1], () => undefined)} disabled={!n}><PlayIcon /> ฟัง</button>
+        </div>
+      )}
       {n === 0 ? (
-        <p className="empty">{zone === 'rim' ? 'ยังไม่มีเสียงขอบ — ตีขอบจะใช้เสียงหนังแทน' : 'ยังไม่มีเสียง — เพิ่มอย่างน้อย 1 ไฟล์'}</p>
+        <p className="empty">{emptyText ?? (zone === 'rim' ? 'ยังไม่มีเสียงขอบ — ตีขอบจะใช้เสียงหนังแทน' : 'ยังไม่มีเสียง — เพิ่มอย่างน้อย 1 ไฟล์')}</p>
       ) : (
         <ul className="sound-list">
           {list.map((id, i) => {
@@ -385,9 +457,11 @@ function SoundList({ pad, zone, goLibrary }: { pad: Pad; zone: Zone; goLibrary: 
         <button type="button" className="btn sm primary" onClick={() => fileRef.current?.click()}><Plus /> ไฟล์</button>
         <input ref={fileRef} type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.aif,.aiff" multiple hidden onChange={(e) => { if (e.target.files) void doImport(e.target.files); e.target.value = ''; }} />
       </div>
-      <span className="faint" style={{ fontSize: 12 }}>
-        ลากไฟล์ .wav / .mp3 มาวางในกรอบนี้ได้ · <button type="button" className="linkish" onClick={goLibrary}>เปิดคลังเสียง</button>
-      </span>
+      {goLibrary && (
+        <span className="faint" style={{ fontSize: 12 }}>
+          ลากไฟล์ .wav / .mp3 มาวางในกรอบนี้ได้ · <button type="button" className="linkish" onClick={goLibrary}>เปิดคลังเสียง</button>
+        </span>
+      )}
       {msg && <span className="muted" style={{ fontSize: 13 }} role="status">{msg}</span>}
     </div>
   );

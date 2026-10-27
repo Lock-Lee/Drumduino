@@ -105,6 +105,13 @@ export function HardwarePage() {
             <li>ในหน้าชุดกลอง เลือกชิ้นนั้น แล้วตั้ง “ขาขอบ (Rim)”</li>
             <li>ตีหนังและตีขอบสลับกัน แล้วปรับเปอร์เซ็นต์ตีขอบจนแยกได้ถูก</li>
           </ol>
+          <h3 style={{ fontSize: 15 }}>แป้นไฮแฮท</h3>
+          <ol className="steps">
+            <li>ใช้ตัวต้านทานปรับค่า (pot) 10 kΩ: ขาข้าง → 5V และ GND, ขากลาง → ขาอนาล็อก (เช่น A9)</li>
+            <li>หรือเซนเซอร์แรงกด (FSR): FSR ต่อ 5V กับขาอนาล็อก + ตัวต้านทาน 10 kΩ จากขานั้นลง GND</li>
+            <li>ขานี้ <b>ไม่ต้อง</b> ใส่ตัวต้านทาน 1 MΩ</li>
+            <li>เลือกไฮแฮท → แท็บ “แป้นไฮแฮท” → ตั้งขาแป้น แล้วเหยียบสุดกด “ตั้งจุดปิด” ปล่อยสุดกด “ตั้งจุดเปิด”</li>
+          </ol>
           <div className="note">Mega: 16 ขา (A0–A15) · Nano: 8 ขา · Uno: 6 ขา — ขาที่ไม่ได้ตั้งในแอปจะถูกปิดไว้ กันสัญญาณมั่ว</div>
         </section>
       </div>
@@ -130,15 +137,17 @@ export function HardwarePage() {
               {Array.from({ length: CHANNEL_COUNT }, (_, ch) => {
                 const head = kit.pads.find((x) => x.channel === ch);
                 const rimOf = head ? undefined : kit.pads.find((x) => x.rimChannel === ch);
+                const pedalOf = head || rimOf ? undefined : kit.pads.find((x) => x.pedalChannel === ch);
                 const p = head ?? rimOf;
-                const lvl = hw.channelLevels[ch];
+                const raw = hw.pedalRaw[ch];
+                const lvl = pedalOf ? ((raw ?? 0) / 1023) * 127 : hw.channelLevels[ch];
                 const thrPct = p ? (sensitivityToThreshold(p.sensitivity) / 1023) * 100 : 0;
                 const off = Number.isFinite(boardChannels) && ch >= boardChannels;
                 return (
                   <tr key={ch} style={off ? { opacity: 0.45 } : !p ? { opacity: 0.7 } : undefined}>
                     <td className="mono" style={{ fontWeight: 500 }}>{PIN_LABELS[ch]}</td>
                     <td>
-                      {head ? head.name + (head.rimChannel >= 0 ? ' · หนัง' : '') : rimOf ? <span>{rimOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>ขอบ</b></span> : <span className="faint">ว่าง (ปิดอยู่)</span>}
+                      {head ? head.name + (head.rimChannel >= 0 ? ' · หนัง' : '') : rimOf ? <span>{rimOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>ขอบ</b></span> : pedalOf ? <span>{pedalOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>แป้น</b></span> : <span className="faint">ว่าง (ปิดอยู่)</span>}
                       {off && <span className="faint"> · บอร์ดไม่มีขานี้</span>}
                     </td>
                     <td>
@@ -172,7 +181,12 @@ export function HardwarePage() {
                         </div>
                       </td>
                     )}
-                    {!p && <td colSpan={3} />}
+                    {pedalOf && (
+                      <td colSpan={3} className="faint" style={{ fontSize: 13 }}>
+                        ค่าเซนเซอร์ <span className="mono">{raw ?? '—'}</span> · ปรับจุดปิด/เปิดในแท็บ “แป้นไฮแฮท”
+                      </td>
+                    )}
+                    {!p && !pedalOf && <td colSpan={3} />}
                   </tr>
                 );
               })}

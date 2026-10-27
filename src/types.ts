@@ -22,6 +22,16 @@ export interface Pad {
   rimRatio: number;
   /** MIDI note for rim hits (MIDI mode) */
   rimNote: number;
+  /** Hi-hat: sounds by pedal position (closed = samples) */
+  halfSamples: string[];
+  openSamples: string[];
+  /** Hi-hat: pedal closed without hitting ("chick") */
+  chickSamples: string[];
+  /** Hi-hat pedal input (continuous sensor), -1 = none */
+  pedalChannel: number;
+  /** raw sensor value with the pedal fully pressed (closed) / fully released (open) */
+  pedalClosed: number;
+  pedalOpen: number;
   mode: PlayMode;
   /** 0–100 */
   volume: number;
@@ -40,9 +50,11 @@ export interface Pad {
 }
 
 /** What a drum kit (sound set) decides for a pad. Layout and Arduino settings are shared by all kits. */
-export type SoundField = 'samples' | 'rimSamples' | 'mode' | 'volume' | 'pitch';
+export type SampleField = 'samples' | 'rimSamples' | 'halfSamples' | 'openSamples' | 'chickSamples';
+export type SoundField = SampleField | 'mode' | 'volume' | 'pitch';
 export type PadSound = Pick<Pad, SoundField>;
-export const SOUND_FIELDS: SoundField[] = ['samples', 'rimSamples', 'mode', 'volume', 'pitch'];
+export const SAMPLE_FIELDS: SampleField[] = ['samples', 'rimSamples', 'halfSamples', 'openSamples', 'chickSamples'];
+export const SOUND_FIELDS: SoundField[] = [...SAMPLE_FIELDS, 'mode', 'volume', 'pitch'];
 
 export interface KitSounds {
   id: string;
@@ -103,4 +115,9 @@ export function sensitivityToThreshold(sens: number): number {
 export const CHANNEL_COUNT = 16; // Arduino Mega: A0–A15
 export const PIN_LABELS = Array.from({ length: CHANNEL_COUNT }, (_, i) => 'A' + i);
 
-export type Zone = 'head' | 'rim';
+/** head/rim = stick hits; pedal = hi-hat foot chick */
+export type Zone = 'head' | 'rim' | 'pedal';
+
+/** pedal openness thresholds (0 = closed … 1 = fully open) */
+export const HH_HALF = 0.18;
+export const HH_OPEN = 0.6;

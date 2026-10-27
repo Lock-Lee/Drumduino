@@ -540,6 +540,51 @@
   "group": "Pearl13Tom2"
  },
  {
+  "id": "avl:SabianRockHatSwish-1",
+  "file": "avl/SabianRockHatSwish_1.ogg",
+  "name": "Sabian Rock Hat Open (Swish) 1",
+  "category": "hihat",
+  "duration": 0.7,
+  "source": "avl",
+  "group": "SabianRockHatSwish"
+ },
+ {
+  "id": "avl:SabianRockHatSwish-2",
+  "file": "avl/SabianRockHatSwish_2.ogg",
+  "name": "Sabian Rock Hat Open (Swish) 2",
+  "category": "hihat",
+  "duration": 0.7,
+  "source": "avl",
+  "group": "SabianRockHatSwish"
+ },
+ {
+  "id": "avl:SabianRockHatSwish-3",
+  "file": "avl/SabianRockHatSwish_3.ogg",
+  "name": "Sabian Rock Hat Open (Swish) 3",
+  "category": "hihat",
+  "duration": 0.7,
+  "source": "avl",
+  "group": "SabianRockHatSwish"
+ },
+ {
+  "id": "avl:SabianRockHatSwish-4",
+  "file": "avl/SabianRockHatSwish_4.ogg",
+  "name": "Sabian Rock Hat Open (Swish) 4",
+  "category": "hihat",
+  "duration": 0.67,
+  "source": "avl",
+  "group": "SabianRockHatSwish"
+ },
+ {
+  "id": "avl:SabianRockHatSwish-5",
+  "file": "avl/SabianRockHatSwish_5.ogg",
+  "name": "Sabian Rock Hat Open (Swish) 5",
+  "category": "hihat",
+  "duration": 0.67,
+  "source": "avl",
+  "group": "SabianRockHatSwish"
+ },
+ {
   "id": "avl:SabianAA16Crash-1",
   "file": "avl/SabianAA16Crash_1.ogg",
   "name": "Sabian AA 16\" Crash 1",

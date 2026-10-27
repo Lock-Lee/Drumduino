@@ -1,5 +1,6 @@
 // Audio engine: holds decoded buffers and plays pads with low latency.
 import type { Pad, Zone } from '../types';
+import { HH_HALF, HH_OPEN } from '../types';
 import { BUILTINS, renderBuiltin } from './synth';
 import { getSample } from './sampleDb';
 
@@ -112,9 +113,49 @@ class Engine {
   }
 
   /** Pick which sample to play for this hit. */
-  /** Sounds for a zone; a rim hit on a pad without rim sounds falls back to the head sounds. */
+  /** Hi-hat pedal openness per pad: 0 = closed … 1 = open */
+  private pedal = new Map<string, number>();
+  private pedalListeners = new Set<(padId: string, openness: number) => void>();
+
+  setPedal(padId: string, openness: number) {
+    const o = Math.max(0, Math.min(1, openness));
+    this.pedal.set(padId, o);
+    this.pedalListeners.forEach((fn) => fn(padId, o));
+  }
+
+  getPedal(padId: string): number {
+    return this.pedal.get(padId) ?? 0;
+  }
+
+  onPedal(fn: (padId: string, openness: number) => void): () => void {
+    this.pedalListeners.add(fn);
+    return () => this.pedalListeners.delete(fn);
+  }
+
+  /** Stop a ringing sound quickly (closing the hi-hat, grabbing a cymbal). */
+  choke(padId: string) {
+    const v = this.voices.get(padId);
+    if (!v) return;
+    const t = this.ctx.currentTime;
+    v.gain.gain.cancelScheduledValues(t);
+    v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+    v.gain.gain.linearRampToValueAtTime(0, t + 0.06);
+    try {
+      v.src.stop(t + 0.08);
+    } catch {
+      /* already stopped */
+    }
+    this.voices.delete(padId);
+  }
+
+  /** Sounds for a zone. Hi-hat head hits follow the pedal; a rim hit without rim sounds uses the head sounds. */
   layers(pad: Pad, zone: Zone): string[] {
-    return zone === 'rim' && pad.rimSamples?.length ? pad.rimSamples : pad.samples;
+    if (zone === 'pedal') return pad.chickSamples ?? [];
+    if (zone === 'rim' && pad.rimSamples?.length) return pad.rimSamples;
+    const o = this.getPedal(pad.id);
+    if (o >= HH_OPEN && pad.openSamples?.length) return pad.openSamples;
+    if (o >= HH_HALF && pad.halfSamples?.length) return pad.halfSamples;
+    return pad.samples;
   }
 
   private pick(pad: Pad, list: string[], zone: Zone, velocity: number): string | null {
@@ -159,14 +200,14 @@ class Engine {
     const t = this.ctx.currentTime;
 
     // Same pad re-hit: fade the previous voice quickly to avoid build-up on cymbals/hats.
-    const prev = this.voices.get(pad.id);
-    if (prev && source !== 'ui') {
-      prev.gain.gain.setTargetAtTime(prev.gain.gain.value * 0.5, t, 0.03);
+    if (zone !== 'pedal') {
+      const prev = this.voices.get(pad.id);
+      if (prev && source !== 'ui') prev.gain.gain.setTargetAtTime(prev.gain.gain.value * 0.5, t, 0.03);
+      this.voices.set(pad.id, { src, gain: g });
+      src.onended = () => {
+        if (this.voices.get(pad.id)?.src === src) this.voices.delete(pad.id);
+      };
     }
-    this.voices.set(pad.id, { src, gain: g });
-    src.onended = () => {
-      if (this.voices.get(pad.id)?.src === src) this.voices.delete(pad.id);
-    };
     src.start(t);
   }
 

@@ -15,21 +15,26 @@
     (recommended) 5.1 V zener diode across it for protection.
   Dual-zone pad: head piezo under the drum head (centre), rim piezo on the rim/shell,
   ideally on a bit of foam so the head piezo picks up as little of a rim hit as possible.
+  Hi-hat pedal (continuous controller, no 1 MΩ resistor on this input):
+    potentiometer: one end → 5V, other end → GND, wiper → analog pin
+    or FSR: FSR between 5V and the analog pin, 10 kΩ from the pin to GND
 
   Serial protocol, 115200 baud, one text line per message:
     board → app:  I DRUMDUINO <version> <channels>
                   H <channel> <velocity 1–127>        head (or single-zone) hit
                   H <channel> <velocity 1–127> R      rim hit on the pad whose head is <channel>
+                  C <channel> <raw 0–1023>            pedal position (sent when it moves)
     app → board:  E <channel> <0|1>                   enable / disable a channel (unused inputs float!)
                   T <channel> <threshold 0–1023>
                   S <channel> <scan ms>
                   M <channel> <mask ms>
                   P <head channel> <rim channel|-1>   pair a rim input with a head input
                   X <head channel> <rim ratio %>      rim if rimPeak ≥ headPeak × ratio / 100
+                  K <channel> <0|1>                   1 = continuous pedal input instead of a piezo
                   ?
 */
 
-#define FW_VERSION "1.1"
+#define FW_VERSION "1.2"
 
 // ---------- board setup ----------
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
@@ -70,6 +75,10 @@ bool     enabled[MAXCH];
 int8_t   rimOf[MAXCH];     // head channel → its rim channel, -1 = single zone
 bool     isRim[MAXCH];     // this channel is the rim of another pad (scanned with its head)
 uint8_t  rimRatio[MAXCH];  // per head channel, %
+bool     isPedal[MAXCH];   // continuous controller (hi-hat pedal)
+uint16_t pedalSmooth[MAXCH];
+uint16_t pedalSent[MAXCH];
+uint32_t pedalAt[MAXCH];
 
 // ---------- state ----------
 enum State : uint8_t { IDLE, SCAN, MASK };
@@ -98,6 +107,7 @@ void setup() {
     threshold[i] = 60; scanMs[i] = 3; maskMs[i] = 35;
     enabled[i] = i < 8 && i < N;   // channels 8+ stay off until the app enables them
     rimOf[i] = -1; isRim[i] = false; rimRatio[i] = 70;
+    isPedal[i] = false; pedalSmooth[i] = 0; pedalSent[i] = 0xFFFF; pedalAt[i] = 0;
     state[i] = IDLE; peakHead[i] = 0; peakRim[i] = 0; since[i] = 0;
   }
   sendInfo();
@@ -146,6 +156,7 @@ void handleLine() {
     case 'M': maskMs[ch]    = constrain(val, 5, 250);  break;
     case 'E': enabled[ch]   = val != 0; state[ch] = IDLE; break;
     case 'X': rimRatio[ch]  = constrain(val, 10, 400); break;
+    case 'K': isPedal[ch]   = val != 0; pedalSent[ch] = 0xFFFF; state[ch] = IDLE; break;
     case 'P':
       unpair(ch);
       if (val >= 0 && val < N && val != ch) {
@@ -156,6 +167,23 @@ void handleLine() {
         state[val] = IDLE;
       }
       break;
+  }
+}
+
+// Hi-hat pedal: smooth, then report when it moved (max every 2 ms, and a refresh every 500 ms).
+void readPedal(uint8_t i, uint32_t now) {
+  uint16_t v = analogRead(PINS[i]);
+  pedalSmooth[i] = (pedalSmooth[i] * 3 + v) / 4;
+  uint16_t p = pedalSmooth[i];
+  int diff = (int)p - (int)pedalSent[i];
+  if (diff < 0) diff = -diff;
+  if (((pedalSent[i] == 0xFFFF || diff >= 6) && now - pedalAt[i] >= 2) || now - pedalAt[i] >= 500) {
+    Serial.print(F("C "));
+    Serial.print(i);
+    Serial.print(' ');
+    Serial.println(p);
+    pedalSent[i] = p;
+    pedalAt[i] = now;
   }
 }
 
@@ -175,6 +203,7 @@ void loop() {
   uint32_t now = millis();
   for (uint8_t i = 0; i < N; i++) {
     if (!enabled[i] || isRim[i]) continue;      // rim inputs are read together with their head
+    if (isPedal[i]) { readPedal(i, now); continue; }
     int8_t r = rimOf[i];
     bool dual = r >= 0 && enabled[r];
     uint16_t vh = analogRead(PINS[i]);

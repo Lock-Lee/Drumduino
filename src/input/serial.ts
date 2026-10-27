@@ -2,17 +2,20 @@
 // Protocol (text lines, 115200 baud):
 //   board → app:  "I DRUMDUINO <version> <channels>"   (hello / info)
 //                 "H <channel> <velocity> [R]"          (a hit, velocity 1–127; R = rim zone)
+//                 "C <channel> <raw 0-1023>"            (hi-hat pedal position)
 //   app → board:  "T <channel> <threshold 0-1023>"
 //                 "S <channel> <scan ms>"
 //                 "M <channel> <mask ms>"
 //                 "E <channel> <0|1>"                    (enable input)
 //                 "P <head> <rim|-1>"                    (pair rim input with head)
 //                 "X <head> <ratio %>"                   (rim decision ratio)
+//                 "K <channel> <0|1>"                    (1 = pedal input)
 //                 "?"                                    (ask for info line)
 
 export interface SerialEvents {
   onHit(channel: number, velocity: number, rim: boolean): void;
   onInfo(info: string): void;
+  onPedal(channel: number, raw: number): void;
   onClose(error?: string): void;
 }
 
@@ -89,6 +92,10 @@ export class SerialLink {
       const ch = parseInt(parts[1], 10);
       const v = parseInt(parts[2], 10);
       if (Number.isFinite(ch) && Number.isFinite(v)) this.events.onHit(ch, v, parts[3] === 'R');
+    } else if (parts[0] === 'C' && parts.length >= 3) {
+      const ch = parseInt(parts[1], 10);
+      const raw = parseInt(parts[2], 10);
+      if (Number.isFinite(ch) && Number.isFinite(raw)) this.events.onPedal(ch, raw);
     } else if (parts[0] === 'I') {
       this.events.onInfo(parts.slice(1).join(' '));
     }

@@ -12,9 +12,10 @@
 - ปรับความดัง, pitch, ความไวเซนเซอร์, scan/mask time แยกแต่ละชิ้น — ส่งค่าไปบอร์ดอัตโนมัติ
 - เพิ่ม/ลบ/ย้ายตำแหน่งชิ้นกลอง, ตั้งชื่อ, เลือกขา Arduino
 - **ตีขอบได้ (dual-zone)** แบบกลองไฟฟ้า: piezo หนัง + piezo ขอบ เฟิร์มแวร์แยกว่าตีหนังหรือตีขอบ แต่ละชิ้นมีเสียงขอบแยก (rimshot, ride bell, ขอบทอม ฯลฯ)
+- **แป้นไฮแฮท**: เซนเซอร์ต่อเนื่อง (pot หรือ FSR) — ปิด / ครึ่งเปิด / เปิด ตามความลึกที่เหยียบ, เสียงเหยียบ (chick), ปิดแป้นแล้วเสียงไฮแฮทเปิดหยุดทันที (choke), รองรับ MIDI CC4
 - รับสัญญาณผ่าน USB Serial (ทุกบอร์ด) หรือ USB MIDI (Leonardo / Pro Micro)
 - รองรับ Arduino Mega 16 ขา (A0–A15)
-- ทดสอบด้วยคีย์บอร์ดได้ (Q W E R A S D F, Shift = ตีเบา, Option/Alt = ตีขอบ)
+- ทดสอบด้วยคีย์บอร์ดได้ (Q W E R A S D F, Shift = ตีเบา, Option/Alt = ตีขอบ, X ค้าง = ไฮแฮทเปิด, Z = เหยียบแป้น)
 - บันทึกอัตโนมัติ ไฟล์เสียงเก็บไว้ในเครื่อง
 
 ## ฮาร์ดแวร์
@@ -74,12 +75,14 @@ npm run dist:win   # ต้องรันบน Windows → release/DrumDuino S
 ```
 บอร์ด → แอป   I DRUMDUINO <version> <channels>
               H <channel> <velocity 1–127> [R]     R = ตีขอบ
+              C <channel> <raw 0–1023>             ตำแหน่งแป้นไฮแฮท
 แอป → บอร์ด   E <channel> <0|1>                    เปิด/ปิดขา
               T <channel> <threshold 0–1023>
               S <channel> <scan ms>
               M <channel> <mask ms>
               P <head channel> <rim channel|-1>    จับคู่ขาขอบกับขาหนัง
               X <head channel> <ratio %>           ตีขอบเมื่อ ขอบ ≥ หนัง × ratio/100
+              K <channel> <0|1>                    1 = ขานี้เป็นแป้น (เซนเซอร์ต่อเนื่อง)
               ?
 ```
 

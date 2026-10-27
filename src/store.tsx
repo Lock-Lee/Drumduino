@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import type { Kit, KitSounds, Pad, PadSound, SampleMeta } from './types';
 import { SOUND_FIELDS } from './types';
-import type { Zone } from './types';
+import type { SampleField } from './types';
+import { SAMPLE_FIELDS } from './types';
 import { BUILTINS } from './audio/synth';
 import vdKit from './audio/vdKit.json';
 import avlKit from './audio/avlKit.json';
@@ -14,11 +15,12 @@ import type { Preset } from './kits';
 const STATE_KEY = 'drumduino.state.v3';
 const SAMPLES_KEY = 'drumduino.samples.v1';
 
-const EMPTY_SOUND: PadSound = { samples: [], rimSamples: [], mode: 'vel', volume: 85, pitch: 0 };
+const EMPTY_SOUND: PadSound = { samples: [], rimSamples: [], halfSamples: [], openSamples: [], chickSamples: [], mode: 'vel', volume: 85, pitch: 0 };
+const allSamples = (p: PadSound) => SAMPLE_FIELDS.flatMap((f) => p[f] ?? []);
 
 type PadInit = Partial<Pad> & Pick<Pad, 'id' | 'name' | 'th' | 'channel' | 'x' | 'y' | 'w' | 'midiNote' | 'key'>;
 function pad(p: PadInit): Pad {
-  return { cymbal: false, sensitivity: 60, scan: 3, mask: 35, rimChannel: -1, rimRatio: 70, rimNote: 0, ...EMPTY_SOUND, ...p };
+  return { cymbal: false, sensitivity: 60, scan: 3, mask: 35, rimChannel: -1, rimRatio: 70, rimNote: 0, pedalChannel: -1, pedalClosed: 1000, pedalOpen: 100, ...EMPTY_SOUND, ...p };
 }
 
 /** Shared layout + Arduino settings (sound fields are filled from the current kit). */
@@ -79,6 +81,8 @@ function save(key: string, value: unknown) {
 
 /** Keep factory kits that were added in newer app versions. */
 const OLD_FACTORY_RIMS = new Set([
+  'vd:hhopen-1,vd:hhopen-2',
+  [1, 2, 3, 4, 5].map((i) => `avl:SabianRockHatSemiOpen-${i}`).join(','),
   'vd:rimshot-1,vd:rimshot-2,vd:rimshot-3',
   [1, 2, 3, 4, 5].map((i) => `avl:PearlSnare2Edge-${i}`).join(','),
   [1, 2, 3, 4, 5].map((i) => `avl:PorkpieSnareEdge-${i}`).join(',')
@@ -96,9 +100,12 @@ function withAllPresets(st: Persisted): Persisted {
       const preset = PRESETS.find((x) => x.id === k.presetId);
       const sounds: Record<string, PadSound> = {};
       for (const [pid, snd] of Object.entries(k.sounds)) {
-        const merged: PadSound = { ...EMPTY_SOUND, rimSamples: preset?.sounds[pid]?.rimSamples ?? [], ...(snd as Partial<PadSound>) };
+        const fromPreset = preset?.sounds[pid];
+        const merged: PadSound = { ...EMPTY_SOUND, ...(snd as Partial<PadSound>) };
+        // sample lists added in newer versions come from the factory kit
+        for (const f of SAMPLE_FIELDS) if (!(snd as Partial<PadSound>)[f]) merged[f] = fromPreset?.[f] ?? [];
         // rim lists shipped by older versions get the improved factory list
-        if (preset && OLD_FACTORY_RIMS.has(merged.rimSamples.join(','))) merged.rimSamples = preset.sounds[pid]?.rimSamples ?? [];
+        if (fromPreset && OLD_FACTORY_RIMS.has(merged.rimSamples.join(','))) merged.rimSamples = fromPreset.rimSamples;
         sounds[pid] = merged;
       }
       return { ...k, sounds };
@@ -128,7 +135,7 @@ interface Store {
   deleteKit(id: string): void;
   resetKitSounds(): void;
   resetLayout(): void;
-  importFiles(files: FileList | File[], assignTo?: string, zone?: Zone): Promise<{ ok: number; failed: string[] }>;
+  importFiles(files: FileList | File[], assignTo?: string, field?: SampleField): Promise<{ ok: number; failed: string[] }>;
   removeSample(id: string): Promise<void>;
   exportKit(): void;
   ready: boolean;
@@ -184,7 +191,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     let alive = true;
     engine
       .loadBuiltins()
-      .then(() => engine.preload(kitRef.current.pads.flatMap((p) => [...p.samples, ...p.rimSamples])))
+      .then(() => engine.preload(kitRef.current.pads.flatMap(allSamples)))
       .finally(() => alive && setReady(true));
     return () => {
       alive = false;
@@ -192,10 +199,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Load the samples of a kit when switching to it.
-  const sampleSig = kit.pads.map((p) => p.samples.join(',') + '/' + p.rimSamples.join(',')).join('|');
+  const sampleSig = kit.pads.map((p) => allSamples(p).join(',')).join('|');
   useEffect(() => {
     if (!ready) return;
-    const ids = kitRef.current.pads.flatMap((p) => [...p.samples, ...p.rimSamples]).filter((id) => !engine.has(id));
+    const ids = kitRef.current.pads.flatMap(allSamples).filter((id) => !engine.has(id));
     if (!ids.length) return;
     let alive = true;
     setKitLoading(true);
@@ -253,7 +260,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const importFiles = useCallback(
-    async (files: FileList | File[], assignTo?: string, zone: Zone = 'head') => {
+    async (files: FileList | File[], assignTo?: string, key: SampleField = 'samples') => {
       const added: SampleMeta[] = [];
       const failed: string[] = [];
       for (const f of Array.from(files)) {
@@ -273,7 +280,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (assignTo) {
           updateSounds((snd) => {
             const cur = { ...EMPTY_SOUND, ...snd[assignTo] };
-            const key = zone === 'rim' ? 'rimSamples' : 'samples';
             return { ...snd, [assignTo]: { ...cur, [key]: [...cur[key], ...added.map((a) => a.id)] } };
           });
         }
@@ -291,7 +297,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...s,
       kits: s.kits.map((k) => ({
         ...k,
-        sounds: Object.fromEntries(Object.entries(k.sounds).map(([pid, snd]) => [pid, { ...snd, samples: snd.samples.filter((x) => x !== id), rimSamples: (snd.rimSamples ?? []).filter((x) => x !== id) }]))
+        sounds: Object.fromEntries(Object.entries(k.sounds).map(([pid, snd]) => [pid, { ...snd, ...Object.fromEntries(SAMPLE_FIELDS.map((f) => [f, (snd[f] ?? []).filter((x) => x !== id)])) }]))
       }))
     }));
   }, []);

@@ -10,8 +10,15 @@ export interface Preset {
 }
 
 function s(samples: string[], pitch = 0, volume = 85, rimSamples: string[] = []): PadSound {
-  return { samples, rimSamples, mode: 'vel', volume, pitch };
+  return { samples, rimSamples, halfSamples: [], openSamples: [], chickSamples: [], mode: 'vel', volume, pitch };
 }
+/** hi-hat: closed (stick) + half-open + open + pedal chick */
+const hat = (closed: string[], half: string[], open: string[], chick: string[]): PadSound => ({
+  ...s(closed),
+  halfSamples: half,
+  openSamples: open,
+  chickSamples: chick
+});
 /** add rim-zone sounds to a pad sound */
 const rim = (snd: PadSound, rimSamples: string[]): PadSound => ({ ...snd, rimSamples });
 const vdIds = (group: string, n: number) => Array.from({ length: n }, (_, i) => `vd:${group}-${i + 1}`);
@@ -35,7 +42,7 @@ export const PRESETS: Preset[] = [
       tom1: vd('htom', 4),
       tom2: rim(vd('ltom', 4, 1), vdIds('ltomrim', 3)),
       ride: rim(vd('ride', 3), vdIds('bell', 3)),
-      hihat: rim(vd('hhclosed', 4), vdIds('hhopen', 2)),
+      hihat: hat(vdIds('hhclosed', 4), vdIds('hhhalf', 4), vdIds('hhopen', 4), vdIds('hhpedal', 3)),
       // soft rim = cross-stick, harder = rimshot (like a V-Drums snare)
       snare: rim(vd('snare', 6), ['vd:xstick-2', 'vd:xstick-3', 'vd:rimshot-3', 'vd:rimshot-4', 'vd:rimshot-5', 'vd:rimshot-6']),
       kick: vd('kick', 4),
@@ -52,7 +59,7 @@ export const PRESETS: Preset[] = [
       tom1: avl('Pearl12Tom'),
       tom2: avl('Pearl13Tom2'),
       ride: rim(avl('SabianAAX20Ride'), avlIds('SabianAAX20RideBell')),
-      hihat: rim(avl('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen')),
+      hihat: hat(avlIds('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen'), avlIds('SabianRockHatSwish'), avlIds('SabianRockHatPedal')),
       // AVL has no rimshot: soft rim = its side stick, harder = Virtuosity rimshot
       snare: rim(avl('PearlSnare2'), [...AVL_XSTICK, ...VD_RIMSHOT]),
       kick: avl('Pearl22Kick'),
@@ -69,7 +76,7 @@ export const PRESETS: Preset[] = [
       tom1: rim(avl('Ludwig14Tom'), avlIds('Ludwig14TomEdge')),
       tom2: avl('Ludwig16FloorTom'),
       ride: rim(avl('ZildjianA24Ride'), avlIds('ZildjianA24RideBell')),
-      hihat: rim(avl('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen')),
+      hihat: hat(avlIds('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen'), avlIds('SabianRockHatSwish'), avlIds('SabianRockHatPedal')),
       snare: rim(avl('PorkpieSnare'), [...AVL_XSTICK, ...VD_RIMSHOT]),
       kick: avl('Ludwig26Kick'),
       floor: avl('Ludwig18FloorTom')
@@ -85,7 +92,7 @@ export const PRESETS: Preset[] = [
       tom1: s(['bi:tom-high']),
       tom2: s(['bi:tom-mid']),
       ride: s(['bi:ride-bow'], 0, 85, ['bi:ride-bell']),
-      hihat: s(['bi:hh-closed', 'bi:hh-half'], 0, 85, ['bi:hh-open']),
+      hihat: hat(['bi:hh-closed'], ['bi:hh-half'], ['bi:hh-open'], ['bi:hh-closed']),
       snare: s(['bi:snare-ghost', 'bi:snare-mid', 'bi:snare-hard'], 0, 85, ['bi:snare-rim']),
       kick: s(['bi:kick-soft', 'bi:kick-hard']),
       floor: s(['bi:tom-floor'])

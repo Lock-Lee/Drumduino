@@ -270,3 +270,13 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 @media (max-width: 1200px) { .col-wave { display: none; } }
 .lib-main table td:last-child { white-space: nowrap; text-align: right; }
+
+/* hi-hat pedal */
+.hat-meter { display: flex; flex-direction: column; gap: 6px; }
+.hat-track { position: relative; height: 30px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.hat-zone { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 11.5px; color: var(--faint); border-right: 1px solid var(--line); }
+.hat-needle { position: absolute; top: 2px; bottom: 2px; width: 6px; margin-left: -3px; border-radius: 3px; background: var(--accent); transition: left 60ms; }
+.hat-dot { position: absolute; left: 50%; bottom: 13%; width: 34%; height: 4px; margin-left: -17%; border-radius: 2px; background: var(--line-2); overflow: hidden; }
+.hat-dot::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--o) * 100%); background: var(--accent); }
+.pad.hit .hat-dot { background: rgba(0,0,0,.25); }
+.pad.hit .hat-dot::after { background: var(--on-accent); }
