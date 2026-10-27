@@ -9,7 +9,7 @@ import { Player } from '../score/player';
 import type { DrumsMode, Expected } from '../score/player';
 import type { PadId, Score } from '../score/types';
 import { PAD_LABEL } from '../score/types';
-import { PlayIcon, Stop, Trash, Upload } from '../components/Icons';
+import { PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
 
 const IMPORTED_KEY = 'drumduino.scores.v1';
 const PREFS_KEY = 'drumduino.practice.v1';
@@ -59,6 +59,14 @@ export function PracticePage() {
   const [range, setRange] = useState<[number, number]>([0, score.measures]);
   const [playing, setPlaying] = useState(false);
   const [msg, setMsg] = useState('');
+  const [q, setQ] = useState('');
+  const match = (sc: Score) => {
+    const t = q.trim().toLowerCase();
+    if (!t) return true;
+    return [sc.title, sc.subtitle ?? '', `${sc.bpm}`, `${sc.sig[0]}/${sc.sig[1]}`, ...(sc.sections ?? []).map((x) => x.name)].some((v) => v.toLowerCase().includes(t));
+  };
+  const builtIn = GROOVES.filter(match);
+  const mine = imported.filter(match);
   const [marks, setMarks] = useState<Map<number, NoteMark>>(new Map());
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [last, setLast] = useState<{ text: string; cls: string } | null>(null);
@@ -224,15 +232,29 @@ export function PracticePage() {
   return (
     <main className="pr-page">
       <aside className="pr-list" aria-label="เลือกจังหวะหรือเพลง">
-        <span className="label" style={{ padding: '0 10px 6px' }}>จังหวะในแอป</span>
-        {GROOVES.map((s) => (
+        <div className="search pr-search">
+          <Search />
+          <label htmlFor="prq" className="sr-only">ค้นหาจังหวะหรือเพลง</label>
+          <input id="prq" type="search" placeholder="ค้นหาเพลง / จังหวะ / BPM…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        {q.trim() && !builtIn.length && !mine.length && (
+          <div className="pr-online">
+            <span>ไม่พบ “{q.trim()}” ในแอป</span>
+            <span className="faint">หาโน้ตกลองออนไลน์ แล้ว export เป็น MIDI / MusicXML มานำเข้า:</span>
+            <a href={`https://www.songsterr.com/?pattern=${encodeURIComponent(q.trim())}`} target="_blank" rel="noreferrer">ค้นบน Songsterr ↗</a>
+            <a href={`https://musescore.com/sheetmusic?text=${encodeURIComponent(q.trim() + ' drums')}`} target="_blank" rel="noreferrer">ค้นบน MuseScore ↗</a>
+          </div>
+        )}
+        {builtIn.length > 0 && <span className="label" style={{ padding: '0 10px 6px' }}>จังหวะในแอป</span>}
+        {builtIn.map((s) => (
           <button key={s.id} type="button" className="pr-item" aria-pressed={s.id === score.id} onClick={() => { stop(); setScoreId(s.id); }}>
             <span className="pr-t">{s.title}</span>
             <span className="pr-s">{s.bpm} BPM · {s.sig[0]}/{s.sig[1]} · {s.measures} ห้อง</span>
           </button>
         ))}
         <span className="label" style={{ padding: '12px 10px 6px' }}>นำเข้าเอง</span>
-        {imported.map((s) => (
+        {q.trim() && imported.length > 0 && !mine.length && <span className="faint" style={{ fontSize: 12, padding: '0 10px' }}>ไม่มีเพลงที่นำเข้าตรงกับคำค้น</span>}
+        {mine.map((s) => (
           <div key={s.id} className="row" style={{ gap: 2, flexWrap: 'nowrap' }}>
             <button type="button" className="pr-item" style={{ flex: '1 1 0' }} aria-pressed={s.id === score.id} onClick={() => { stop(); setScoreId(s.id); }}>
               <span className="pr-t">{s.title}</span>

@@ -1,6 +1,6 @@
 // Renders a drum score as standard drum-set notation (VexFlow), with a playhead and hit markers.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Annotation, Articulation, Beam, Formatter, Fraction, Renderer, Stave, StaveNote, Tuplet, Voice } from 'vexflow';
+import { Articulation, Beam, Formatter, Fraction, Modifier, Parenthesis, Renderer, Stave, StaveNote, Tuplet, Voice } from 'vexflow';
 import type { Art, PadId, Score, ScoreNote } from './types';
 import { PPQ, ticksPerMeasure } from './types';
 
@@ -89,8 +89,13 @@ export function Notation({
     const compound = score.sig[1] === 8 && score.sig[0] % 3 === 0;
     const groupTicks = compound ? (PPQ * 3) / 2 : (PPQ * 4) / score.sig[1];
     const groups = tpm / groupTicks;
-    const perRow = width >= 1100 ? 4 : width >= 720 ? 3 : 2;
-    const rowH = 118;
+    // fewer bars per row when bars are busy (16ths need room)
+    const onsets = byMeasure.map((ms) => new Set(ms.map((it) => it.n.tick)).size);
+    const busiest = Math.max(4, ...onsets);
+    const minBarW = 90 + busiest * 20;
+    const usableW = width - 20 - 46;
+    const perRow = Math.max(1, Math.min(width >= 1100 ? 4 : width >= 720 ? 3 : 2, Math.floor(usableW / minBarW)));
+    const rowH = 150;
     const left = 10;
     const firstExtra = 46;
     const rows = Math.ceil(score.measures / perRow);
@@ -112,7 +117,7 @@ export function Notation({
       const mw = usable / perRow;
       const x = left + col * mw + (col === 0 ? 0 : firstExtra);
       const w = mw + (col === 0 ? firstExtra : 0);
-      const y = 20 + row * rowH;
+      const y = 34 + row * rowH;
       const stave = new Stave(x, y, w);
       if (col === 0) stave.addClef('percussion');
       if (m === 0) stave.addTimeSignature(`${score.sig[0]}/${score.sig[1]}`);
@@ -180,9 +185,15 @@ export function Notation({
               const uniq = [...new Map(members.map((mm) => [mm.key, mm])).values()].sort((a, b) => lineOf(a.key) - lineOf(b.key));
               const sn = mk(uniq.map((u) => u.key), dur, false);
               if (members.some((mm) => mm.n.vel >= 115)) sn.addModifier(new Articulation('a>').setPosition(down ? 4 : 3), 0);
-              if (members.some((mm) => mm.n.pad === 'hihat' && mm.n.art === 'open')) sn.addModifier(new Annotation('o').setVerticalJustification(Annotation.VerticalJustify.TOP), 0);
-              if (members.some((mm) => mm.n.pad === 'hihat' && mm.n.art === 'half')) sn.addModifier(new Annotation('ø').setVerticalJustification(Annotation.VerticalJustify.TOP), 0);
-              if (members.some((mm) => mm.n.vel <= 45)) sn.addModifier(new Annotation('( )').setVerticalJustification(Annotation.VerticalJustify.BOTTOM), 0);
+              // open / half-open hi-hat: small circle above (standard drum notation)
+              if (members.some((mm) => mm.n.pad === 'hihat' && (mm.n.art === 'open' || mm.n.art === 'half'))) sn.addModifier(new Articulation('ah').setPosition(3), 0);
+              // ghost notes: notehead in parentheses
+              uniq.forEach((u, k) => {
+                if (members.some((mm) => mm.key === u.key && mm.n.vel <= 45)) {
+                  sn.addModifier(new Parenthesis(Modifier.Position.LEFT), k);
+                  sn.addModifier(new Parenthesis(Modifier.Position.RIGHT), k);
+                }
+              });
               tickables.push(sn);
               groupNotes.push(sn);
               allNotes.push(sn);
