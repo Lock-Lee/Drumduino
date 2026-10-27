@@ -14,6 +14,14 @@ export interface Pad {
   cymbal: boolean;
   /** Sample ids, in order (velocity layers go soft → hard) */
   samples: string[];
+  /** Rim zone sounds (dual-zone pads), same ordering rules */
+  rimSamples: string[];
+  /** Arduino input of the rim piezo, -1 = single-zone pad */
+  rimChannel: number;
+  /** rim if rimPeak ≥ headPeak × rimRatio / 100 */
+  rimRatio: number;
+  /** MIDI note for rim hits (MIDI mode) */
+  rimNote: number;
   mode: PlayMode;
   /** 0–100 */
   volume: number;
@@ -32,9 +40,9 @@ export interface Pad {
 }
 
 /** What a drum kit (sound set) decides for a pad. Layout and Arduino settings are shared by all kits. */
-export type SoundField = 'samples' | 'mode' | 'volume' | 'pitch';
+export type SoundField = 'samples' | 'rimSamples' | 'mode' | 'volume' | 'pitch';
 export type PadSound = Pick<Pad, SoundField>;
-export const SOUND_FIELDS: SoundField[] = ['samples', 'mode', 'volume', 'pitch'];
+export const SOUND_FIELDS: SoundField[] = ['samples', 'rimSamples', 'mode', 'volume', 'pitch'];
 
 export interface KitSounds {
   id: string;
@@ -92,5 +100,7 @@ export function sensitivityToThreshold(sens: number): number {
   return Math.round(8 + (100 - Math.min(100, Math.max(1, sens))) * 2.4);
 }
 
-export const PIN_LABELS = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'];
-export const CHANNEL_COUNT = 8;
+export const CHANNEL_COUNT = 16; // Arduino Mega: A0–A15
+export const PIN_LABELS = Array.from({ length: CHANNEL_COUNT }, (_, i) => 'A' + i);
+
+export type Zone = 'head' | 'rim';

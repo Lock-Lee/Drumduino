@@ -337,7 +337,7 @@
   "file": "bell_1.ogg",
   "name": "Ride Bell 1",
   "category": "cym",
-  "duration": 5.57,
+  "duration": 5.53,
   "group": "bell",
   "layer": 1
  },
@@ -346,8 +346,44 @@
   "file": "bell_2.ogg",
   "name": "Ride Bell 2",
   "category": "cym",
-  "duration": 6.82,
+  "duration": 5.57,
   "group": "bell",
   "layer": 2
+ },
+ {
+  "id": "vd:bell-3",
+  "file": "bell_3.ogg",
+  "name": "Ride Bell 3",
+  "category": "cym",
+  "duration": 6.82,
+  "group": "bell",
+  "layer": 3
+ },
+ {
+  "id": "vd:ltomrim-1",
+  "file": "ltomrim_1.ogg",
+  "name": "Low Tom Rimshot 1",
+  "category": "tom",
+  "duration": 2.25,
+  "group": "ltomrim",
+  "layer": 1
+ },
+ {
+  "id": "vd:ltomrim-2",
+  "file": "ltomrim_2.ogg",
+  "name": "Low Tom Rimshot 2",
+  "category": "tom",
+  "duration": 3.98,
+  "group": "ltomrim",
+  "layer": 2
+ },
+ {
+  "id": "vd:ltomrim-3",
+  "file": "ltomrim_3.ogg",
+  "name": "Low Tom Rimshot 3",
+  "category": "tom",
+  "duration": 3.57,
+  "group": "ltomrim",
+  "layer": 3
  }
 ]

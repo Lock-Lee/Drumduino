@@ -1,9 +1,9 @@
 // Audio engine: holds decoded buffers and plays pads with low latency.
-import type { Pad } from '../types';
+import type { Pad, Zone } from '../types';
 import { BUILTINS, renderBuiltin } from './synth';
 import { getSample } from './sampleDb';
 
-export type HitListener = (padId: string, velocity: number) => void;
+export type HitListener = (padId: string, velocity: number, zone: Zone) => void;
 
 class Engine {
   readonly ctx: AudioContext;
@@ -112,28 +112,35 @@ class Engine {
   }
 
   /** Pick which sample to play for this hit. */
-  private pick(pad: Pad, velocity: number): string | null {
-    const n = pad.samples.length;
+  /** Sounds for a zone; a rim hit on a pad without rim sounds falls back to the head sounds. */
+  layers(pad: Pad, zone: Zone): string[] {
+    return zone === 'rim' && pad.rimSamples?.length ? pad.rimSamples : pad.samples;
+  }
+
+  private pick(pad: Pad, list: string[], zone: Zone, velocity: number): string | null {
+    const n = list.length;
     if (n === 0) return null;
-    if (n === 1) return pad.samples[0];
+    if (n === 1) return list[0];
     if (pad.mode === 'vel') {
       const i = Math.min(n - 1, Math.floor(((Math.max(1, velocity) - 1) * n) / 127));
-      return pad.samples[i];
+      return list[i];
     }
     if (pad.mode === 'rr') {
-      const i = (this.rr.get(pad.id) ?? -1) + 1;
-      this.rr.set(pad.id, i % n);
-      return pad.samples[i % n];
+      const key = pad.id + ':' + zone;
+      const i = (this.rr.get(key) ?? -1) + 1;
+      this.rr.set(key, i % n);
+      return list[i % n];
     }
-    return pad.samples[Math.floor(Math.random() * n)];
+    return list[Math.floor(Math.random() * n)];
   }
 
   /** Play a pad. velocity 1–127. */
-  play(pad: Pad, velocity: number, source: 'serial' | 'midi' | 'key' | 'ui' = 'ui') {
+  play(pad: Pad, velocity: number, source: 'serial' | 'midi' | 'key' | 'ui' = 'ui', zone: Zone = 'head') {
     this.resume();
     const v = Math.max(1, Math.min(127, Math.round(velocity)));
-    this.listeners.forEach((fn) => fn(pad.id, v));
-    const id = this.pick(pad, v);
+    this.listeners.forEach((fn) => fn(pad.id, v, zone));
+    const list = this.layers(pad, zone);
+    const id = this.pick(pad, list, zone, v);
     if (!id) return;
     const buf = this.buffers.get(id);
     if (!buf) {
@@ -145,7 +152,7 @@ class Engine {
     src.playbackRate.value = Math.pow(2, pad.pitch / 12);
     const g = this.ctx.createGain();
     // With 3+ velocity layers the recordings already carry the dynamics, so only shade within a layer.
-    const layered = pad.mode === 'vel' && pad.samples.length >= 3;
+    const layered = pad.mode === 'vel' && list.length >= 3;
     const velGain = layered ? 0.6 + 0.4 * (v / 127) : Math.pow(v / 127, 1.6);
     g.gain.value = (pad.volume / 100) * velGain;
     src.connect(g).connect(this.master);

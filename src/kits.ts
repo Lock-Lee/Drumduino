@@ -9,13 +9,17 @@ export interface Preset {
   sounds: Record<string, PadSound>;
 }
 
-function s(samples: string[], pitch = 0, volume = 85): PadSound {
-  return { samples, mode: 'vel', volume, pitch };
+function s(samples: string[], pitch = 0, volume = 85, rimSamples: string[] = []): PadSound {
+  return { samples, rimSamples, mode: 'vel', volume, pitch };
 }
+/** add rim-zone sounds to a pad sound */
+const rim = (snd: PadSound, rimSamples: string[]): PadSound => ({ ...snd, rimSamples });
+const vdIds = (group: string, n: number) => Array.from({ length: n }, (_, i) => `vd:${group}-${i + 1}`);
+const avlIds = (slug: string) => [1, 2, 3, 4, 5].map((i) => `avl:${slug}-${i}`);
 /** Virtuosity Drums layers, soft → hard */
-const vd = (group: string, n: number, pitch = 0) => s(Array.from({ length: n }, (_, i) => `vd:${group}-${i + 1}`), pitch);
+const vd = (group: string, n: number, pitch = 0) => s(vdIds(group, n), pitch);
 /** AVL Drumkits: 5 velocity layers per piece */
-const avl = (slug: string, pitch = 0, volume = 85) => s([1, 2, 3, 4, 5].map((i) => `avl:${slug}-${i}`), pitch, volume);
+const avl = (slug: string, pitch = 0, volume = 85) => s(avlIds(slug), pitch, volume);
 
 export const PRESETS: Preset[] = [
   {
@@ -26,12 +30,12 @@ export const PRESETS: Preset[] = [
     sounds: {
       crash: vd('crash', 3),
       tom1: vd('htom', 4),
-      tom2: vd('ltom', 4, 1),
-      ride: vd('ride', 3),
-      hihat: vd('hhclosed', 4),
-      snare: vd('snare', 6),
+      tom2: rim(vd('ltom', 4, 1), vdIds('ltomrim', 3)),
+      ride: rim(vd('ride', 3), vdIds('bell', 3)),
+      hihat: rim(vd('hhclosed', 4), vdIds('hhopen', 2)),
+      snare: rim(vd('snare', 6), vdIds('rimshot', 3)),
       kick: vd('kick', 4),
-      floor: vd('ltom', 4, -4)
+      floor: rim(vd('ltom', 4, -4), vdIds('ltomrim', 3))
     }
   },
   {
@@ -43,11 +47,11 @@ export const PRESETS: Preset[] = [
       crash: avl('SabianAA16Crash'),
       tom1: avl('Pearl12Tom'),
       tom2: avl('Pearl13Tom2'),
-      ride: avl('SabianAAX20Ride'),
-      hihat: avl('SabianRockHatClosed'),
-      snare: avl('PearlSnare2'),
+      ride: rim(avl('SabianAAX20Ride'), avlIds('SabianAAX20RideBell')),
+      hihat: rim(avl('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen')),
+      snare: rim(avl('PearlSnare2'), avlIds('PearlSnare2Edge')),
       kick: avl('Pearl22Kick'),
-      floor: avl('Pearl16FloorTom')
+      floor: rim(avl('Pearl16FloorTom'), avlIds('Pearl16FloorTomEdge'))
     }
   },
   {
@@ -57,11 +61,11 @@ export const PRESETS: Preset[] = [
     credit: 'AVL Drumkits “Red Zeppelin” — Glen MacArthur (CC BY-SA 3.0)',
     sounds: {
       crash: avl('ZildjianA20Crash'),
-      tom1: avl('Ludwig14Tom'),
+      tom1: rim(avl('Ludwig14Tom'), avlIds('Ludwig14TomEdge')),
       tom2: avl('Ludwig16FloorTom'),
-      ride: avl('ZildjianA24Ride'),
-      hihat: avl('SabianRockHatClosed'),
-      snare: avl('PorkpieSnare'),
+      ride: rim(avl('ZildjianA24Ride'), avlIds('ZildjianA24RideBell')),
+      hihat: rim(avl('SabianRockHatClosed'), avlIds('SabianRockHatSemiOpen')),
+      snare: rim(avl('PorkpieSnare'), avlIds('PorkpieSnareEdge')),
       kick: avl('Ludwig26Kick'),
       floor: avl('Ludwig18FloorTom')
     }
@@ -75,9 +79,9 @@ export const PRESETS: Preset[] = [
       crash: s(['bi:crash-soft', 'bi:crash-hard']),
       tom1: s(['bi:tom-high']),
       tom2: s(['bi:tom-mid']),
-      ride: s(['bi:ride-bow', 'bi:ride-bell']),
-      hihat: s(['bi:hh-closed', 'bi:hh-half', 'bi:hh-open']),
-      snare: s(['bi:snare-ghost', 'bi:snare-mid', 'bi:snare-hard']),
+      ride: s(['bi:ride-bow'], 0, 85, ['bi:ride-bell']),
+      hihat: s(['bi:hh-closed', 'bi:hh-half'], 0, 85, ['bi:hh-open']),
+      snare: s(['bi:snare-ghost', 'bi:snare-mid', 'bi:snare-hard'], 0, 85, ['bi:snare-rim']),
       kick: s(['bi:kick-soft', 'bi:kick-hard']),
       floor: s(['bi:tom-floor'])
     }

@@ -29,6 +29,8 @@ interface Hardware {
   padLevels: Record<string, number>;
   /** pad id that was hit most recently, cleared shortly after */
   flash: Record<string, number>;
+  /** same, for rim-zone hits */
+  rimFlash: Record<string, number>;
   /** serial port picker (Electron) */
   portChoices: PortInfo[] | null;
   choosePort(id: string): void;
@@ -59,6 +61,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
   const [channelLevels, setChannelLevels] = useState<number[]>(() => Array(CHANNEL_COUNT).fill(0));
   const [padLevels, setPadLevels] = useState<Record<string, number>>({});
   const [flash, setFlash] = useState<Record<string, number>>({});
+  const [rimFlash, setRimFlash] = useState<Record<string, number>>({});
   const [portChoices, setPortChoices] = useState<PortInfo[] | null>(null);
 
   const [midiAccess, setMidiAccess] = useState<MIDIAccess | null>(null);
@@ -77,11 +80,12 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
   // Every pad hit (any source) → meters + flash.
   useEffect(
     () =>
-      engine.onHit((id, v) => {
+      engine.onHit((id, v, zone) => {
         setPadLevels((p) => ({ ...p, [id]: v }));
         const stamp = performance.now();
-        setFlash((f) => ({ ...f, [id]: stamp }));
-        setTimeout(() => setFlash((f) => (f[id] === stamp ? { ...f, [id]: 0 } : f)), 160);
+        const set = zone === 'rim' ? setRimFlash : setFlash;
+        set((f) => ({ ...f, [id]: stamp }));
+        setTimeout(() => set((f) => (f[id] === stamp ? { ...f, [id]: 0 } : f)), 160);
       }),
     []
   );
@@ -89,11 +93,11 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
   const link = useMemo(
     () =>
       new SerialLink({
-        onHit(ch, v) {
-          setChannelLevel(ch, v);
-          if (modeRef.current !== 'serial') return;
+        onHit(ch, v, rim) {
           const pad = kitRef.current.pads.find((p) => p.channel === ch);
-          if (pad) engine.play(pad, v, 'serial');
+          setChannelLevel(rim && pad && pad.rimChannel >= 0 ? pad.rimChannel : ch, v);
+          if (modeRef.current !== 'serial') return;
+          if (pad) engine.play(pad, v, 'serial', rim ? 'rim' : 'head');
         },
         onInfo(info) {
           setBoardInfo(info);
@@ -135,18 +139,26 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
   // Push threshold / scan / mask to the board whenever they change.
   const settingsSig = kit.pads
     .filter((p) => p.channel >= 0)
-    .map((p) => `${p.channel}:${p.sensitivity}:${p.scan}:${p.mask}`)
+    .map((p) => `${p.channel}:${p.rimChannel}:${p.rimRatio}:${p.sensitivity}:${p.scan}:${p.mask}`)
     .join('|');
   useEffect(() => {
     if (serialStatus !== 'connected') return;
     const t = setTimeout(() => {
       const lines: string[] = [];
-      for (const p of kitRef.current.pads) {
-        if (p.channel < 0) continue;
-        lines.push(`T ${p.channel} ${sensitivityToThreshold(p.sensitivity)}`);
-        lines.push(`S ${p.channel} ${p.scan}`);
-        lines.push(`M ${p.channel} ${p.mask}`);
+      const pads = kitRef.current.pads.filter((p) => p.channel >= 0);
+      const used = new Set<number>();
+      for (const p of pads) {
+        used.add(p.channel);
+        const thr = sensitivityToThreshold(p.sensitivity);
+        const rimCh = p.rimChannel >= 0 && p.rimChannel !== p.channel ? p.rimChannel : -1;
+        for (const ch of rimCh >= 0 ? [p.channel, rimCh] : [p.channel]) {
+          used.add(ch);
+          lines.push(`T ${ch} ${thr}`, `S ${ch} ${p.scan}`, `M ${ch} ${p.mask}`);
+        }
+        lines.push(`P ${p.channel} ${rimCh}`, `X ${p.channel} ${p.rimRatio}`);
       }
+      // only listen on inputs that have a piezo assigned (unconnected inputs float and false-trigger)
+      for (let ch = 0; ch < CHANNEL_COUNT; ch++) lines.unshift(`E ${ch} ${used.has(ch) ? 1 : 0}`);
       void link.sendMany(lines);
     }, boardInfo ? 250 : 1800);
     return () => clearTimeout(t);
@@ -180,10 +192,13 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
       if (!d || d.length < 3) return;
       const cmd = d[0] & 0xf0;
       if (cmd !== 0x90 || d[2] === 0) return;
-      const pad = kitRef.current.pads.find((p) => p.midiNote === d[1]);
+      const head = kitRef.current.pads.find((p) => p.midiNote === d[1]);
+      const rimPad = head ? undefined : kitRef.current.pads.find((p) => p.rimNote > 0 && p.rimNote === d[1]);
+      const pad = head ?? rimPad;
       if (pad) {
-        if (pad.channel >= 0) setChannelLevel(pad.channel, d[2]);
-        engine.play(pad, d[2], 'midi');
+        const ch = rimPad ? pad.rimChannel : pad.channel;
+        if (ch >= 0) setChannelLevel(ch, d[2]);
+        engine.play(pad, d[2], 'midi', rimPad ? 'rim' : 'head');
       }
     };
     return () => {
@@ -194,14 +209,15 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
   // Keyboard test keys
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.repeat || e.metaKey || e.ctrlKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-      const k = e.key.toLowerCase();
+      // e.code so Option/Alt (+key = rim) still matches the letter on macOS
+      const k = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3).toLowerCase() : /^Digit\d$/.test(e.code) ? e.code.slice(5) : e.key.toLowerCase();
       const pad = kitRef.current.pads.find((p) => p.key && p.key === k);
       if (!pad) return;
       e.preventDefault();
-      engine.play(pad, e.shiftKey ? 50 : 110, 'key');
+      engine.play(pad, e.shiftKey ? 50 : 110, 'key', e.altKey ? 'rim' : 'head');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -232,6 +248,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
     channelLevels,
     padLevels,
     flash,
+    rimFlash,
     portChoices,
     choosePort
   };

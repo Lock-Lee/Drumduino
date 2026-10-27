@@ -11,8 +11,10 @@
 - เล่นหลายไฟล์ต่อชิ้น: ตามแรงตี (velocity layers) · วนตามลำดับ (round robin) · สุ่ม
 - ปรับความดัง, pitch, ความไวเซนเซอร์, scan/mask time แยกแต่ละชิ้น — ส่งค่าไปบอร์ดอัตโนมัติ
 - เพิ่ม/ลบ/ย้ายตำแหน่งชิ้นกลอง, ตั้งชื่อ, เลือกขา Arduino
+- **ตีขอบได้ (dual-zone)** แบบกลองไฟฟ้า: piezo หนัง + piezo ขอบ เฟิร์มแวร์แยกว่าตีหนังหรือตีขอบ แต่ละชิ้นมีเสียงขอบแยก (rimshot, ride bell, ขอบทอม ฯลฯ)
 - รับสัญญาณผ่าน USB Serial (ทุกบอร์ด) หรือ USB MIDI (Leonardo / Pro Micro)
-- ทดสอบด้วยคีย์บอร์ดได้ (Q W E R A S D F, กด Shift = ตีเบา)
+- รองรับ Arduino Mega 16 ขา (A0–A15)
+- ทดสอบด้วยคีย์บอร์ดได้ (Q W E R A S D F, Shift = ตีเบา, Option/Alt = ตีขอบ)
 - บันทึกอัตโนมัติ ไฟล์เสียงเก็บไว้ในเครื่อง
 
 ## ฮาร์ดแวร์
@@ -21,7 +23,7 @@
 |---|---|---|
 | Arduino Nano | 8 (A0–A7) | USB Serial |
 | Arduino Uno | 6 (A0–A5) | USB Serial |
-| Arduino Mega | 8 (A0–A7) | USB Serial |
+| Arduino Mega | 16 (A0–A15) | USB Serial |
 | Leonardo / Pro Micro | 8 | USB Serial + USB MIDI |
 
 ต่อสายแต่ละช่อง: piezo (+) → ขาอนาล็อก, piezo (−) → GND, ตัวต้านทาน 1 MΩ คร่อมขาอนาล็อกกับ GND
@@ -71,10 +73,13 @@ npm run dist:win   # ต้องรันบน Windows → release/DrumDuino S
 
 ```
 บอร์ด → แอป   I DRUMDUINO <version> <channels>
-              H <channel> <velocity 1–127>
-แอป → บอร์ด   T <channel> <threshold 0–1023>
+              H <channel> <velocity 1–127> [R]     R = ตีขอบ
+แอป → บอร์ด   E <channel> <0|1>                    เปิด/ปิดขา
+              T <channel> <threshold 0–1023>
               S <channel> <scan ms>
               M <channel> <mask ms>
+              P <head channel> <rim channel|-1>    จับคู่ขาขอบกับขาหนัง
+              X <head channel> <ratio %>           ตีขอบเมื่อ ขอบ ≥ หนัง × ratio/100
               ?
 ```
 

@@ -21,7 +21,7 @@ export function HardwarePage() {
             </div>
             <span className="faint" style={{ fontSize: 13 }}>
               {hw.mode === 'serial'
-                ? 'ใช้กับทุกบอร์ด (Uno, Nano, Mega, Leonardo) และปรับความไว/เวลาจากแอปได้'
+                ? 'ใช้กับทุกบอร์ด (Mega, Nano, Uno, Leonardo) ปรับความไว/เวลา และตีขอบจากแอปได้'
                 : 'สำหรับ Leonardo / Pro Micro ที่ลงเฟิร์มแวร์แบบ MIDI — บอร์ดจะใช้กับโปรแกรมดนตรีอื่นได้ด้วย'}
             </span>
           </div>
@@ -93,12 +93,19 @@ export function HardwarePage() {
         <section className="card stack" aria-labelledby="wireH">
           <h2 id="wireH" style={{ fontSize: 19 }}>วิธีต่อสาย</h2>
           <ol className="steps">
-            <li>ขา + (สายแดง) ของ piezo → ขา A0–A7 ตามชิ้นกลอง</li>
+            <li>ขา + (สายแดง) ของ piezo → ขาอนาล็อกตามชิ้นกลอง (A0–A15 บน Mega)</li>
             <li>ขา − (สายดำ) ของ piezo → GND</li>
             <li>ตัวต้านทาน 1 MΩ คร่อมระหว่างขาอนาล็อกกับ GND ทุกช่อง</li>
             <li>แนะนำ: ไดโอดซีเนอร์ 5.1V คร่อมอีกตัว กันแรงดันเกินเวลาตีแรง</li>
           </ol>
-          <div className="note">Arduino Uno มีแค่ A0–A5 (6 ชิ้น) · Nano / Mega ใช้ได้ครบ 8 ชิ้น</div>
+          <h3 style={{ fontSize: 15 }}>กลองตีขอบได้ (dual-zone)</h3>
+          <ol className="steps">
+            <li>piezo ตัวที่ 1 ติดใต้หนังกลอง (ตรงกลาง) → ขาหนัง</li>
+            <li>piezo ตัวที่ 2 ติดที่ขอบหรือตัวถัง รองด้วยโฟมบางๆ → ขาขอบ (เช่น A8)</li>
+            <li>ในหน้าชุดกลอง เลือกชิ้นนั้น แล้วตั้ง “ขาขอบ (Rim)”</li>
+            <li>ตีหนังและตีขอบสลับกัน แล้วปรับเปอร์เซ็นต์ตีขอบจนแยกได้ถูก</li>
+          </ol>
+          <div className="note">Mega: 16 ขา (A0–A15) · Nano: 8 ขา · Uno: 6 ขา — ขาที่ไม่ได้ตั้งในแอปจะถูกปิดไว้ กันสัญญาณมั่ว</div>
         </section>
       </div>
 
@@ -121,44 +128,51 @@ export function HardwarePage() {
             </thead>
             <tbody>
               {Array.from({ length: CHANNEL_COUNT }, (_, ch) => {
-                const p = kit.pads.find((x) => x.channel === ch);
+                const head = kit.pads.find((x) => x.channel === ch);
+                const rimOf = head ? undefined : kit.pads.find((x) => x.rimChannel === ch);
+                const p = head ?? rimOf;
                 const lvl = hw.channelLevels[ch];
                 const thrPct = p ? (sensitivityToThreshold(p.sensitivity) / 1023) * 100 : 0;
                 const off = Number.isFinite(boardChannels) && ch >= boardChannels;
                 return (
-                  <tr key={ch} style={off ? { opacity: 0.45 } : undefined}>
+                  <tr key={ch} style={off ? { opacity: 0.45 } : !p ? { opacity: 0.7 } : undefined}>
                     <td className="mono" style={{ fontWeight: 500 }}>{PIN_LABELS[ch]}</td>
-                    <td>{p ? p.name : <span className="faint">ว่าง</span>}{off && <span className="faint"> · บอร์ดไม่มีขานี้</span>}</td>
+                    <td>
+                      {head ? head.name + (head.rimChannel >= 0 ? ' · หนัง' : '') : rimOf ? <span>{rimOf.name} · <b style={{ color: 'var(--accent)', fontWeight: 600 }}>ขอบ</b></span> : <span className="faint">ว่าง (ปิดอยู่)</span>}
+                      {off && <span className="faint"> · บอร์ดไม่มีขานี้</span>}
+                    </td>
                     <td>
                       <div className="lvl">
                         <div className="v" style={{ width: (lvl / 127) * 100 + '%' }} />
                         {p && <div className="t" style={{ left: thrPct + '%' }} />}
                       </div>
                     </td>
-                    <td>
-                      {p && (
-                        <>
+                    {head && (
+                      <>
+                        <td>
                           <label htmlFor={'s' + ch} className="sr-only">ความไว {PIN_LABELS[ch]}</label>
-                          <input id={'s' + ch} className="num" type="number" min={1} max={100} value={p.sensitivity} onChange={(e) => updatePad(p.id, { sensitivity: clamp(e.target.value, 1, 100) })} />
-                        </>
-                      )}
-                    </td>
-                    <td>
-                      {p && (
-                        <>
+                          <input id={'s' + ch} className="num" type="number" min={1} max={100} value={head.sensitivity} onChange={(e) => updatePad(head.id, { sensitivity: clamp(e.target.value, 1, 100) })} />
+                        </td>
+                        <td>
                           <label htmlFor={'sc' + ch} className="sr-only">Scan {PIN_LABELS[ch]}</label>
-                          <input id={'sc' + ch} className="num" type="number" min={1} max={20} value={p.scan} onChange={(e) => updatePad(p.id, { scan: clamp(e.target.value, 1, 20) })} />
-                        </>
-                      )}
-                    </td>
-                    <td>
-                      {p && (
-                        <>
+                          <input id={'sc' + ch} className="num" type="number" min={1} max={20} value={head.scan} onChange={(e) => updatePad(head.id, { scan: clamp(e.target.value, 1, 20) })} />
+                        </td>
+                        <td>
                           <label htmlFor={'m' + ch} className="sr-only">Mask {PIN_LABELS[ch]}</label>
-                          <input id={'m' + ch} className="num" type="number" min={5} max={250} value={p.mask} onChange={(e) => updatePad(p.id, { mask: clamp(e.target.value, 5, 250) })} />
-                        </>
-                      )}
-                    </td>
+                          <input id={'m' + ch} className="num" type="number" min={5} max={250} value={head.mask} onChange={(e) => updatePad(head.id, { mask: clamp(e.target.value, 5, 250) })} />
+                        </td>
+                      </>
+                    )}
+                    {rimOf && (
+                      <td colSpan={3}>
+                        <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+                          <label htmlFor={'r' + ch} className="faint" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>ตีขอบเมื่อขอบ ≥</label>
+                          <input id={'r' + ch} className="num" type="number" min={20} max={300} step={5} value={rimOf.rimRatio} onChange={(e) => updatePad(rimOf.id, { rimRatio: clamp(e.target.value, 20, 300) })} />
+                          <span className="faint" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>% ของหนัง</span>
+                        </div>
+                      </td>
+                    )}
+                    {!p && <td colSpan={3} />}
                   </tr>
                 );
               })}

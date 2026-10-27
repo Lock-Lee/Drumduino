@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import type { Kit, KitSounds, Pad, PadSound, SampleMeta } from './types';
 import { SOUND_FIELDS } from './types';
+import type { Zone } from './types';
 import { BUILTINS } from './audio/synth';
 import vdKit from './audio/vdKit.json';
 import avlKit from './audio/avlKit.json';
@@ -13,24 +14,24 @@ import type { Preset } from './kits';
 const STATE_KEY = 'drumduino.state.v3';
 const SAMPLES_KEY = 'drumduino.samples.v1';
 
-const EMPTY_SOUND: PadSound = { samples: [], mode: 'vel', volume: 85, pitch: 0 };
+const EMPTY_SOUND: PadSound = { samples: [], rimSamples: [], mode: 'vel', volume: 85, pitch: 0 };
 
 type PadInit = Partial<Pad> & Pick<Pad, 'id' | 'name' | 'th' | 'channel' | 'x' | 'y' | 'w' | 'midiNote' | 'key'>;
 function pad(p: PadInit): Pad {
-  return { cymbal: false, sensitivity: 60, scan: 3, mask: 35, ...EMPTY_SOUND, ...p };
+  return { cymbal: false, sensitivity: 60, scan: 3, mask: 35, rimChannel: -1, rimRatio: 70, rimNote: 0, ...EMPTY_SOUND, ...p };
 }
 
 /** Shared layout + Arduino settings (sound fields are filled from the current kit). */
 export function defaultPads(): Pad[] {
   return [
     pad({ id: 'crash', name: 'Crash', th: 'ฉาบแครช', channel: 0, x: 14, y: 6, w: 20, cymbal: true, midiNote: 49, key: 'q', mask: 45 }),
-    pad({ id: 'tom1', name: 'Tom 1', th: 'ทอมสูง', channel: 4, x: 35, y: 16, w: 14, midiNote: 48, key: 'w' }),
-    pad({ id: 'tom2', name: 'Tom 2', th: 'ทอมกลาง', channel: 5, x: 51, y: 16, w: 14, midiNote: 45, key: 'e' }),
-    pad({ id: 'ride', name: 'Ride', th: 'ฉาบไรด์', channel: 7, x: 72, y: 8, w: 22, cymbal: true, midiNote: 51, key: 'r', mask: 45 }),
-    pad({ id: 'hihat', name: 'Hi-hat', th: 'ไฮแฮท', channel: 1, x: 3, y: 40, w: 16, cymbal: true, midiNote: 42, key: 'a', mask: 30 }),
-    pad({ id: 'snare', name: 'Snare', th: 'กลองสแนร์', channel: 2, x: 21, y: 50, w: 18, midiNote: 38, key: 's', mask: 25 }),
+    pad({ id: 'tom1', name: 'Tom 1', th: 'ทอมสูง', channel: 4, x: 35, y: 16, w: 14, midiNote: 48, rimNote: 50, key: 'w' }),
+    pad({ id: 'tom2', name: 'Tom 2', th: 'ทอมกลาง', channel: 5, x: 51, y: 16, w: 14, midiNote: 45, rimNote: 47, key: 'e' }),
+    pad({ id: 'ride', name: 'Ride', th: 'ฉาบไรด์', channel: 7, x: 72, y: 8, w: 22, cymbal: true, midiNote: 51, rimNote: 53, key: 'r', mask: 45 }),
+    pad({ id: 'hihat', name: 'Hi-hat', th: 'ไฮแฮท', channel: 1, x: 3, y: 40, w: 16, cymbal: true, midiNote: 42, rimNote: 46, key: 'a', mask: 30 }),
+    pad({ id: 'snare', name: 'Snare', th: 'กลองสแนร์', channel: 2, x: 21, y: 50, w: 18, midiNote: 38, rimNote: 40, key: 's', mask: 25 }),
     pad({ id: 'kick', name: 'Kick', th: 'กลองเบส', channel: 3, x: 40, y: 56, w: 22, midiNote: 36, key: 'd', mask: 45 }),
-    pad({ id: 'floor', name: 'Floor Tom', th: 'ทอมตั้งพื้น', channel: 6, x: 66, y: 50, w: 20, midiNote: 43, key: 'f' })
+    pad({ id: 'floor', name: 'Floor Tom', th: 'ทอมตั้งพื้น', channel: 6, x: 66, y: 50, w: 20, midiNote: 43, rimNote: 58, key: 'f' })
   ];
 }
 
@@ -78,6 +79,22 @@ function save(key: string, value: unknown) {
 
 /** Keep factory kits that were added in newer app versions. */
 function withAllPresets(st: Persisted): Persisted {
+  // fill fields added in newer versions
+  st = {
+    ...st,
+    pads: st.pads.map((p) => {
+      const d = defaultPads().find((x) => x.id === p.id);
+      return pad({ ...(d ? { rimNote: d.rimNote } : {}), ...p });
+    }),
+    kits: st.kits.map((k) => {
+      const preset = PRESETS.find((x) => x.id === k.presetId);
+      const sounds: Record<string, PadSound> = {};
+      for (const [pid, snd] of Object.entries(k.sounds)) {
+        sounds[pid] = { ...EMPTY_SOUND, rimSamples: preset?.sounds[pid]?.rimSamples ?? [], ...(snd as Partial<PadSound>) };
+      }
+      return { ...k, sounds };
+    })
+  };
   const have = new Set(st.kits.map((k) => k.presetId));
   const missing = PRESETS.filter((p) => !have.has(p.id)).map(kitFromPreset);
   const kits = [...st.kits, ...missing];
@@ -102,7 +119,7 @@ interface Store {
   deleteKit(id: string): void;
   resetKitSounds(): void;
   resetLayout(): void;
-  importFiles(files: FileList | File[], assignTo?: string): Promise<{ ok: number; failed: string[] }>;
+  importFiles(files: FileList | File[], assignTo?: string, zone?: Zone): Promise<{ ok: number; failed: string[] }>;
   removeSample(id: string): Promise<void>;
   exportKit(): void;
   ready: boolean;
@@ -146,7 +163,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       name: current.name,
       presetId: current.presetId,
       master: st.master,
-      pads: st.pads.map((p) => ({ ...p, ...(current.sounds[p.id] ?? EMPTY_SOUND) }))
+      pads: st.pads.map((p) => ({ ...p, ...EMPTY_SOUND, ...current.sounds[p.id] }))
     }),
     [st.pads, st.master, current]
   );
@@ -158,7 +175,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     let alive = true;
     engine
       .loadBuiltins()
-      .then(() => engine.preload(kitRef.current.pads.flatMap((p) => p.samples)))
+      .then(() => engine.preload(kitRef.current.pads.flatMap((p) => [...p.samples, ...p.rimSamples])))
       .finally(() => alive && setReady(true));
     return () => {
       alive = false;
@@ -166,10 +183,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Load the samples of a kit when switching to it.
-  const sampleSig = kit.pads.map((p) => p.samples.join(',')).join('|');
+  const sampleSig = kit.pads.map((p) => p.samples.join(',') + '/' + p.rimSamples.join(',')).join('|');
   useEffect(() => {
     if (!ready) return;
-    const ids = kitRef.current.pads.flatMap((p) => p.samples).filter((id) => !engine.has(id));
+    const ids = kitRef.current.pads.flatMap((p) => [...p.samples, ...p.rimSamples]).filter((id) => !engine.has(id));
     if (!ids.length) return;
     let alive = true;
     setKitLoading(true);
@@ -227,7 +244,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const importFiles = useCallback(
-    async (files: FileList | File[], assignTo?: string) => {
+    async (files: FileList | File[], assignTo?: string, zone: Zone = 'head') => {
       const added: SampleMeta[] = [];
       const failed: string[] = [];
       for (const f of Array.from(files)) {
@@ -246,8 +263,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setUserSamples((s) => [...s, ...added]);
         if (assignTo) {
           updateSounds((snd) => {
-            const cur = snd[assignTo] ?? EMPTY_SOUND;
-            return { ...snd, [assignTo]: { ...cur, samples: [...cur.samples, ...added.map((a) => a.id)] } };
+            const cur = { ...EMPTY_SOUND, ...snd[assignTo] };
+            const key = zone === 'rim' ? 'rimSamples' : 'samples';
+            return { ...snd, [assignTo]: { ...cur, [key]: [...cur[key], ...added.map((a) => a.id)] } };
           });
         }
       }
@@ -264,7 +282,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...s,
       kits: s.kits.map((k) => ({
         ...k,
-        sounds: Object.fromEntries(Object.entries(k.sounds).map(([pid, snd]) => [pid, { ...snd, samples: snd.samples.filter((x) => x !== id) }]))
+        sounds: Object.fromEntries(Object.entries(k.sounds).map(([pid, snd]) => [pid, { ...snd, samples: snd.samples.filter((x) => x !== id), rimSamples: (snd.rimSamples ?? []).filter((x) => x !== id) }]))
       }))
     }));
   }, []);
