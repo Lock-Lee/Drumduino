@@ -10,5 +10,11 @@ contextBridge.exposeInMainWorld('drumduino', {
   },
   chooseSerialPort(portId) {
     return ipcRenderer.invoke('serial:choose', portId);
+  },
+  listMyScores() {
+    return ipcRenderer.invoke('scores:list');
+  },
+  openScoresFolder() {
+    return ipcRenderer.invoke('scores:openFolder');
   }
 });

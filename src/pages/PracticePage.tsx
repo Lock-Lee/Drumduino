@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../store';
 import { engine } from '../audio/engine';
 import { GROOVES } from '../score/grooves';
-import { importScoreFile } from '../score/importers';
+import { importScoreFile, parseMidi, parseMusicXml } from '../score/importers';
 import { Notation } from '../score/Notation';
 import type { NoteMark } from '../score/Notation';
 import { Player } from '../score/player';
@@ -13,6 +13,7 @@ import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons
 import { ScoreEditor, newScore } from './ScoreEditor';
 
 const IMPORTED_KEY = 'drumduino.scores.v1';
+let scanBusy = false;
 const PREFS_KEY = 'drumduino.practice.v1';
 
 function loadJSON<T>(k: string, fb: T): T {
@@ -47,6 +48,39 @@ export function PracticePage() {
   const [imported, setImported] = useState<Score[]>(() => loadJSON(IMPORTED_KEY, [] as Score[]));
   useEffect(() => saveJSON(IMPORTED_KEY, imported), [imported]);
   const all = useMemo(() => [...GROOVES, ...imported], [imported]);
+
+  // pick up score files dropped into the my-scores folder
+  const scanFolder = useCallback(async (announce: boolean) => {
+    if (scanBusy) return;
+    scanBusy = true;
+    try {
+    const files = (await window.drumduino?.listMyScores?.()) ?? [];
+    const have = new Set(loadJSON(IMPORTED_KEY, [] as Score[]).map((x) => x.fileKey));
+    const added: Score[] = [];
+    for (const f of files) {
+      if (have.has(f.key)) continue;
+      try {
+        const bin = Uint8Array.from(atob(f.data), (c) => c.charCodeAt(0));
+        const sc = /\.(mid|midi)$/i.test(f.name) ? parseMidi(bin.buffer, f.name) : parseMusicXml(new TextDecoder().decode(bin), f.name);
+        added.push({ ...sc, id: 'file-' + f.key.replace(/[^\w]/g, '').slice(-40), fileKey: f.key, subtitle: 'จากโฟลเดอร์ my-scores' });
+      } catch {
+        /* not a drum file */
+      }
+    }
+    if (added.length) {
+      setImported((list) => [...list.filter((x) => !added.some((a) => a.title === x.title && x.fileKey)), ...added]);
+      setScoreId(added[0].id);
+      setMsg(`เพิ่ม ${added.map((a) => a.title).join(', ')} จากโฟลเดอร์ my-scores`);
+    } else if (announce) setMsg(files.length ? 'ไม่มีไฟล์ใหม่ในโฟลเดอร์' : 'โฟลเดอร์ my-scores ยังว่าง');
+    // let the save effect store them before another scan
+    await new Promise((r) => setTimeout(r, 300));
+    } finally {
+      scanBusy = false;
+    }
+  }, []);
+  useEffect(() => {
+    void scanFolder(false);
+  }, [scanFolder]);
   const [scoreId, setScoreId] = useState(GROOVES[GROOVES.length - 1].id);
   const score = all.find((s) => s.id === scoreId) ?? GROOVES[0];
 
@@ -268,6 +302,12 @@ export function PracticePage() {
         ))}
         <button type="button" className="btn sm primary" style={{ margin: '6px 4px 0' }} onClick={() => { stop(); setEditing(newScore()); }}><Plus /> สร้างเพลงใหม่ (ใส่โน้ตเอง)</button>
         <button type="button" className="btn sm" style={{ margin: '6px 4px' }} onClick={() => fileRef.current?.click()}><Upload /> นำเข้า MIDI / MusicXML</button>
+        {window.drumduino?.listMyScores && (
+          <div className="row" style={{ gap: 4, margin: '0 4px', flexWrap: 'nowrap' }}>
+            <button type="button" className="btn sm ghost" onClick={() => void scanFolder(true)}>โหลดจากโฟลเดอร์</button>
+            <button type="button" className="btn sm ghost" onClick={() => void window.drumduino?.openScoresFolder?.()}>เปิดโฟลเดอร์</button>
+          </div>
+        )}
         <input ref={fileRef} type="file" accept=".mid,.midi,.musicxml,.xml" multiple hidden onChange={(e) => { void onImport(e.target.files); e.target.value = ''; }} />
         {msg && <span className="faint" style={{ fontSize: 12, padding: '0 8px' }} role="status">{msg}</span>}
         <p className="faint" style={{ fontSize: 11.5, padding: '6px 8px', lineHeight: 1.5 }}>

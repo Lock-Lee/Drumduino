@@ -1,6 +1,37 @@
 // DrumDuino — Electron main process
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+// Drum score files (MIDI / MusicXML) the app picks up by itself on start.
+function scoreDirs() {
+  const dirs = [path.join(app.getPath('userData'), 'my-scores')];
+  const local = path.join(process.cwd(), 'my-scores');
+  if (!app.isPackaged && !dirs.includes(local)) dirs.push(local);
+  return dirs;
+}
+ipcMain.handle('scores:list', () => {
+  const out = [];
+  for (const dir of scoreDirs()) {
+    let names = [];
+    try { names = fs.readdirSync(dir); } catch { continue; }
+    for (const name of names) {
+      if (!/\.(mid|midi|musicxml|xml)$/i.test(name)) continue;
+      try {
+        const full = path.join(dir, name);
+        const st = fs.statSync(full);
+        if (!st.isFile() || st.size > 5 * 1024 * 1024) continue;
+        out.push({ name, key: `${name}:${st.size}:${Math.round(st.mtimeMs)}`, data: fs.readFileSync(full).toString('base64') });
+      } catch { /* skip unreadable */ }
+    }
+  }
+  return out;
+});
+ipcMain.handle('scores:openFolder', async () => {
+  const dir = scoreDirs()[app.isPackaged ? 0 : scoreDirs().length - 1];
+  fs.mkdirSync(dir, { recursive: true });
+  return shell.openPath(dir);
+});
 
 // Known USB vendor IDs for Arduino boards and common USB-serial chips.
 const ARDUINO_VENDORS = new Set([

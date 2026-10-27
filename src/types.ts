@@ -103,6 +103,8 @@ declare global {
       platform: string;
       onSerialPorts(cb: (ports: PortInfo[]) => void): () => void;
       chooseSerialPort(portId: string): Promise<boolean>;
+      listMyScores?(): Promise<{ name: string; key: string; data: string }[]>;
+      openScoresFolder?(): Promise<string>;
     };
   }
 }

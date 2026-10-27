@@ -42,6 +42,8 @@ export interface Score {
   sections?: Section[];
   /** user-imported (stored locally) vs built-in */
   imported?: boolean;
+  /** file it was auto-loaded from (my-scores folder) */
+  fileKey?: string;
 }
 
 export function ticksPerMeasure(s: Pick<Score, 'sig'>): number {
