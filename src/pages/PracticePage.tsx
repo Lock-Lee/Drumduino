@@ -9,7 +9,8 @@ import { Player } from '../score/player';
 import type { DrumsMode, Expected } from '../score/player';
 import type { PadId, Score } from '../score/types';
 import { PAD_LABEL } from '../score/types';
-import { PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
+import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
+import { ScoreEditor, newScore } from './ScoreEditor';
 
 const IMPORTED_KEY = 'drumduino.scores.v1';
 const PREFS_KEY = 'drumduino.practice.v1';
@@ -60,6 +61,7 @@ export function PracticePage() {
   const [playing, setPlaying] = useState(false);
   const [msg, setMsg] = useState('');
   const [q, setQ] = useState('');
+  const [editing, setEditing] = useState<Score | null>(null);
   const match = (sc: Score) => {
     const t = q.trim().toLowerCase();
     if (!t) return true;
@@ -260,9 +262,11 @@ export function PracticePage() {
               <span className="pr-t">{s.title}</span>
               <span className="pr-s">{s.bpm} BPM · {s.measures} ห้อง</span>
             </button>
+            <button type="button" className="icon-btn sm" aria-label={'แก้ไขโน้ต ' + s.title} title="แก้ไขโน้ต" onClick={() => { stop(); setEditing(s); }}>✎</button>
             <button type="button" className="icon-btn sm" aria-label={'ลบ ' + s.title} onClick={() => { if (confirm(`ลบ "${s.title}"?`)) { stop(); setImported((x) => x.filter((y) => y.id !== s.id)); } }}><Trash /></button>
           </div>
         ))}
+        <button type="button" className="btn sm primary" style={{ margin: '6px 4px 0' }} onClick={() => { stop(); setEditing(newScore()); }}><Plus /> สร้างเพลงใหม่ (ใส่โน้ตเอง)</button>
         <button type="button" className="btn sm" style={{ margin: '6px 4px' }} onClick={() => fileRef.current?.click()}><Upload /> นำเข้า MIDI / MusicXML</button>
         <input ref={fileRef} type="file" accept=".mid,.midi,.musicxml,.xml" multiple hidden onChange={(e) => { void onImport(e.target.files); e.target.value = ''; }} />
         {msg && <span className="faint" style={{ fontSize: 12, padding: '0 8px' }} role="status">{msg}</span>}
@@ -271,6 +275,18 @@ export function PracticePage() {
         </p>
       </aside>
 
+      {editing ? (
+        <ScoreEditor
+          key={editing.id}
+          initial={editing}
+          onCancel={() => setEditing(null)}
+          onSave={(sc) => {
+            setImported((list) => (list.some((x) => x.id === sc.id) ? list.map((x) => (x.id === sc.id ? sc : x)) : [...list, sc]));
+            setScoreId(sc.id);
+            setMsg(`บันทึก “${sc.title}” แล้ว`);
+          }}
+        />
+      ) : (
       <section className="pr-main">
         <div className="pr-transport">
           <button type="button" className={'btn play-btn' + (playing ? '' : ' primary')} onClick={() => (playing ? stop() : start())} aria-label={playing ? 'หยุด' : 'เล่น'}>
@@ -350,6 +366,7 @@ export function PracticePage() {
           )}
         </div>
       </section>
+      )}
     </main>
   );
 }
