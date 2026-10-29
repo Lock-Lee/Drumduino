@@ -221,14 +221,17 @@ export function Notation({
         beamGroups.push(voiceBeams);
       }
 
-      new Formatter().joinVoices(voices).format(voices, stave.getNoteEndX() - stave.getNoteStartX() - 12);
-      voices.forEach((v) => v.draw(ctx, stave));
+      // Beams must exist before the notes are drawn, otherwise every beamed note also draws its own flag.
       const beamGroup = compound ? [new Fraction(3, 8)] : [new Fraction(1, score.sig[1] === 8 ? 8 : 4)];
+      const beams: Beam[] = [];
       beamGroups.forEach((ns) => {
         const real = ns.filter((n) => !n.isRest());
         if (real.length < 2) return;
-        Beam.generateBeams(ns, { groups: beamGroup, maintain_stem_directions: true, beam_rests: false }).forEach((b) => b.setContext(ctx).draw());
+        beams.push(...Beam.generateBeams(ns, { groups: beamGroup, maintain_stem_directions: true, beam_rests: false }));
       });
+      new Formatter().joinVoices(voices).format(voices, stave.getNoteEndX() - stave.getNoteStartX() - 12);
+      voices.forEach((v) => v.draw(ctx, stave));
+      beams.forEach((b) => b.setContext(ctx).draw());
       for (const t of tuplets) {
         const xa = t.notes[0].getAbsoluteX();
         const xb = t.notes[t.notes.length - 1].getAbsoluteX() + 12;
