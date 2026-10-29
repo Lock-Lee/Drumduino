@@ -24,7 +24,6 @@ function lineOf(key: string): number {
   const d = parseInt(oct, 10) * 7 + STEPS.indexOf(step);
   return 3 + (d - (4 * 7 + 6)) / 2;
 }
-const isDown = (n: ScoreNote) => n.pad === 'kick' || (n.pad === 'hihat' && n.art === 'pedal');
 
 export interface NoteMark {
   status: 'ok' | 'early' | 'late' | 'miss';
@@ -134,9 +133,18 @@ export function Notation({
       const beamGroups: StaveNote[][] = [];
       const placed: { sn: StaveNote; tick: number; members: { i: number; key: string }[] }[] = [];
 
-      for (const down of [false, true]) {
-        const vn = items.filter((it) => isDown(it.n) === down);
-        if (down && vn.length === 0) continue; // feet voice only when needed
+      // One voice, stems up, every instrument on the same stem (the usual published drum-sheet style).
+      // An empty bar gets a single whole-bar rest.
+      if (items.length === 0) {
+        const wr = new StaveNote({ clef: 'percussion', keys: ['b/4'], duration: 'wr', align_center: true });
+        const v = new Voice({ num_beats: score.sig[0], beat_value: score.sig[1] }).setMode(Voice.Mode.SOFT);
+        v.addTickables([wr]);
+        voices.push(v);
+        anchors.push({ tick: base, x: -1 });
+        placed.push({ sn: wr, tick: base, members: [] });
+      }
+      for (const down of items.length ? [false] : []) {
+        const vn = items;
         const tickables: StaveNote[] = [];
         const voiceBeams: StaveNote[] = [];
         for (let g = 0; g < groups; g++) {
