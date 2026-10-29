@@ -88,8 +88,7 @@ def write_models(d):
     os.makedirs(d, exist_ok=True)
     # Rean / Neutrik NRJ6HF, footprint frame: T pad at origin, body x -7.35..16.95, nose 16.95..25.85
     jack = [dict(kind='box', x=(-7.35, 16.95), y=(-2.09, 13.66), z=(0, 12.4), color=BLACK),
-            dict(kind='cyl', x=(16.95, 25.85), y=7.23, z=6.3, r=4.75, color=SILVER),
-            dict(kind='cyl', x=(16.95, 18.6), y=7.23, z=6.3, r=6.0, color=GREY)]
+            dict(kind='cyl', x=(16.95, 25.85), y=7.23, z=6.3, r=4.75, color=SILVER)]
     open(os.path.join(d, 'Jack_6.35mm_Rean_NRJ6HF_simplified.wrl'), 'w').write(vrml(jack))
     # Mega 2560 PRO on female sockets, footprint frame (y down)
     zb = SOCKET_H + HEADER_H

@@ -2,4 +2,3 @@
 # DrumDuino: simplified model for placement / height checks
 Transform { translation 1.8898 -2.2776 2.4409 children Shape { appearance Appearance { material Material { diffuseColor 0.080 0.080 0.090 specularColor 0.2 0.2 0.2 shininess 0.3 } } geometry Box { size 9.5669 6.2008 4.8819 } } }
 Transform { translation 8.4252 -2.8465 2.4803 rotation 0 0 1 1.5708 children Shape { appearance Appearance { material Material { diffuseColor 0.750 0.750 0.780 specularColor 0.2 0.2 0.2 shininess 0.3 } } geometry Cylinder { radius 1.8701 height 3.5039 } } }
-Transform { translation 6.9980 -2.8465 2.4803 rotation 0 0 1 1.5708 children Shape { appearance Appearance { material Material { diffuseColor 0.350 0.350 0.370 specularColor 0.2 0.2 0.2 shininess 0.3 } } geometry Cylinder { radius 2.3622 height 0.6496 } } }
