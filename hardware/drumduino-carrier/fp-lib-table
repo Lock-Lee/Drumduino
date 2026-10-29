@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "drumduino")(type "KiCad")(uri "${KIPRJMOD}/drumduino.pretty")(options "")(descr "DrumDuino"))
+)

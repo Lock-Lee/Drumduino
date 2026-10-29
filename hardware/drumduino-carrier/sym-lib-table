@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "drumduino")(type "KiCad")(uri "${KIPRJMOD}/drumduino.kicad_sym")(options "")(descr "DrumDuino"))
+)
