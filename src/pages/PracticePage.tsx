@@ -5,10 +5,14 @@ import { GROOVES } from '../score/grooves';
 import { importScoreFile, parseMidi, parseMusicXml } from '../score/importers';
 import { Notation } from '../score/Notation';
 import { DrumKit3D } from '../score/DrumKit3D';
+import { backing, loadMetaAll } from '../audio/backing';
+import type { BackingMeta } from '../audio/backing';
+import { BackingPanel } from './BackingPanel';
 import type { NoteMark } from '../score/Notation';
 import { Player } from '../score/player';
 import type { DrumsMode, Expected } from '../score/player';
 import type { PadId, Score } from '../score/types';
+import { PPQ } from '../score/types';
 import { PAD_LABEL } from '../score/types';
 import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
 import { ScoreEditor, newScore } from './ScoreEditor';
@@ -119,6 +123,23 @@ export function PracticePage() {
     setLast(null);
   }, [score]);
 
+  // ---- backing track (the user's recording of the song) ----
+  const [bkMeta, setBkMeta] = useState<BackingMeta | null>(null);
+  const bkRef = useRef(bkMeta);
+  bkRef.current = bkMeta;
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
+  const bpmRef = useRef(bpm);
+  bpmRef.current = bpm;
+  useEffect(() => {
+    const m = loadMetaAll()[score.id] ?? null;
+    setBkMeta(m);
+    if (m) void backing.load(score.id);
+    else backing.unload();
+  }, [score.id]);
+  useEffect(() => backing.setVolume(bkMeta?.volume ?? 0), [bkMeta?.volume]);
+  useEffect(() => () => backing.pause(), []);
+
   // ---- judging ----
   const expected = useRef<(Expected & { done: boolean })[]>([]);
   const tickRef = useRef<number | null>(null);
@@ -181,6 +202,9 @@ export function PracticePage() {
     const loopFn = () => {
       raf = requestAnimationFrame(loopFn);
       tickRef.current = player.currentTick();
+      const bk = bkRef.current;
+      const sc = scoreRef.current;
+      if (bk && backing.loadedId === sc.id) backing.follow(bk.offset + (tickRef.current * 60) / (PPQ * sc.bpm), bpmRef.current / sc.bpm);
       const now = engine.ctx.currentTime - prefsRef.current.latency / 1000;
       const keep: typeof expected.current = [];
       for (const e of expected.current) {
@@ -196,7 +220,10 @@ export function PracticePage() {
       expected.current = keep;
     };
     raf = requestAnimationFrame(loopFn);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      backing.pause();
+    };
   }, [playing, player, mark]);
 
   const drums = (p: Prefs): DrumsMode => (p.mode === 'listen' ? 'full' : p.guide ? 'guide' : 'off');
@@ -379,6 +406,8 @@ export function PracticePage() {
             </span>
           </div>
         </div>
+
+        <BackingPanel score={score} meta={bkMeta} setMeta={setBkMeta} playing={playing} stopPlayer={stop} />
 
         <div className="pr-sheet-scroll">
           <div className="pr-sheet-head">
