@@ -14,7 +14,12 @@ export interface BackingMeta {
   volume: number;
   /** the recording's own tempo, found by auto-align (the score's tempo when unset) */
   songBpm?: number;
+  /** version of the aligner that set offset/songBpm (older results get redone automatically) */
+  alignV?: number;
 }
+
+/** bump when the aligner improves: saved results from older versions are recomputed once */
+export const ALIGN_VERSION = 2;
 
 const META_KEY = 'drumduino.backing.v1';
 const DB = 'drumduino-backing';

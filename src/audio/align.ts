@@ -111,6 +111,53 @@ function estimateTempo(d: Float32Array, scoreBpm: number): number {
   return best;
 }
 
+/** how busy/loud the recording is, every 0.1 s: log high-band energy, smoothed over 2 s, zero mean, unit variance */
+function busyCurve(x: Float32Array, sr: number): Float32Array {
+  const hop = sr * 0.1;
+  const n = Math.floor(x.length / hop) - 1;
+  const e = new Float32Array(n);
+  let prev = 0;
+  for (let f = 0; f < n; f++) {
+    let s = 0;
+    for (let i = Math.round(f * hop), end = Math.round((f + 1) * hop); i < end; i++) {
+      const dd = x[i] - prev;
+      prev = x[i];
+      s += dd * dd;
+    }
+    e[f] = Math.log(1e-7 + s / hop);
+  }
+  return zSmooth(e, 10);
+}
+/** the score's note weight per 0.1 s from measure 1 at `bpm`, smoothed the same way */
+function densityCurve(ev: { beat: Float64Array; w: Float32Array }, bpm: number): Float32Array {
+  const last = ev.beat.length ? ev.beat[ev.beat.length - 1] : 0;
+  const n = Math.ceil(((last + 4) * 60) / bpm / 0.1);
+  const a = new Float32Array(n);
+  for (let i = 0; i < ev.beat.length; i++) {
+    const k = Math.floor((ev.beat[i] * 60) / bpm / 0.1);
+    if (k < n) a[k] += ev.w[i];
+  }
+  return zSmooth(a, 10);
+}
+function zSmooth(a: Float32Array, half: number): Float32Array {
+  const n = a.length;
+  const c = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) c[i + 1] = c[i] + a[i];
+  const o = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const s = Math.max(0, i - half), e = Math.min(n, i + half + 1);
+    o[i] = (c[e] - c[s]) / (e - s);
+  }
+  let m = 0;
+  for (const v of o) m += v;
+  m /= n || 1;
+  let v2 = 0;
+  for (const v of o) v2 += (v - m) ** 2;
+  const sd = Math.sqrt(v2 / (n || 1)) || 1;
+  for (let i = 0; i < n; i++) o[i] = (o[i] - m) / sd;
+  return o;
+}
+
 export async function alignScore(mono: Float32Array, sr: number, score: Score, progress?: (p: number) => void): Promise<AlignResult> {
   const pause = () => new Promise((r) => setTimeout(r, 0));
   const d = onsetCurve(mono, sr);
@@ -122,7 +169,11 @@ export async function alignScore(mono: Float32Array, sr: number, score: Score, p
   // Over a whole song a 0.1 BPM error already smears the hits, so the tempo has to be searched too.
   const loud = events({ ...score, notes: score.notes.filter((q) => q.pad === 'kick' || q.pad === 'snare' || q.pad === 'crash') });
   const head = loud.beat.length > 40 ? loud : all;
-  const steps = Math.max(1, Math.floor((dur - 2) / (2 * HOP)));
+  // the score must end inside the file (two measures of slack for a fade or a clipped ending)
+  const lastBeat = all.beat.length ? all.beat[all.beat.length - 1] : 0;
+  const barBeats = (4 * score.sig[0]) / score.sig[1];
+  const maxOffset = (bpm: number) => dur - ((lastBeat - 2 * barBeats) * 60) / bpm;
+  const steps = Math.max(1, Math.floor(Math.max(1, maxOffset(B0) + 0.5) / (2 * HOP)));
   const tempos: number[] = [];
   for (let bpm = B0 * 0.996; bpm <= B0 * 1.004; bpm += 0.03) tempos.push(bpm);
   const cand: { o: number; bpm: number; s: number }[] = [];
@@ -148,6 +199,24 @@ export async function alignScore(mono: Float32Array, sr: number, score: Score, p
     if (picks.length >= 5) break;
   }
 
+  // plus the place where the song's loud/busy parts line up with the score's busy parts:
+  // pure onset matching can lock onto a repeat of a chorus 8–16 measures away
+  const env = busyCurve(mono, sr);
+  const dens = densityCurve(all, B0);
+  let st = { o: 0, c: -Infinity };
+  const kMax = Math.max(1, Math.floor(maxOffset(B0) / 0.1));
+  for (let k = 0; k <= kMax; k++) {
+    let c = 0;
+    for (let j = 0; j < dens.length; j++) {
+      const i = k + j;
+      if (i < env.length) c += env[i] * dens[j];
+    }
+    if (c > st.c) st = { o: k * 0.1, c };
+  }
+  const barSec = (barBeats * 60) / B0;
+  for (let o = st.o - 0.6 * barSec; o <= st.o + 0.6 * barSec; o += 0.25) if (o >= 0) picks.push({ o, bpm: B0, s: 0 });
+  await pause();
+
   // refine each candidate on the full score over the whole tempo window (the coarse grid can land
   // a little off the sharp tempo peak, which also shifts its best offset by a few tenths)
   let best = { offset: 0, bpm: B0, s: -1 };
@@ -155,7 +224,7 @@ export async function alignScore(mono: Float32Array, sr: number, score: Score, p
     const c = picks[pi];
     for (let bpm = B0 * 0.996; bpm <= B0 * 1.004; bpm += 0.01) {
       for (let o = c.o - 0.3; o <= c.o + 0.3; o += HOP) {
-        if (o < 0) continue;
+        if (o < 0 || o > maxOffset(bpm)) continue;
         const s = fit(d, all, o, bpm);
         if (s > best.s) best = { offset: o, bpm, s };
       }

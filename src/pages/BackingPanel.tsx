@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { autoAlign, backing, deleteFile, putFile, saveMeta } from '../audio/backing';
+import { ALIGN_VERSION, autoAlign, backing, deleteFile, putFile, saveMeta } from '../audio/backing';
 import type { BackingMeta } from '../audio/backing';
 import { engine } from '../audio/engine';
 import type { Score } from '../score/types';
@@ -42,10 +42,10 @@ export function BackingPanel({ score, meta, setMeta, playing, stopPlayer, onTemp
     try {
       const r = await autoAlign(score, (p) => setBusy(p));
       if (!r) return;
-      const m = { ...base, offset: r.offset, songBpm: r.bpm };
+      const m = { ...base, offset: r.offset, songBpm: r.bpm, alignV: ALIGN_VERSION };
       update(m);
       onTempo(r.bpm);
-      setMsg(r.confidence >= 2.5
+      setMsg(r.confidence >= 1.5
         ? 'จับจังหวะให้แล้ว กดเล่นได้เลย'
         : 'จับจังหวะให้แล้ว แต่ไม่ค่อยมั่นใจ ลองกดเล่นฟัง ถ้ายังไม่ตรงให้กด “ปรับเอง”');
     } catch (e) {
@@ -88,7 +88,7 @@ export function BackingPanel({ score, meta, setMeta, playing, stopPlayer, onTemp
   // files added before auto-align existed: line them up once, by themselves
   const tried = useRef('');
   useEffect(() => {
-    if (meta && meta.songBpm === undefined && busy === null && tried.current !== score.id) {
+    if (meta && (meta.songBpm === undefined || (meta.alignV ?? 1) < ALIGN_VERSION) && busy === null && tried.current !== score.id) {
       tried.current = score.id;
       void runAlign(meta);
     }
