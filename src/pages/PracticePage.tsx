@@ -12,7 +12,7 @@ import type { NoteMark } from '../score/Notation';
 import { Player } from '../score/player';
 import type { DrumsMode, Expected } from '../score/player';
 import type { PadId, Score } from '../score/types';
-import { PPQ } from '../score/types';
+import { PPQ, ticksPerMeasure } from '../score/types';
 import { PAD_LABEL } from '../score/types';
 import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
 import { ScoreEditor, newScore } from './ScoreEditor';
@@ -149,15 +149,36 @@ export function PracticePage() {
     setMarks((m) => new Map(m).set(idx, { status }));
   }, []);
 
+  // after the last measure a backing track keeps playing to its own end ("tail")
+  const [tail, setTail] = useState(false);
+  const tailRef = useRef(false);
+  tailRef.current = tail;
+  const onEndRef = useRef<() => void>(() => undefined);
+  const toEndRef = useRef(false);
+  onEndRef.current = () => {
+    tickRef.current = null;
+    if (toEndRef.current && bkRef.current && backing.loadedId === scoreRef.current.id && !backing.el.paused && !backing.el.ended) {
+      setTail(true);
+      return;
+    }
+    setPlaying(false);
+  };
+  useEffect(() => {
+    const ended = () => {
+      if (!tailRef.current) return;
+      setTail(false);
+      setPlaying(false);
+    };
+    backing.el.addEventListener('ended', ended);
+    return () => backing.el.removeEventListener('ended', ended);
+  }, []);
+
   const player = useMemo(
     () =>
       new Player(
         (id: PadId) => kitRef.current.pads.find((p) => p.id === id),
         (e) => expected.current.push({ ...e, done: false }),
-        () => {
-          setPlaying(false);
-          tickRef.current = null;
-        },
+        () => onEndRef.current(),
         (p) => {
           setPass(p);
           setMarks(new Map());
@@ -202,6 +223,7 @@ export function PracticePage() {
     let raf = 0;
     const loopFn = () => {
       raf = requestAnimationFrame(loopFn);
+      if (tailRef.current) return;
       tickRef.current = player.currentTick();
       const bk = bkRef.current;
       const sc = scoreRef.current;
@@ -240,11 +262,20 @@ export function PracticePage() {
     setLast(null);
     setPass(0);
     const to = Math.max(from + 1, range[1]);
-    player.start(score, { bpm, from, to, loop, countIn: prefs.countIn, metronome: prefs.metronome, drums: drums(prefs) });
+    // with a backing track, starting from measure 1 plays the song's intro first
+    const bk = bkMeta && backing.loadedId === score.id ? bkMeta : null;
+    const songBpm = bk?.songBpm ?? score.bpm;
+    const countInSec = prefs.countIn ? (ticksPerMeasure(score) * 60) / (PPQ * bpm) : 0;
+    const leadIn = bk && from === 0 ? Math.max(0, (bk.offset * songBpm) / bpm - countInSec) : 0;
+    setTail(false);
+    toEndRef.current = to >= score.measures;
+    player.start(score, { bpm, from, to, loop, countIn: prefs.countIn, metronome: prefs.metronome, drums: drums(prefs), leadIn });
     setPlaying(true);
   };
   const stop = () => {
     player.stop();
+    backing.pause();
+    setTail(false);
     setPlaying(false);
     tickRef.current = null;
   };

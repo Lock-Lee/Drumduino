@@ -15,6 +15,8 @@ export interface PlayerOptions {
   countIn: boolean;
   metronome: boolean;
   drums: DrumsMode;
+  /** seconds of silence before the count-in / measure 1 (lets a backing track play its intro) */
+  leadIn?: number;
 }
 
 /** A note as scheduled: when it should be hit (AudioContext time). Used for judging. */
@@ -74,7 +76,7 @@ export class Player {
     this.opt = opt;
     const { start, tpm } = this.range();
     const beatTicks = (PPQ * 4) / score.sig[1];
-    let t0 = engine.ctx.currentTime + 0.12;
+    let t0 = engine.ctx.currentTime + 0.12 + Math.max(0, opt.leadIn ?? 0);
     if (opt.countIn) {
       const beats = tpm / beatTicks;
       for (let b = 0; b < beats; b++) engine.click(t0 + b * beatTicks * this.spt, b === 0, 0.8);
