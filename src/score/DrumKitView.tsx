@@ -3,6 +3,8 @@ import { engine } from '../audio/engine';
 import type { Kit } from '../types';
 import type { PadId } from './types';
 import { PAD_LABEL } from './types';
+import { createSticking } from './sticking';
+import type { Hand, HandPad } from './sticking';
 
 /**
  * A drawn drum kit for the practice page. Every hit the engine reports (the app playing the score,
@@ -11,7 +13,6 @@ import { PAD_LABEL } from './types';
  * Animations run imperatively (Web Animations API) so fast 16ths never re-render React.
  */
 
-type Hand = 'L' | 'R';
 interface Spot { x: number; y: number; hand: Hand; cym?: boolean }
 
 // stick-tip contact points in the SVG (viewBox 0 0 640 250)
@@ -28,10 +29,6 @@ const SPOT: Record<Exclude<PadId, 'kick'>, Spot> = {
 const HAND_BASE: Record<Hand, { x: number; y: number }> = { L: { x: 250, y: 330 }, R: { x: 400, y: 330 } };
 const IDLE: Record<Hand, Exclude<PadId, 'kick'>> = { L: 'snare', R: 'hihat' };
 const STICK = 170;
-type HandPad = Exclude<PadId, 'kick'>;
-const CYM = new Set<HandPad>(['hihat', 'ride', 'crash']);
-// who gets the right hand when two pads are hit together
-const RANK: Record<HandPad, number> = { ride: 7, hihat: 6, crash: 5, floor: 4, tom2: 3, tom1: 2, snare: 1 };
 
 function pose(tip: { x: number; y: number }, hand: Hand, lift: number) {
   const b = HAND_BASE[hand];
@@ -85,46 +82,8 @@ export function DrumKitView({ kit }: { kit: Kit }) {
       s.animate([{ transform: pose(spot, hand, 0) }, { transform: pose(spot, hand, up) }], { duration: 170, easing: 'cubic-bezier(.2,.7,.3,1)' });
     };
 
-    // ---- sticking: which hand plays each note ----
-    // Notes that arrive together are played by both hands (the pad further "right" in the
-    // drummer's sense — ride, hi-hat, crash … — goes to the right hand). A note that follows the
-    // previous one quickly alternates hands (R L R L), like a real roll, fill or 16th hi-hat;
-    // after a pause the natural hand leads: cymbals with the right, a fill with the right,
-    // a snare under a right-hand groove with the left.
-    let prev = { hand: 'R' as Hand, t: -1e9 };
-    let lastCymR = -1e9;
-    let batch: { id: HandPad; v: number }[] = [];
-    let timer = 0;
-    const flush = () => {
-      timer = 0;
-      const t = performance.now() / 1000;
-      const notes = batch.sort((a, b) => RANK[b.id] - RANK[a.id]);
-      batch = [];
-      const assign = (hand: Hand, n: { id: HandPad; v: number }) => {
-        swing(hand, n.id, n.v);
-        if (hand === 'R' && CYM.has(n.id)) lastCymR = t;
-      };
-      if (notes.length >= 2) {
-        assign('R', notes[0]);
-        assign('L', notes[1]);
-        prev = { hand: 'R', t };
-        return;
-      }
-      const n = notes[0];
-      if (!n) return;
-      const gap = t - prev.t;
-      let hand: Hand;
-      if (gap < (CYM.has(n.id) ? 0.13 : 0.26)) hand = prev.hand === 'R' ? 'L' : 'R';
-      else if (CYM.has(n.id)) hand = 'R';
-      else if (n.id === 'snare' || n.id === 'tom1') hand = t - lastCymR < 0.5 ? 'L' : 'R';
-      else hand = 'R';
-      assign(hand, n);
-      prev = { hand, t };
-    };
-    const strike = (id: HandPad, v: number) => {
-      batch.push({ id, v });
-      if (!timer) timer = window.setTimeout(flush, 8);
-    };
+    const sticking = createSticking(swing);
+    const strike = (id: HandPad, v: number) => sticking.push(id, v);
 
     const foot = (which: 'kick' | 'hhpedal', v: number) => {
       const el = q<SVGGElement>(`[data-foot=${which}]`);
@@ -151,7 +110,7 @@ export function DrumKitView({ kit }: { kit: Kit }) {
     });
     return () => {
       off();
-      window.clearTimeout(timer);
+      sticking.dispose();
     };
   }, []);
 

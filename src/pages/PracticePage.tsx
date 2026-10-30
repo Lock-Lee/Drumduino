@@ -4,7 +4,7 @@ import { engine } from '../audio/engine';
 import { GROOVES } from '../score/grooves';
 import { importScoreFile, parseMidi, parseMusicXml } from '../score/importers';
 import { Notation } from '../score/Notation';
-import { DrumKitView } from '../score/DrumKitView';
+import { DrumKit3D } from '../score/DrumKit3D';
 import type { NoteMark } from '../score/Notation';
 import { Player } from '../score/player';
 import type { DrumsMode, Expected } from '../score/player';
@@ -403,7 +403,7 @@ export function PracticePage() {
 
         {prefs.kitView && (
           <div className="pr-kitview">
-            <DrumKitView kit={kit} />
+            <DrumKit3D kit={kit} />
           </div>
         )}
 
