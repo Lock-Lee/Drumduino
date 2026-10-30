@@ -28,6 +28,10 @@ const SPOT: Record<Exclude<PadId, 'kick'>, Spot> = {
 const HAND_BASE: Record<Hand, { x: number; y: number }> = { L: { x: 250, y: 330 }, R: { x: 400, y: 330 } };
 const IDLE: Record<Hand, Exclude<PadId, 'kick'>> = { L: 'snare', R: 'hihat' };
 const STICK = 170;
+type HandPad = Exclude<PadId, 'kick'>;
+const CYM = new Set<HandPad>(['hihat', 'ride', 'crash']);
+// who gets the right hand when two pads are hit together
+const RANK: Record<HandPad, number> = { ride: 7, hihat: 6, crash: 5, floor: 4, tom2: 3, tom1: 2, snare: 1 };
 
 function pose(tip: { x: number; y: number }, hand: Hand, lift: number) {
   const b = HAND_BASE[hand];
@@ -48,7 +52,6 @@ export function DrumKitView({ kit }: { kit: Kit }) {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     const q = <T extends Element>(sel: string) => svg.querySelector(sel) as T | null;
     const stick: Record<Hand, SVGGElement | null> = { L: q('[data-stick=L]'), R: q('[data-stick=R]') };
-    const last: Record<Hand, { t: number; pad: string }> = { L: { t: 0, pad: IDLE.L }, R: { t: 0, pad: IDLE.R } };
     for (const h of ['L', 'R'] as Hand[]) {
       const s = stick[h];
       if (s) s.style.transform = pose(SPOT[IDLE[h]], h, 34);
@@ -69,14 +72,8 @@ export function DrumKitView({ kit }: { kit: Kit }) {
       );
     };
 
-    const strike = (id: Exclude<PadId, 'kick'>, v: number) => {
+    const swing = (hand: Hand, id: HandPad, v: number) => {
       const spot = SPOT[id];
-      const now = performance.now();
-      const other: Hand = spot.hand === 'L' ? 'R' : 'L';
-      // the preferred hand is still busy (fast roll / two pads at once) → use the other one
-      let hand: Hand = spot.hand;
-      if (now - last[hand].t < 95 && now - last[other].t >= 95) hand = other;
-      last[hand] = { t: now, pad: id };
       const s = stick[hand];
       if (!s) return;
       const up = 20 + 26 * (v / 127);
@@ -85,7 +82,48 @@ export function DrumKitView({ kit }: { kit: Kit }) {
         return;
       }
       s.style.transform = pose(spot, hand, up);
-      s.animate([{ transform: pose(spot, hand, 0) }, { transform: pose(spot, hand, up) }], { duration: 190, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      s.animate([{ transform: pose(spot, hand, 0) }, { transform: pose(spot, hand, up) }], { duration: 170, easing: 'cubic-bezier(.2,.7,.3,1)' });
+    };
+
+    // ---- sticking: which hand plays each note ----
+    // Notes that arrive together are played by both hands (the pad further "right" in the
+    // drummer's sense — ride, hi-hat, crash … — goes to the right hand). A note that follows the
+    // previous one quickly alternates hands (R L R L), like a real roll, fill or 16th hi-hat;
+    // after a pause the natural hand leads: cymbals with the right, a fill with the right,
+    // a snare under a right-hand groove with the left.
+    let prev = { hand: 'R' as Hand, t: -1e9 };
+    let lastCymR = -1e9;
+    let batch: { id: HandPad; v: number }[] = [];
+    let timer = 0;
+    const flush = () => {
+      timer = 0;
+      const t = performance.now() / 1000;
+      const notes = batch.sort((a, b) => RANK[b.id] - RANK[a.id]);
+      batch = [];
+      const assign = (hand: Hand, n: { id: HandPad; v: number }) => {
+        swing(hand, n.id, n.v);
+        if (hand === 'R' && CYM.has(n.id)) lastCymR = t;
+      };
+      if (notes.length >= 2) {
+        assign('R', notes[0]);
+        assign('L', notes[1]);
+        prev = { hand: 'R', t };
+        return;
+      }
+      const n = notes[0];
+      if (!n) return;
+      const gap = t - prev.t;
+      let hand: Hand;
+      if (gap < (CYM.has(n.id) ? 0.13 : 0.26)) hand = prev.hand === 'R' ? 'L' : 'R';
+      else if (CYM.has(n.id)) hand = 'R';
+      else if (n.id === 'snare' || n.id === 'tom1') hand = t - lastCymR < 0.5 ? 'L' : 'R';
+      else hand = 'R';
+      assign(hand, n);
+      prev = { hand, t };
+    };
+    const strike = (id: HandPad, v: number) => {
+      batch.push({ id, v });
+      if (!timer) timer = window.setTimeout(flush, 8);
     };
 
     const foot = (which: 'kick' | 'hhpedal', v: number) => {
@@ -95,7 +133,7 @@ export function DrumKitView({ kit }: { kit: Kit }) {
       el.animate([{ transform: `rotate(${a}deg)` }, { transform: 'rotate(0deg)' }], { duration: 200, easing: 'ease-out' });
     };
 
-    return engine.onHit((padId, v, zone) => {
+    const off = engine.onHit((padId, v, zone) => {
       const id = padId as PadId;
       if (id === 'kick') {
         flash('kick', v);
@@ -109,8 +147,12 @@ export function DrumKitView({ kit }: { kit: Kit }) {
         return;
       }
       flash(id, v);
-      strike(id as Exclude<PadId, 'kick'>, v);
+      strike(id as HandPad, v);
     });
+    return () => {
+      off();
+      window.clearTimeout(timer);
+    };
   }, []);
 
   const hit = (id: PadId) => {
