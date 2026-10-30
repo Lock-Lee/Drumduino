@@ -2,6 +2,9 @@
 // Audio files live in IndexedDB (one per score id); offset/volume live in localStorage.
 // Playback goes through an <audio> element so slowing the tempo keeps the pitch (preservesPitch).
 import { engine } from './engine';
+import { alignScore } from './align';
+import type { AlignResult } from './align';
+import type { Score } from '../score/types';
 
 export interface BackingMeta {
   name: string;
@@ -9,6 +12,8 @@ export interface BackingMeta {
   offset: number;
   /** 0–100 */
   volume: number;
+  /** the recording's own tempo, found by auto-align (the score's tempo when unset) */
+  songBpm?: number;
 }
 
 const META_KEY = 'drumduino.backing.v1';
@@ -137,3 +142,16 @@ class BackingPlayer {
 }
 
 export const backing = new BackingPlayer();
+
+/** Decode the stored file and find where the score starts in it. */
+export async function autoAlign(score: Score, progress?: (p: number) => void): Promise<AlignResult | null> {
+  const blob = await getFile(score.id);
+  if (!blob) return null;
+  const buf = await engine.ctx.decodeAudioData(await blob.arrayBuffer());
+  const mono = new Float32Array(buf.length);
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const ch = buf.getChannelData(c);
+    for (let i = 0; i < ch.length; i++) mono[i] += ch[i] / buf.numberOfChannels;
+  }
+  return alignScore(mono, buf.sampleRate, score, progress);
+}

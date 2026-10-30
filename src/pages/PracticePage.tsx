@@ -134,6 +134,7 @@ export function PracticePage() {
   useEffect(() => {
     const m = loadMetaAll()[score.id] ?? null;
     setBkMeta(m);
+    if (m?.songBpm) setBpm(Math.round(m.songBpm * 100) / 100);
     if (m) void backing.load(score.id);
     else backing.unload();
   }, [score.id]);
@@ -204,7 +205,11 @@ export function PracticePage() {
       tickRef.current = player.currentTick();
       const bk = bkRef.current;
       const sc = scoreRef.current;
-      if (bk && backing.loadedId === sc.id) backing.follow(bk.offset + (tickRef.current * 60) / (PPQ * sc.bpm), bpmRef.current / sc.bpm);
+      if (bk && backing.loadedId === sc.id) {
+        // the score is played at bpmRef; the recording runs at songBpm when played at rate 1
+        const songBpm = bk.songBpm ?? sc.bpm;
+        backing.follow(bk.offset + (tickRef.current * 60) / (PPQ * songBpm), bpmRef.current / songBpm);
+      }
       const now = engine.ctx.currentTime - prefsRef.current.latency / 1000;
       const keep: typeof expected.current = [];
       for (const e of expected.current) {
@@ -375,7 +380,7 @@ export function PracticePage() {
             <label htmlFor="bpm" className="label">ความเร็ว</label>
             <input id="bpm" type="range" min={30} max={240} value={bpm} onChange={(e) => setBpm(Number(e.target.value))} />
             <input className="num" type="number" min={30} max={240} value={bpm} aria-label="BPM" onChange={(e) => setBpm(Math.max(30, Math.min(240, Number(e.target.value) || score.bpm)))} />
-            <button type="button" className="btn sm ghost" onClick={() => setBpm(score.bpm)} title="ความเร็วเดิมของเพลง">{score.bpm}</button>
+            <button type="button" className="btn sm ghost" onClick={() => setBpm(bkMeta?.songBpm ? Math.round(bkMeta.songBpm * 100) / 100 : score.bpm)} title="ความเร็วเดิมของเพลง">{bkMeta?.songBpm ? bkMeta.songBpm.toFixed(1) : score.bpm}</button>
           </div>
           <div className="pr-kit">
             <label htmlFor="prkit" className="label">ชุดกลอง</label>
@@ -407,7 +412,7 @@ export function PracticePage() {
           </div>
         </div>
 
-        <BackingPanel score={score} meta={bkMeta} setMeta={setBkMeta} playing={playing} stopPlayer={stop} />
+        <BackingPanel score={score} meta={bkMeta} setMeta={setBkMeta} playing={playing} stopPlayer={stop} onTempo={(b) => setBpm(Math.round(b * 100) / 100)} />
 
         <div className="pr-sheet-scroll">
           <div className="pr-sheet-head">
