@@ -4,6 +4,7 @@ import { engine } from '../audio/engine';
 import { GROOVES } from '../score/grooves';
 import { importScoreFile, parseMidi, parseMusicXml } from '../score/importers';
 import { Notation } from '../score/Notation';
+import { DrumKitView } from '../score/DrumKitView';
 import type { NoteMark } from '../score/Notation';
 import { Player } from '../score/player';
 import type { DrumsMode, Expected } from '../score/player';
@@ -33,7 +34,7 @@ function saveJSON(k: string, v: unknown) {
 }
 
 type Mode = 'listen' | 'practice';
-interface Prefs { mode: Mode; guide: boolean; metronome: boolean; countIn: boolean; latency: number }
+interface Prefs { mode: Mode; guide: boolean; metronome: boolean; countIn: boolean; latency: number; kitView: boolean }
 
 const WIN = { ok: 0.04, judge: 0.15 };
 
@@ -85,7 +86,7 @@ export function PracticePage() {
   const [scoreId, setScoreId] = useState(GROOVES[GROOVES.length - 1].id);
   const score = all.find((s) => s.id === scoreId) ?? GROOVES[0];
 
-  const [prefs, setPrefs] = useState<Prefs>(() => ({ mode: 'listen', guide: false, metronome: true, countIn: true, latency: 0, ...loadJSON(PREFS_KEY, {}) }));
+  const [prefs, setPrefs] = useState<Prefs>(() => ({ mode: 'listen', guide: false, metronome: true, countIn: true, latency: 0, kitView: true, ...loadJSON(PREFS_KEY, {}) }));
   useEffect(() => saveJSON(PREFS_KEY, prefs), [prefs]);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
@@ -368,6 +369,7 @@ export function PracticePage() {
             <label><input type="checkbox" checked={prefs.countIn} onChange={(e) => setPrefs((p) => ({ ...p, countIn: e.target.checked }))} /> นับจังหวะก่อนเริ่ม</label>
             {prefs.mode === 'practice' && <label><input type="checkbox" checked={prefs.guide} onChange={(e) => setPrefs((p) => ({ ...p, guide: e.target.checked }))} /> เปิดเสียงนำเบา ๆ</label>}
             <label><input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> วนซ้ำ</label>
+            <label><input type="checkbox" checked={prefs.kitView} onChange={(e) => setPrefs((p) => ({ ...p, kitView: e.target.checked }))} /> แสดงชุดกลอง</label>
             <span className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
               <span className="faint">ห้อง</span>
               <input className="num" style={{ width: 54 }} type="number" min={1} max={score.measures} value={range[0] + 1} aria-label="เริ่มห้อง" onChange={(e) => { const v = Math.max(1, Math.min(score.measures, Number(e.target.value) || 1)) - 1; setRange(([, b]) => [v, Math.max(v + 1, b)]); }} />
@@ -398,6 +400,12 @@ export function PracticePage() {
             />
           </div>
         </div>
+
+        {prefs.kitView && (
+          <div className="pr-kitview">
+            <DrumKitView kit={kit} />
+          </div>
+        )}
 
         <div className="pr-stats">
           {prefs.mode === 'practice' ? (

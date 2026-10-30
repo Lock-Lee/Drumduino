@@ -325,6 +325,13 @@ html, body, #root { height: 100%; overflow: hidden; }
 .pr-counts { display: flex; flex-wrap: wrap; gap: 6px; }
 .pr-counts .c { font-size: 12.5px; padding: 3px 8px; border-radius: 6px; background: var(--chip); color: var(--text-2); }
 .pr-counts .c.ok { color: #4ADE80; } .pr-counts .c.early { color: #7AA7FF; } .pr-counts .c.late { color: #F2A93B; } .pr-counts .c.miss { color: #FF8A80; }
+.pr-kitview { flex: none; height: clamp(160px, 30vh, 260px); display: flex; justify-content: center; background: radial-gradient(ellipse at 50% 120%, #2a2418 0%, var(--surface) 70%); border: 1px solid var(--line); border-radius: 12px; padding: 6px 8px 2px; }
+.kv { height: 100%; width: auto; max-width: 100%; overflow: visible; touch-action: manipulation; }
+.kv-pad { cursor: pointer; outline: none; }
+.kv-pad:focus-visible ellipse:first-of-type, .kv-pad:focus-visible circle:first-of-type { stroke: var(--accent); stroke-width: 3; }
+.kv-label { font-size: 11px; fill: var(--muted); text-anchor: middle; pointer-events: none; font-family: inherit; }
+.kv-kick { fill: #d9d6cc; font-size: 13px; font-weight: 600; letter-spacing: .04em; opacity: .8; }
+.kv-stick { will-change: transform; }
 .pr-lat { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .pr-lat input { width: 110px; }
 @media (max-width: 900px) { .pr-page { grid-template-columns: 1fr; overflow: visible; } .pr-list { max-height: 200px; } }
