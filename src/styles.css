@@ -375,3 +375,15 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .pr-kit { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .pr-kit select { min-width: 150px; }
+
+/* recording mode (OBS): only the sheet + the 3-D kit fill the small window */
+body.rec-mode .topbar, body.rec-mode .pr-list, body.rec-mode .pr-transport, body.rec-mode .pr-backing, body.rec-mode .pr-stats { display: none !important; }
+body.rec-mode .pr-page { grid-template-columns: minmax(0, 1fr); padding: 0; gap: 0; }
+body.rec-mode .pr-main { gap: 0; height: 100vh; }
+body.rec-mode .pr-sheet-scroll { flex: 0 0 44%; border-radius: 0; border: none; }
+body.rec-mode .pr-sheet-head { padding: 10px 14px 0; }
+body.rec-mode .pr-sheet-head .faint { display: none; }
+body.rec-mode .pr-sheet-head h2 { font-size: 17px; }
+body.rec-mode .pr-kitview { flex: 1 1 auto; height: auto; border-radius: 0; border: none; }
+.rec-exit { position: fixed; top: 8px; right: 8px; z-index: 50; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line-2); background: rgba(20,20,24,.85); color: var(--text); font-size: 12px; opacity: 0; transition: opacity .2s; }
+body.rec-mode:hover .rec-exit, .rec-exit:focus-visible { opacity: 1; }

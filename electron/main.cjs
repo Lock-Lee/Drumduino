@@ -1,5 +1,5 @@
 // DrumDuino — Electron main process
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -99,6 +99,30 @@ function createWindow() {
     if (pendingPortCallback) {
       pendingPortCallback(portId || '');
       pendingPortCallback = null;
+    }
+    return true;
+  });
+
+  // Recording mode: a small fixed-size window (560×720, 7:9) that OBS captures next to the camera.
+  // Keep REC in sync with the crop in obs/setup_obs.py.
+  const REC = { x: 40, y: 110, w: 560, h: 720 };
+  let normalBounds = null;
+  ipcMain.removeHandler('window:recMode');
+  ipcMain.handle('window:recMode', (_e, on) => {
+    if (!mainWindow) return false;
+    if (on) {
+      if (!normalBounds) normalBounds = mainWindow.getBounds();
+      if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false);
+      mainWindow.setMinimumSize(320, 400);
+      // always the same spot on the main display, so OBS can crop it out of an application capture
+      const d = screen.getPrimaryDisplay().bounds;
+      mainWindow.setContentBounds({ x: d.x + REC.x, y: d.y + REC.y, width: REC.w, height: REC.h });
+      mainWindow.setTitle('DrumDuino Rec');
+    } else {
+      mainWindow.setMinimumSize(980, 640);
+      if (normalBounds) mainWindow.setBounds(normalBounds);
+      normalBounds = null;
+      mainWindow.setTitle('DrumDuino');
     }
     return true;
   });

@@ -108,6 +108,7 @@ declare global {
       chooseSerialPort(portId: string): Promise<boolean>;
       listMyScores?(): Promise<{ name: string; key: string; data: string }[]>;
       openScoresFolder?(): Promise<string>;
+      setRecMode?(on: boolean): Promise<boolean>;
     };
   }
 }

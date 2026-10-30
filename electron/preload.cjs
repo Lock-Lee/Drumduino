@@ -16,5 +16,8 @@ contextBridge.exposeInMainWorld('drumduino', {
   },
   openScoresFolder() {
     return ipcRenderer.invoke('scores:openFolder');
+  },
+  setRecMode(on) {
+    return ipcRenderer.invoke('window:recMode', !!on);
   }
 });
