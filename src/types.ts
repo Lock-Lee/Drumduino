@@ -76,7 +76,7 @@ export interface Kit {
   pads: Pad[];
 }
 
-export type SampleSource = 'vd' | 'avl' | 'synth' | 'user';
+export type SampleSource = 'vd' | 'avl' | 'sal' | 'synth' | 'user';
 
 export type SampleCategory = 'kick' | 'snare' | 'hihat' | 'tom' | 'cym' | 'mine';
 

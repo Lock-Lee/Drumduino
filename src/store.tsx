@@ -7,6 +7,7 @@ import { SAMPLE_FIELDS } from './types';
 import { BUILTINS } from './audio/synth';
 import vdKit from './audio/vdKit.json';
 import avlKit from './audio/avlKit.json';
+import salKit from './audio/salKit.json';
 import { engine } from './audio/engine';
 import { deleteSample, putSample } from './audio/sampleDb';
 import { PRESETS } from './kits';
@@ -53,12 +54,13 @@ function defaultState(): Persisted {
 }
 
 type Bundled = { id: string; file: string; name: string; category: SampleMeta['category']; duration: number };
-const bundledList: Bundled[] = [...(vdKit as Bundled[]), ...(avlKit as Bundled[])];
+const bundledList: Bundled[] = [...(vdKit as Bundled[]), ...(avlKit as Bundled[]), ...(salKit as Bundled[])];
 engine.registerBundled(bundledList);
 
 const builtinMeta: SampleMeta[] = [
   ...(vdKit as Bundled[]).map((r) => ({ id: r.id, name: r.name, category: r.category, duration: r.duration, builtin: true, source: 'vd' as const })),
   ...(avlKit as Bundled[]).map((r) => ({ id: r.id, name: r.name, category: r.category, duration: r.duration, builtin: true, source: 'avl' as const })),
+  ...(salKit as Bundled[]).map((r) => ({ id: r.id, name: r.name, category: r.category, duration: r.duration, builtin: true, source: 'sal' as const })),
   ...BUILTINS.map((b) => ({ id: b.id, name: 'Synth ' + b.name, category: b.category, duration: b.seconds, builtin: true, source: 'synth' as const }))
 ];
 

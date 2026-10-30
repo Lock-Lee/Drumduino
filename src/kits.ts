@@ -28,6 +28,10 @@ const vd = (group: string, n: number, pitch = 0) => s(vdIds(group, n), pitch);
 /** AVL Drumkits: 5 velocity layers per piece */
 const avl = (slug: string, pitch = 0, volume = 85) => s(avlIds(slug), pitch, volume);
 
+/** Salamander Drumkit: n velocity layers per piece, soft → hard */
+const salIds = (g: string, n: number) => Array.from({ length: n }, (_, i) => `sal:${g}-${i + 1}`);
+const sal = (g: string, n: number, pitch = 0, volume = 85) => s(salIds(g, n), pitch, volume);
+
 /** tone shaping (dB) */
 const eq = (snd: PadSound, low: number, mid: number, high: number): PadSound => ({ ...snd, tone: { low, mid, high } });
 
@@ -102,6 +106,23 @@ export const PRESETS: Preset[] = [
     }
   },
   {
+    id: 'salamander',
+    name: 'Salamander Garage',
+    description: 'กลองอะคูสติกอัดในโรงรถ เสียงสด ห้องก้องเป็นธรรมชาติ สแนร์ไม้เบิร์ช ฉาบ Paiste ตอบสนองแรงตีหลายระดับ',
+    credit: 'Salamander Drumkit — Alexander Holm / Rytmenpinne (CC BY-SA 3.0)',
+    sounds: {
+      crash: sal('crash', 4, 0, 80),
+      tom1: sal('htom', 6, 1),
+      tom2: sal('htom', 6, -2),
+      ride: rim(sal('ride', 4, 0, 80), salIds('bell', 3)),
+      hihat: { ...hat(salIds('hhclosed', 4), salIds('hhhalf', 3), salIds('hhopen', 3), salIds('hhpedal', 3)), volume: 80 },
+      // soft rim = cross-stick, harder = Virtuosity rimshot (Salamander has none)
+      snare: rim(sal('snare', 8, 0, 88), [...salIds('xstick', 3), ...VD_RIMSHOT]),
+      kick: sal('kick', 6, 0, 95),
+      floor: sal('ftom', 5)
+    }
+  },
+  {
     id: 'synth',
     name: 'Synth Kit',
     description: 'เสียงกลองสังเคราะห์ คล้ายเครื่องตีจังหวะ',
@@ -122,6 +143,7 @@ export const PRESETS: Preset[] = [
 export const SOURCE_LABELS: Record<string, string> = {
   vd: 'Studio Maple',
   avl: 'Black Pearl / Red Zeppelin',
+  sal: 'Salamander Garage',
   synth: 'Synth',
   user: 'นำเข้าเอง'
 };

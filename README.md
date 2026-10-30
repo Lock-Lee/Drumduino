@@ -105,4 +105,7 @@ firmware/        โค้ด Arduino
 - **Black Pearl / Red Zeppelin** — [AVL Drumkits](https://github.com/studiorack/avl-drumkits) โดย Glen MacArthur ([bandshed.net](http://www.bandshed.net/avldrumkits/)),
   ไลเซนส์ [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) — แปลงเป็น OGG สเตอริโอ ตัดหางเสียงเงียบ และแพนตามไฟล์ SFZ ต้นฉบับ
   ไฟล์เสียงชุดนี้ (รวมที่แก้ไขแล้ว) แจกต่อภายใต้ CC BY-SA 3.0 เช่นเดิม (`public/samples/avl/LICENSE-AVL-Drumkits-CC-BY-SA-3.0.txt`)
+- **Salamander Garage** — [Salamander Drumkit](https://github.com/studiorack/salamander-drumkit) โดย Alexander Holm (Rytmenpinne),
+  ไลเซนส์ [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) — เลือก 3–8 ระดับแรงตีต่อชิ้น แปลงเป็น OGG ตัดความยาว และปรับระดับเสียงตามแรงตี
+  ไฟล์ที่แก้ไขแล้วแจกต่อภายใต้ CC BY-SA 3.0 เช่นเดิม (`public/samples/sal/LICENSE-Salamander-Drumkit-CC-BY-SA-3.0.txt`)
 - **Synth Kit** — สร้างขึ้นในแอป

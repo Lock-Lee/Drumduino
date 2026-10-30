@@ -1,0 +1,470 @@
+[
+ {
+  "id": "sal:kick-1",
+  "file": "sal/kick_1.ogg",
+  "name": "Salamander 18\" Kick 1",
+  "category": "kick",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "kick"
+ },
+ {
+  "id": "sal:kick-2",
+  "file": "sal/kick_2.ogg",
+  "name": "Salamander 18\" Kick 2",
+  "category": "kick",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "kick"
+ },
+ {
+  "id": "sal:kick-3",
+  "file": "sal/kick_3.ogg",
+  "name": "Salamander 18\" Kick 3",
+  "category": "kick",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "kick"
+ },
+ {
+  "id": "sal:kick-4",
+  "file": "sal/kick_4.ogg",
+  "name": "Salamander 18\" Kick 4",
+  "category": "kick",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "kick"
+ },
+ {
+  "id": "sal:kick-5",
+  "file": "sal/kick_5.ogg",
+  "name": "Salamander 18\" Kick 5",
+  "category": "kick",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "kick"
+ },
+ {
+  "id": "sal:kick-6",
+  "file": "sal/kick_6.ogg",
+  "name": "Salamander 18\" Kick 6",
+  "category": "kick",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "kick"
+ },
+ {
+  "id": "sal:snare-1",
+  "file": "sal/snare_1.ogg",
+  "name": "Salamander 14x5\" Snare 1",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:snare-2",
+  "file": "sal/snare_2.ogg",
+  "name": "Salamander 14x5\" Snare 2",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:snare-3",
+  "file": "sal/snare_3.ogg",
+  "name": "Salamander 14x5\" Snare 3",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:snare-4",
+  "file": "sal/snare_4.ogg",
+  "name": "Salamander 14x5\" Snare 4",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:snare-5",
+  "file": "sal/snare_5.ogg",
+  "name": "Salamander 14x5\" Snare 5",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:snare-6",
+  "file": "sal/snare_6.ogg",
+  "name": "Salamander 14x5\" Snare 6",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:snare-7",
+  "file": "sal/snare_7.ogg",
+  "name": "Salamander 14x5\" Snare 7",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:snare-8",
+  "file": "sal/snare_8.ogg",
+  "name": "Salamander 14x5\" Snare 8",
+  "category": "snare",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "snare"
+ },
+ {
+  "id": "sal:xstick-1",
+  "file": "sal/xstick_1.ogg",
+  "name": "Salamander Cross-stick 1",
+  "category": "snare",
+  "duration": 0.8,
+  "source": "sal",
+  "group": "xstick"
+ },
+ {
+  "id": "sal:xstick-2",
+  "file": "sal/xstick_2.ogg",
+  "name": "Salamander Cross-stick 2",
+  "category": "snare",
+  "duration": 0.8,
+  "source": "sal",
+  "group": "xstick"
+ },
+ {
+  "id": "sal:xstick-3",
+  "file": "sal/xstick_3.ogg",
+  "name": "Salamander Cross-stick 3",
+  "category": "snare",
+  "duration": 0.8,
+  "source": "sal",
+  "group": "xstick"
+ },
+ {
+  "id": "sal:hhclosed-1",
+  "file": "sal/hhclosed_1.ogg",
+  "name": "Salamander Hi-hat Closed 1",
+  "category": "hihat",
+  "duration": 0.9,
+  "source": "sal",
+  "group": "hhclosed"
+ },
+ {
+  "id": "sal:hhclosed-2",
+  "file": "sal/hhclosed_2.ogg",
+  "name": "Salamander Hi-hat Closed 2",
+  "category": "hihat",
+  "duration": 0.9,
+  "source": "sal",
+  "group": "hhclosed"
+ },
+ {
+  "id": "sal:hhclosed-3",
+  "file": "sal/hhclosed_3.ogg",
+  "name": "Salamander Hi-hat Closed 3",
+  "category": "hihat",
+  "duration": 0.9,
+  "source": "sal",
+  "group": "hhclosed"
+ },
+ {
+  "id": "sal:hhclosed-4",
+  "file": "sal/hhclosed_4.ogg",
+  "name": "Salamander Hi-hat Closed 4",
+  "category": "hihat",
+  "duration": 0.9,
+  "source": "sal",
+  "group": "hhclosed"
+ },
+ {
+  "id": "sal:hhhalf-1",
+  "file": "sal/hhhalf_1.ogg",
+  "name": "Salamander Hi-hat Half 1",
+  "category": "hihat",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "hhhalf"
+ },
+ {
+  "id": "sal:hhhalf-2",
+  "file": "sal/hhhalf_2.ogg",
+  "name": "Salamander Hi-hat Half 2",
+  "category": "hihat",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "hhhalf"
+ },
+ {
+  "id": "sal:hhhalf-3",
+  "file": "sal/hhhalf_3.ogg",
+  "name": "Salamander Hi-hat Half 3",
+  "category": "hihat",
+  "duration": 1.6,
+  "source": "sal",
+  "group": "hhhalf"
+ },
+ {
+  "id": "sal:hhopen-1",
+  "file": "sal/hhopen_1.ogg",
+  "name": "Salamander Hi-hat Open 1",
+  "category": "hihat",
+  "duration": 3.2,
+  "source": "sal",
+  "group": "hhopen"
+ },
+ {
+  "id": "sal:hhopen-2",
+  "file": "sal/hhopen_2.ogg",
+  "name": "Salamander Hi-hat Open 2",
+  "category": "hihat",
+  "duration": 3.2,
+  "source": "sal",
+  "group": "hhopen"
+ },
+ {
+  "id": "sal:hhopen-3",
+  "file": "sal/hhopen_3.ogg",
+  "name": "Salamander Hi-hat Open 3",
+  "category": "hihat",
+  "duration": 3.2,
+  "source": "sal",
+  "group": "hhopen"
+ },
+ {
+  "id": "sal:hhpedal-1",
+  "file": "sal/hhpedal_1.ogg",
+  "name": "Salamander Hi-hat Pedal 1",
+  "category": "hihat",
+  "duration": 0.9,
+  "source": "sal",
+  "group": "hhpedal"
+ },
+ {
+  "id": "sal:hhpedal-2",
+  "file": "sal/hhpedal_2.ogg",
+  "name": "Salamander Hi-hat Pedal 2",
+  "category": "hihat",
+  "duration": 0.9,
+  "source": "sal",
+  "group": "hhpedal"
+ },
+ {
+  "id": "sal:hhpedal-3",
+  "file": "sal/hhpedal_3.ogg",
+  "name": "Salamander Hi-hat Pedal 3",
+  "category": "hihat",
+  "duration": 0.9,
+  "source": "sal",
+  "group": "hhpedal"
+ },
+ {
+  "id": "sal:htom-1",
+  "file": "sal/htom_1.ogg",
+  "name": "Salamander 12\" Tom 1",
+  "category": "tom",
+  "duration": 2.4,
+  "source": "sal",
+  "group": "htom"
+ },
+ {
+  "id": "sal:htom-2",
+  "file": "sal/htom_2.ogg",
+  "name": "Salamander 12\" Tom 2",
+  "category": "tom",
+  "duration": 2.4,
+  "source": "sal",
+  "group": "htom"
+ },
+ {
+  "id": "sal:htom-3",
+  "file": "sal/htom_3.ogg",
+  "name": "Salamander 12\" Tom 3",
+  "category": "tom",
+  "duration": 2.4,
+  "source": "sal",
+  "group": "htom"
+ },
+ {
+  "id": "sal:htom-4",
+  "file": "sal/htom_4.ogg",
+  "name": "Salamander 12\" Tom 4",
+  "category": "tom",
+  "duration": 2.4,
+  "source": "sal",
+  "group": "htom"
+ },
+ {
+  "id": "sal:htom-5",
+  "file": "sal/htom_5.ogg",
+  "name": "Salamander 12\" Tom 5",
+  "category": "tom",
+  "duration": 2.4,
+  "source": "sal",
+  "group": "htom"
+ },
+ {
+  "id": "sal:htom-6",
+  "file": "sal/htom_6.ogg",
+  "name": "Salamander 12\" Tom 6",
+  "category": "tom",
+  "duration": 2.4,
+  "source": "sal",
+  "group": "htom"
+ },
+ {
+  "id": "sal:ftom-1",
+  "file": "sal/ftom_1.ogg",
+  "name": "Salamander 14\" Floor Tom 1",
+  "category": "tom",
+  "duration": 2.8,
+  "source": "sal",
+  "group": "ftom"
+ },
+ {
+  "id": "sal:ftom-2",
+  "file": "sal/ftom_2.ogg",
+  "name": "Salamander 14\" Floor Tom 2",
+  "category": "tom",
+  "duration": 2.8,
+  "source": "sal",
+  "group": "ftom"
+ },
+ {
+  "id": "sal:ftom-3",
+  "file": "sal/ftom_3.ogg",
+  "name": "Salamander 14\" Floor Tom 3",
+  "category": "tom",
+  "duration": 2.8,
+  "source": "sal",
+  "group": "ftom"
+ },
+ {
+  "id": "sal:ftom-4",
+  "file": "sal/ftom_4.ogg",
+  "name": "Salamander 14\" Floor Tom 4",
+  "category": "tom",
+  "duration": 2.8,
+  "source": "sal",
+  "group": "ftom"
+ },
+ {
+  "id": "sal:ftom-5",
+  "file": "sal/ftom_5.ogg",
+  "name": "Salamander 14\" Floor Tom 5",
+  "category": "tom",
+  "duration": 2.8,
+  "source": "sal",
+  "group": "ftom"
+ },
+ {
+  "id": "sal:crash-1",
+  "file": "sal/crash_1.ogg",
+  "name": "Salamander Paiste 18\" Crash 1",
+  "category": "cym",
+  "duration": 5.0,
+  "source": "sal",
+  "group": "crash"
+ },
+ {
+  "id": "sal:crash-2",
+  "file": "sal/crash_2.ogg",
+  "name": "Salamander Paiste 18\" Crash 2",
+  "category": "cym",
+  "duration": 5.0,
+  "source": "sal",
+  "group": "crash"
+ },
+ {
+  "id": "sal:crash-3",
+  "file": "sal/crash_3.ogg",
+  "name": "Salamander Paiste 18\" Crash 3",
+  "category": "cym",
+  "duration": 5.0,
+  "source": "sal",
+  "group": "crash"
+ },
+ {
+  "id": "sal:crash-4",
+  "file": "sal/crash_4.ogg",
+  "name": "Salamander Paiste 18\" Crash 4",
+  "category": "cym",
+  "duration": 5.0,
+  "source": "sal",
+  "group": "crash"
+ },
+ {
+  "id": "sal:ride-1",
+  "file": "sal/ride_1.ogg",
+  "name": "Salamander Paiste 20\" Ride 1",
+  "category": "cym",
+  "duration": 4.0,
+  "source": "sal",
+  "group": "ride"
+ },
+ {
+  "id": "sal:ride-2",
+  "file": "sal/ride_2.ogg",
+  "name": "Salamander Paiste 20\" Ride 2",
+  "category": "cym",
+  "duration": 4.0,
+  "source": "sal",
+  "group": "ride"
+ },
+ {
+  "id": "sal:ride-3",
+  "file": "sal/ride_3.ogg",
+  "name": "Salamander Paiste 20\" Ride 3",
+  "category": "cym",
+  "duration": 4.0,
+  "source": "sal",
+  "group": "ride"
+ },
+ {
+  "id": "sal:ride-4",
+  "file": "sal/ride_4.ogg",
+  "name": "Salamander Paiste 20\" Ride 4",
+  "category": "cym",
+  "duration": 4.0,
+  "source": "sal",
+  "group": "ride"
+ },
+ {
+  "id": "sal:bell-1",
+  "file": "sal/bell_1.ogg",
+  "name": "Salamander Ride Bell 1",
+  "category": "cym",
+  "duration": 4.0,
+  "source": "sal",
+  "group": "bell"
+ },
+ {
+  "id": "sal:bell-2",
+  "file": "sal/bell_2.ogg",
+  "name": "Salamander Ride Bell 2",
+  "category": "cym",
+  "duration": 4.0,
+  "source": "sal",
+  "group": "bell"
+ },
+ {
+  "id": "sal:bell-3",
+  "file": "sal/bell_3.ogg",
+  "name": "Salamander Ride Bell 3",
+  "category": "cym",
+  "duration": 4.0,
+  "source": "sal",
+  "group": "bell"
+ }
+]
