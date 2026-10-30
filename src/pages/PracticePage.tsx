@@ -124,9 +124,10 @@ export function PracticePage() {
   }, [score]);
 
   // ---- recording mode: only the sheet and the kit, in a small window OBS can capture ----
-  const [rec, setRec] = useState(false);
+  const [rec, setRec] = useState<'portrait' | 'landscape' | false>(false);
   useEffect(() => {
-    document.body.classList.toggle('rec-mode', rec);
+    document.body.classList.toggle('rec-mode', !!rec);
+    document.body.classList.toggle('rec-landscape', rec === 'landscape');
     void window.drumduino?.setRecMode?.(rec);
     if (!rec) return;
     const onKey = (e: KeyboardEvent) => {
@@ -136,7 +137,7 @@ export function PracticePage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [rec]);
   useEffect(() => () => {
-    document.body.classList.remove('rec-mode');
+    document.body.classList.remove('rec-mode', 'rec-landscape');
     void window.drumduino?.setRecMode?.(false);
   }, []);
 
@@ -450,7 +451,11 @@ export function PracticePage() {
             {prefs.mode === 'practice' && <label><input type="checkbox" checked={prefs.guide} onChange={(e) => setPrefs((p) => ({ ...p, guide: e.target.checked }))} /> เปิดเสียงนำเบา ๆ</label>}
             <label><input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> วนซ้ำ</label>
             <label><input type="checkbox" checked={prefs.kitView} onChange={(e) => setPrefs((p) => ({ ...p, kitView: e.target.checked }))} /> แสดงชุดกลอง</label>
-            <button type="button" className="btn sm ghost" onClick={() => setRec(true)} title="ซ่อนเมนูทั้งหมด เหลือโน้ตกับชุดกลองในหน้าต่างขนาดพอดีสำหรับ OBS · กด Space เล่น/หยุด · Esc ออก">● โหมดอัดคลิป</button>
+            <span className="row" style={{ gap: 2, flexWrap: 'nowrap' }} title="ซ่อนเมนูทั้งหมด เหลือโน้ตกับชุดกลองในหน้าต่างขนาดพอดีสำหรับ OBS · กด Space เล่น/หยุด · Esc ออก">
+              <span className="faint">● อัดคลิป</span>
+              <button type="button" className="btn sm ghost" onClick={() => setRec('portrait')}>แนวตั้ง</button>
+              <button type="button" className="btn sm ghost" onClick={() => setRec('landscape')}>แนวนอน (เต็มจอ)</button>
+            </span>
             <span className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
               <span className="faint">ห้อง</span>
               <input className="num" style={{ width: 54 }} type="number" min={1} max={score.measures} value={range[0] + 1} aria-label="เริ่มห้อง" onChange={(e) => { const v = Math.max(1, Math.min(score.measures, Number(e.target.value) || 1)) - 1; setRange(([, b]) => [v, Math.max(v + 1, b)]); }} />

@@ -2,9 +2,10 @@
 """Create an OBS Studio scene collection + profile "DrumDuino" for recording drum videos on macOS.
 
 Scenes (1920×1080, 60 fps):
-  1. ตีกลอง: กล้อง + แอป   camera as a square on the left, the DrumDuino recording window on the right
-  2. กล้องเต็มจอ          camera only
-  3. แอปเต็มจอ            the DrumDuino window centred on a dark background
+  1. ตีกลอง: กล้อง + แอป        camera square on the left, DrumDuino "อัดคลิป แนวตั้ง" window on the right
+  2. กล้องเต็มจอ               camera only
+  3. แอปเต็มจอ (แนวนอน)        DrumDuino "อัดคลิป แนวนอน" window filling the picture
+  4. แอปเต็มจอ + กล้องมุมเล็ก   the same with a small camera picture bottom-right
 Audio: DrumDuino's own sound (drums + backing track) straight from the app via ScreenCaptureKit,
 delayed 100 ms to line up with the camera; the microphone is added but muted.
 
@@ -19,7 +20,9 @@ import json, os, subprocess, sys, uuid, ctypes, ctypes.util, re, configparser
 
 OBS = os.path.expanduser('~/Library/Application Support/obs-studio')
 NAME = 'DrumDuino'
-REC = dict(x=40, y=110, w=560, h=720)  # points, content area of the recording window
+# points, content area of the recording window (= electron/main.cjs REC)
+REC = dict(x=40, y=110, w=560, h=720)     # แนวตั้ง
+REC_L = dict(x=40, y=110, w=960, h=540)   # แนวนอน (เต็มจอ)
 APP_BUNDLE = 'com.github.Electron'      # DrumDuino run with `npx electron .`; the packaged app is com.drumduino.app
 W, H = 1920, 1080
 
@@ -89,9 +92,10 @@ def scene(name, items):
 
 def build(cam_id, disp):
     sx, sy = disp['pw'] / disp['w'], disp['ph'] / disp['h']  # capture pixels per point
-    inset = 2
-    crop = (round(REC['x'] * sx) + inset, round(REC['y'] * sy) + inset,
-            round((disp['w'] - REC['x'] - REC['w']) * sx) + inset, round((disp['h'] - REC['y'] - REC['h']) * sy) + inset)
+    def crop_for(r, inset=2):
+        return (round(r['x'] * sx) + inset, round(r['y'] * sy) + inset,
+                round((disp['w'] - r['x'] - r['w']) * sx) + inset, round((disp['h'] - r['y'] - r['h']) * sy) + inset)
+    crop, crop_l = crop_for(REC), crop_for(REC_L)
     bg = src('พื้นหลัง', 'color_source_v3', {'color': 0xFF141210, 'width': W, 'height': H})
     cam = src('กล้อง', 'macos-avcapture', {'device': cam_id, 'use_preset': True, 'preset': 'AVCaptureSessionPreset1920x1080'})
     app = src('DrumDuino (หน้าต่างอัดคลิป)', 'screen_capture',
@@ -106,8 +110,14 @@ def build(cam_id, disp):
         item(app, 3, (H, 0), (side, H), 2, crop),
         item(snd, 4), item(mic, 5)])
     s2 = scene('กล้องเต็มจอ', [item(cam, 1, (0, 0), (W, H), 3, bounds_crop=True), item(snd, 2), item(mic, 3)])
-    s3 = scene('แอปเต็มจอ', [item(bg, 1), item(app, 2, (0, 0), (W, H), 2, crop), item(snd, 3), item(mic, 4)])
-    scenes = [s1, s2, s3]
+    # landscape recording window: 16:9, so it fills the whole picture
+    s3 = scene('แอปเต็มจอ (แนวนอน)', [item(bg, 1), item(app, 2, (0, 0), (W, H), 2, crop_l), item(snd, 3), item(mic, 4)])
+    pw, ph, m = 480, 270, 28
+    s4 = scene('แอปเต็มจอ + กล้องมุมเล็ก', [
+        item(bg, 1), item(app, 2, (0, 0), (W, H), 2, crop_l),
+        item(cam, 3, (W - pw - m, H - ph - m), (pw, ph), 3, bounds_crop=True),
+        item(snd, 4), item(mic, 5)])
+    scenes = [s1, s2, s3, s4]
     return {
         'name': NAME,
         'sources': [bg, cam, app, snd, mic] + scenes,
@@ -120,7 +130,7 @@ def build(cam_id, disp):
             {'name': 'Fade', 'duration': 300, 'hotkeys': [], 'id': 2, 'fade_to_black': False}],
         'preview_locked': False, 'scaling_enabled': False, 'scaling_level': 0, 'scaling_off_x': 0.0, 'scaling_off_y': 0.0,
         'modules': {}, 'resolution': {'x': W, 'y': H}, 'version': 2
-    }, crop
+    }, (crop, crop_l)
 
 
 def profile():

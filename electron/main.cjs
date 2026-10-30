@@ -103,20 +103,23 @@ function createWindow() {
     return true;
   });
 
-  // Recording mode: a small fixed-size window (560×720, 7:9) that OBS captures next to the camera.
-  // Keep REC in sync with the crop in obs/setup_obs.py.
-  const REC = { x: 40, y: 110, w: 560, h: 720 };
+  // Recording mode: a fixed-size window at a fixed spot that OBS crops out of an application capture.
+  //   portrait  560×720 (7:9)  — next to a square camera picture
+  //   landscape 960×540 (16:9) — fills a 1920×1080 video exactly (2× on Retina)
+  // Keep REC in sync with obs/setup_obs.py.
+  const REC = { portrait: { x: 40, y: 110, w: 560, h: 720 }, landscape: { x: 40, y: 110, w: 960, h: 540 } };
   let normalBounds = null;
   ipcMain.removeHandler('window:recMode');
-  ipcMain.handle('window:recMode', (_e, on) => {
+  ipcMain.handle('window:recMode', (_e, mode) => {
     if (!mainWindow) return false;
-    if (on) {
+    const r = REC[mode === 'landscape' ? 'landscape' : 'portrait'];
+    if (mode) {
       if (!normalBounds) normalBounds = mainWindow.getBounds();
       if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false);
       mainWindow.setMinimumSize(320, 400);
       // always the same spot on the main display, so OBS can crop it out of an application capture
       const d = screen.getPrimaryDisplay().bounds;
-      mainWindow.setContentBounds({ x: d.x + REC.x, y: d.y + REC.y, width: REC.w, height: REC.h });
+      mainWindow.setContentBounds({ x: d.x + r.x, y: d.y + r.y, width: r.w, height: r.h });
       mainWindow.setTitle('DrumDuino Rec');
     } else {
       mainWindow.setMinimumSize(980, 640);
