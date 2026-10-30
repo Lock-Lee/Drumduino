@@ -11,7 +11,8 @@ delayed 100 ms to line up with the camera; the microphone is added but muted.
 The DrumDuino window is captured with an application capture of the main display and cropped to the
 spot where the app puts its "โหมดอัดคลิป" window (REC below = electron/main.cjs REC).
 
-Run with OBS closed:  python3 obs/setup_obs.py [camera-unique-id]
+Run with OBS closed:  python3 obs/setup_obs.py [camera-unique-id]   (--force: OBS may stay open; the
+                      DrumDuino collection/profile are separate files OBS does not overwrite)
 Then start OBS:       open -a OBS --args --collection DrumDuino --profile DrumDuino
 """
 import json, os, subprocess, sys, uuid, ctypes, ctypes.util, re, configparser
@@ -169,10 +170,11 @@ ChannelSetup=Stereo
 
 
 if __name__ == '__main__':
-    if subprocess.run(['pgrep', '-x', 'OBS'], capture_output=True).returncode == 0:
+    if '--force' not in sys.argv and subprocess.run(['pgrep', '-x', 'OBS'], capture_output=True).returncode == 0:
         sys.exit('ปิด OBS ก่อน แล้วรันใหม่ (OBS จะเขียนทับไฟล์ตอนปิด)')
     cams = cameras()
-    want = sys.argv[1] if len(sys.argv) > 1 else None
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    want = args[0] if args else None
     cam_id = want or next((u for n, u in cams if 'iPhone' in n), cams[0][1] if cams else '')
     disp = main_display()
     coll, crop = build(cam_id, disp)
