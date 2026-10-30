@@ -38,12 +38,13 @@ def main_display():
     w, h = cg.CGDisplayPixelsWide(d), cg.CGDisplayPixelsHigh(d)
     # display UUID as OBS stores it
     cf = ctypes.CDLL(ctypes.util.find_library('CoreFoundation'))
-    cg.CGDisplayCreateUUIDFromDisplayID.restype = ctypes.c_void_p
-    cg.CGDisplayCreateUUIDFromDisplayID.argtypes = [ctypes.c_uint32]
+    cs = ctypes.CDLL('/System/Library/Frameworks/ColorSync.framework/ColorSync')
+    cs.CGDisplayCreateUUIDFromDisplayID.restype = ctypes.c_void_p
+    cs.CGDisplayCreateUUIDFromDisplayID.argtypes = [ctypes.c_uint32]
     cf.CFUUIDCreateString.restype = ctypes.c_void_p
     cf.CFUUIDCreateString.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
     cf.CFStringGetCString.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_long, ctypes.c_uint32]
-    s = cf.CFUUIDCreateString(None, cg.CGDisplayCreateUUIDFromDisplayID(d))
+    s = cf.CFUUIDCreateString(None, cs.CGDisplayCreateUUIDFromDisplayID(d))
     buf = ctypes.create_string_buffer(64)
     cf.CFStringGetCString(s, buf, 64, 0x08000100)
     return dict(w=w, h=h, pw=pw, ph=ph, uuid=buf.value.decode())
