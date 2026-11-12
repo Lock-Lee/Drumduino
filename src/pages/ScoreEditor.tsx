@@ -8,6 +8,8 @@ import type { Art, PadId, Score, ScoreNote } from '../score/types';
 import { PPQ, sortNotes, ticksPerMeasure } from '../score/types';
 import { PlayIcon, Plus, Stop, Trash } from '../components/Icons';
 
+import { t } from '../i18n';
+
 type Cell = { art: Art; vel: number } | null;
 
 interface Row {
@@ -19,20 +21,20 @@ interface Row {
   cycle: { art: Art; vel: number; sym: string; name: string }[];
 }
 
-const X = { art: 'normal' as Art, vel: 96, sym: '●', name: 'ตี' };
-const ACC = { art: 'normal' as Art, vel: 122, sym: '>', name: 'เน้น' };
+const X = { art: 'normal' as Art, vel: 96, sym: '●', name: t("ตี") };
+const ACC = { art: 'normal' as Art, vel: 122, sym: '>', name: t("เน้น") };
 const GH = { art: 'normal' as Art, vel: 38, sym: '( )', name: 'ghost' };
 
 const ROWS: Row[] = [
-  { id: 'crash', label: 'แครช', pad: 'crash', cycle: [X, ACC] },
-  { id: 'ride', label: 'ไรด์', pad: 'ride', cycle: [X, ACC, { art: 'rim', vel: 110, sym: '◆', name: 'bell' }] },
-  { id: 'hihat', label: 'ไฮแฮท', pad: 'hihat', cycle: [X, ACC, { art: 'open', vel: 100, sym: 'o', name: 'เปิด' }, { art: 'half', vel: 96, sym: 'ø', name: 'ครึ่ง' }, GH] },
-  { id: 'tom1', label: 'ทอม 1', pad: 'tom1', cycle: [X, ACC, GH] },
-  { id: 'tom2', label: 'ทอม 2', pad: 'tom2', cycle: [X, ACC, GH] },
-  { id: 'snare', label: 'สแนร์', pad: 'snare', cycle: [X, ACC, GH, { art: 'rim', vel: 115, sym: 'R', name: 'rimshot' }, { art: 'xstick', vel: 70, sym: 'C', name: 'cross-stick' }] },
-  { id: 'floor', label: 'ฟลอร์ทอม', pad: 'floor', cycle: [X, ACC, GH] },
-  { id: 'kick', label: 'กระเดื่อง', pad: 'kick', cycle: [X, ACC] },
-  { id: 'hhpedal', label: 'ไฮแฮท (เท้า)', pad: 'hihat', pedal: true, cycle: [{ art: 'pedal', vel: 90, sym: '✕', name: 'เหยียบ' }] }
+  { id: 'crash', label: t("แครช"), pad: 'crash', cycle: [X, ACC] },
+  { id: 'ride', label: t("ไรด์"), pad: 'ride', cycle: [X, ACC, { art: 'rim', vel: 110, sym: '◆', name: 'bell' }] },
+  { id: 'hihat', label: t("ไฮแฮท"), pad: 'hihat', cycle: [X, ACC, { art: 'open', vel: 100, sym: 'o', name: t("เปิด") }, { art: 'half', vel: 96, sym: 'ø', name: t("ครึ่ง") }, GH] },
+  { id: 'tom1', label: t("ทอม 1"), pad: 'tom1', cycle: [X, ACC, GH] },
+  { id: 'tom2', label: t("ทอม 2"), pad: 'tom2', cycle: [X, ACC, GH] },
+  { id: 'snare', label: t("สแนร์"), pad: 'snare', cycle: [X, ACC, GH, { art: 'rim', vel: 115, sym: 'R', name: 'rimshot' }, { art: 'xstick', vel: 70, sym: 'C', name: 'cross-stick' }] },
+  { id: 'floor', label: t("ฟลอร์ทอม"), pad: 'floor', cycle: [X, ACC, GH] },
+  { id: 'kick', label: t("กระเดื่อง"), pad: 'kick', cycle: [X, ACC] },
+  { id: 'hhpedal', label: t("ไฮแฮท (เท้า)"), pad: 'hihat', pedal: true, cycle: [{ art: 'pedal', vel: 90, sym: '✕', name: t("เหยียบ") }] }
 ];
 
 const rowOf = (n: ScoreNote) => ROWS.find((r) => r.pad === n.pad && !!r.pedal === (n.art === 'pedal'))!;
@@ -45,7 +47,7 @@ const symOf = (row: Row, c: Cell) => {
 type Grid = 'straight' | 'triplet';
 
 export function newScore(): Score {
-  return { id: 'my-' + Date.now().toString(36), title: 'เพลงใหม่', subtitle: 'สร้างเอง', bpm: 120, sig: [4, 4], measures: 4, notes: [], imported: true };
+  return { id: 'my-' + Date.now().toString(36), title: t("เพลงใหม่"), subtitle: t("สร้างเอง"), bpm: 120, sig: [4, 4], measures: 4, notes: [], imported: true };
 }
 
 export function ScoreEditor({ initial, onSave, onCancel }: { initial: Score; onSave: (s: Score) => void; onCancel: () => void }) {
@@ -198,59 +200,59 @@ export function ScoreEditor({ initial, onSave, onCancel }: { initial: Score; onS
   }, []);
 
   const save = () => {
-    onSave({ ...s, title: s.title.trim() || 'เพลงใหม่', notes: sortNotes(s.notes), sections: (s.sections ?? []).length ? s.sections : undefined, imported: true });
+    onSave({ ...s, title: s.title.trim() || t("เพลงใหม่"), notes: sortNotes(s.notes), sections: (s.sections ?? []).length ? s.sections : undefined, imported: true });
     setDirty(false);
   };
 
   const cur = barNotes(bar).length;
 
   return (
-    <section className="ed" aria-label="แก้ไขโน้ต">
+    <section className="ed" aria-label={t("แก้ไขโน้ต")}>
       <div className="ed-head">
-        <label className="sr-only" htmlFor="ed-title">ชื่อเพลง</label>
-        <input id="ed-title" className="input ed-title" value={s.title} onChange={(e) => update((x) => ({ ...x, title: e.target.value }))} placeholder="ชื่อเพลง" />
+        <label className="sr-only" htmlFor="ed-title">{t("ชื่อเพลง")}</label>
+        <input id="ed-title" className="input ed-title" value={s.title} onChange={(e) => update((x) => ({ ...x, title: e.target.value }))} placeholder={t("ชื่อเพลง")} />
         <label className="ed-f"><span className="label">BPM</span><input className="num" type="number" min={30} max={260} value={s.bpm} onChange={(e) => update((x) => ({ ...x, bpm: Math.max(30, Math.min(260, Number(e.target.value) || 120)) }))} /></label>
         <label className="ed-f">
-          <span className="label">จังหวะ</span>
-          <select className="input sm" value={`${s.sig[0]}/${s.sig[1]}`} disabled={s.notes.length > 0} title={s.notes.length ? 'เปลี่ยนได้ตอนยังไม่มีโน้ต' : ''} onChange={(e) => { const [a, b] = e.target.value.split('/').map(Number); update((x) => ({ ...x, sig: [a, b] })); }}>
+          <span className="label">{t("จังหวะ")}</span>
+          <select className="input sm" value={`${s.sig[0]}/${s.sig[1]}`} disabled={s.notes.length > 0} title={s.notes.length ? t("เปลี่ยนได้ตอนยังไม่มีโน้ต") : ''} onChange={(e) => { const [a, b] = e.target.value.split('/').map(Number); update((x) => ({ ...x, sig: [a, b] })); }}>
             {['4/4', '3/4', '2/4', '6/8', '12/8'].map((v) => <option key={v}>{v}</option>)}
           </select>
         </label>
         <label className="ed-f">
-          <span className="label">ความละเอียด</span>
+          <span className="label">{t("ความละเอียด")}</span>
           <select className="input sm" value={grid} disabled={compound} onChange={(e) => setGrid(e.target.value as Grid)}>
-            <option value="straight">เขบ็ต 2 ชั้น (16th)</option>
-            <option value="triplet">โน้ตสามพยางค์ (triplet)</option>
+            <option value="straight">{t("เขบ็ต 2 ชั้น (16th)")}</option>
+            <option value="triplet">{t("โน้ตสามพยางค์ (triplet)")}</option>
           </select>
         </label>
         <div className="spacer" />
-        {dirty && <span className="faint" style={{ fontSize: 12 }}>ยังไม่ได้บันทึก</span>}
-        <button type="button" className="btn sm ghost" onClick={() => { if (!dirty || confirm('ต้องการปิดโดยไม่บันทึกหรือไม่?')) { player.stop(); onCancel(); } }}>ปิด</button>
-        <button type="button" className="btn sm primary" onClick={save}>บันทึก</button>
+        {dirty && <span className="faint" style={{ fontSize: 12 }}>{t("ยังไม่ได้บันทึก")}</span>}
+        <button type="button" className="btn sm ghost" onClick={() => { if (!dirty || confirm(t("ต้องการปิดโดยไม่บันทึกหรือไม่?"))) { player.stop(); onCancel(); } }}>{t("ปิด")}</button>
+        <button type="button" className="btn sm primary" onClick={save}>{t("บันทึก")}</button>
       </div>
 
       <div className="ed-bars">
-        <button type="button" className="btn sm" disabled={bar === 0} onClick={() => setBar(bar - 1)} aria-label="ห้องก่อนหน้า">←</button>
-        <span className="ed-barno">ห้อง <b>{bar + 1}</b> / {s.measures}</span>
-        <button type="button" className="btn sm" disabled={bar >= s.measures - 1} onClick={() => setBar(bar + 1)} aria-label="ห้องถัดไป">→</button>
-        <input className="input sm" style={{ width: 130 }} placeholder="ชื่อท่อน (Verse…)" value={section} onChange={(e) => setSection(e.target.value)} aria-label="ชื่อท่อนที่เริ่มห้องนี้" />
+        <button type="button" className="btn sm" disabled={bar === 0} onClick={() => setBar(bar - 1)} aria-label={t("ห้องก่อนหน้า")}>←</button>
+        <span className="ed-barno">{t("ห้อง")} <b>{bar + 1}</b> / {s.measures}</span>
+        <button type="button" className="btn sm" disabled={bar >= s.measures - 1} onClick={() => setBar(bar + 1)} aria-label={t("ห้องถัดไป")}>→</button>
+        <input className="input sm" style={{ width: 130 }} placeholder={t("ชื่อท่อน (Verse…)")} value={section} onChange={(e) => setSection(e.target.value)} aria-label={t("ชื่อท่อนที่เริ่มห้องนี้")} />
         <span className="vsep" aria-hidden="true" />
-        <button type="button" className="btn sm" onClick={() => { insertBars(bar + 1, [[]]); setBar(bar + 1); }}><Plus /> เพิ่มห้องว่าง</button>
-        <button type="button" className="btn sm" onClick={() => { insertBars(bar + 1, [barNotes(bar)]); setBar(bar + 1); }}>ทำสำเนาห้องนี้</button>
+        <button type="button" className="btn sm" onClick={() => { insertBars(bar + 1, [[]]); setBar(bar + 1); }}><Plus />  {t("เพิ่มห้องว่าง")}</button>
+        <button type="button" className="btn sm" onClick={() => { insertBars(bar + 1, [barNotes(bar)]); setBar(bar + 1); }}>{t("ทำสำเนาห้องนี้")}</button>
         <span className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-          <button type="button" className="btn sm" onClick={() => insertBars(bar + 1, Array.from({ length: repeatN }, () => barNotes(bar)))}>ซ้ำห้องนี้ ×</button>
-          <input className="num" style={{ width: 52 }} type="number" min={1} max={64} value={repeatN} aria-label="จำนวนครั้งที่ซ้ำ" onChange={(e) => setRepeatN(Math.max(1, Math.min(64, Number(e.target.value) || 1)))} />
+          <button type="button" className="btn sm" onClick={() => insertBars(bar + 1, Array.from({ length: repeatN }, () => barNotes(bar)))}>{t("ซ้ำห้องนี้ ×")}</button>
+          <input className="num" style={{ width: 52 }} type="number" min={1} max={64} value={repeatN} aria-label={t("จำนวนครั้งที่ซ้ำ")} onChange={(e) => setRepeatN(Math.max(1, Math.min(64, Number(e.target.value) || 1)))} />
         </span>
-        <button type="button" className="btn sm ghost" onClick={() => setClip(barNotes(bar))}>คัดลอก</button>
-        <button type="button" className="btn sm ghost" disabled={!clip} onClick={() => clip && pasteInto(bar, clip)}>วาง</button>
-        <button type="button" className="btn sm ghost" disabled={!cur} onClick={() => update((x) => ({ ...x, notes: x.notes.filter((n) => Math.floor(n.tick / tpm) !== bar) }))}>ล้างห้อง</button>
-        <button type="button" className="icon-btn sm" aria-label="ลบห้องนี้" disabled={s.measures <= 1} onClick={() => deleteBar(bar)}><Trash /></button>
+        <button type="button" className="btn sm ghost" onClick={() => setClip(barNotes(bar))}>{t("คัดลอก")}</button>
+        <button type="button" className="btn sm ghost" disabled={!clip} onClick={() => clip && pasteInto(bar, clip)}>{t("วาง")}</button>
+        <button type="button" className="btn sm ghost" disabled={!cur} onClick={() => update((x) => ({ ...x, notes: x.notes.filter((n) => Math.floor(n.tick / tpm) !== bar) }))}>{t("ล้างห้อง")}</button>
+        <button type="button" className="icon-btn sm" aria-label={t("ลบห้องนี้")} disabled={s.measures <= 1} onClick={() => deleteBar(bar)}><Trash /></button>
         <div className="spacer" />
-        <button type="button" className={'btn sm' + (playing === 'bar' ? ' outline' : '')} onClick={() => play('bar')}>{playing === 'bar' ? <Stop /> : <PlayIcon />} วนห้องนี้</button>
-        <button type="button" className={'btn sm' + (playing === 'all' ? ' outline' : '')} onClick={() => play('all')}>{playing === 'all' ? <Stop /> : <PlayIcon />} เล่นจากห้องนี้</button>
+        <button type="button" className={'btn sm' + (playing === 'bar' ? ' outline' : '')} onClick={() => play('bar')}>{playing === 'bar' ? <Stop /> : <PlayIcon />}  {t("วนห้องนี้")}</button>
+        <button type="button" className={'btn sm' + (playing === 'all' ? ' outline' : '')} onClick={() => play('all')}>{playing === 'all' ? <Stop /> : <PlayIcon />}  {t("เล่นจากห้องนี้")}</button>
       </div>
 
-      <div className="ed-grid" style={{ ['--slots' as string]: slots }} role="grid" aria-label={`ตารางโน้ตห้อง ${bar + 1}`}>
+      <div className="ed-grid" style={{ ['--slots' as string]: slots }} role="grid" aria-label={t("ตารางโน้ตห้อง {0}", bar + 1)}>
         <div className="ed-row ed-ruler" role="row">
           <span className="ed-lab" />
           {Array.from({ length: slots }, (_, i) => (
@@ -270,7 +272,7 @@ export function ScoreEditor({ initial, onSave, onCancel }: { initial: Score; onS
                   type="button"
                   role="gridcell"
                   className={'ed-cell' + (cell ? ' on' : '') + (i % beatSlots === 0 ? ' beat' : '') + (cell && cell.vel <= 45 ? ' ghost' : '') + (cell && cell.vel >= 115 ? ' acc' : '')}
-                  aria-label={`${row.label} ช่อง ${i + 1}${cell ? ' ' + (row.cycle.find((c) => c.art === cell.art)?.name ?? '') : ''}`}
+                  aria-label={t("{0} ช่อง {1}{2}", row.label, i + 1, cell ? ' ' + (row.cycle.find((c) => c.art === cell.art)?.name ?? '') : '')}
                   onClick={() => cycle(row, i)}
                   onContextMenu={(e) => { e.preventDefault(); cycle(row, i, true); }}
                 >
@@ -282,8 +284,8 @@ export function ScoreEditor({ initial, onSave, onCancel }: { initial: Score; onS
         ))}
       </div>
       <p className="faint ed-help">
-        คลิกช่องเพื่อใส่โน้ต คลิกซ้ำเพื่อเปลี่ยนรูปแบบการตี (ตีปกติ เน้น และแบบอื่น ๆ) คลิกขวาเพื่อลบ และกดลูกศรซ้ายหรือขวาเพื่อเปลี่ยนห้อง
-        สัญลักษณ์: สแนร์ R = rimshot, C = cross-stick / ไฮแฮท o = เปิด, ø = ครึ่งเปิด / ไรด์ ◆ = bell
+        
+        {t("คลิกช่องเพื่อใส่โน้ต คลิกซ้ำเพื่อเปลี่ยนรูปแบบการตี (ตีปกติ เน้น และแบบอื่น ๆ) คลิกขวาเพื่อลบ และกดลูกศรซ้ายหรือขวาเพื่อเปลี่ยนห้อง สัญลักษณ์: สแนร์ R = rimshot, C = cross-stick / ไฮแฮท o = เปิด, ø = ครึ่งเปิด / ไรด์ ◆ = bell")}
       </p>
 
       <div className="ed-preview" ref={wrap}>

@@ -10,6 +10,8 @@ import { createSticking } from './sticking';
 import { PAD_COLOR } from './padColors';
 import type { Hand, HandPad } from './sticking';
 
+import { t } from '../i18n';
+
 /**
  * A 3-D acoustic drum kit for the practice page, seen from just behind the drummer's seat.
  * Every hit the engine reports swings a stick onto that drum or cymbal (with real sticking from
@@ -146,7 +148,7 @@ export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) 
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.domElement.className = 'kv3-canvas';
     renderer.domElement.setAttribute('role', 'img');
-    renderer.domElement.setAttribute('aria-label', 'ชุดกลองสามมิติ ไม้กลองจะตีตามโน้ตที่เล่น คลิกที่กลองเพื่อตี ลากเพื่อหมุนมุมมอง');
+    renderer.domElement.setAttribute('aria-label', t("ชุดกลองสามมิติ ไม้กลองจะตีตามโน้ตที่เล่น คลิกที่กลองเพื่อตี ลากเพื่อหมุนมุมมอง"));
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();

@@ -1,6 +1,8 @@
 // Factory drum kits. Each one only decides the sounds of the 8 standard pads.
 import type { PadSound } from './types';
 
+import { t } from './i18n';
+
 export interface Preset {
   id: string;
   name: string;
@@ -42,7 +44,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'studio',
     name: 'Studio Maple',
-    description: 'กลองอะคูสติกที่บันทึกในห้องอัด เสียงกว้าง ตอบสนองแรงตีได้ละเอียด',
+    description: t("กลองอะคูสติกที่บันทึกในห้องอัด เสียงกว้าง ตอบสนองแรงตีได้ละเอียด"),
     credit: 'Virtuosity Drums — Versilian Studios (CC0)',
     sounds: {
       crash: vd('crash', 3),
@@ -59,7 +61,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'blackpearl',
     name: 'Black Pearl',
-    description: 'กลอง Pearl กับฉาบ Sabian เสียงแน่นและสะอาด เหมาะกับเพลงร็อกและป๊อป',
+    description: t("กลอง Pearl กับฉาบ Sabian เสียงแน่นและสะอาด เหมาะกับเพลงร็อกและป๊อป"),
     credit: 'AVL Drumkits “Black Pearl” — Glen MacArthur (CC BY-SA 3.0)',
     sounds: {
       crash: avl('SabianAA16Crash'),
@@ -76,7 +78,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'redzep',
     name: 'Red Zeppelin',
-    description: 'กลอง Ludwig รุ่นเก่ากับฉาบ Zildjian กลองใบใหญ่ เสียงก้องแบบยุค 70',
+    description: t("กลอง Ludwig รุ่นเก่ากับฉาบ Zildjian กลองใบใหญ่ เสียงก้องแบบยุค 70"),
     credit: 'AVL Drumkits “Red Zeppelin” — Glen MacArthur (CC BY-SA 3.0)',
     sounds: {
       crash: avl('ZildjianA20Crash'),
@@ -92,8 +94,8 @@ export const PRESETS: Preset[] = [
   {
     id: 'arena',
     name: 'Arena Metal',
-    description: 'กลองเมทัลคอร์สมัยใหม่ กระเดื่องมีหัวเสียงคลิกชัด สแนร์แน่นและแตก ทอมเสียงต่ำ ใช้ฉาบ Zildjian',
-    credit: 'AVL Drumkits — Glen MacArthur (CC BY-SA 3.0) + Virtuosity Drums (CC0), แต่งเสียงในแอป',
+    description: t("กลองเมทัลคอร์สมัยใหม่ กระเดื่องมีหัวเสียงคลิกชัด สแนร์แน่นและแตก ทอมเสียงต่ำ ใช้ฉาบ Zildjian"),
+    credit: t("AVL Drumkits — Glen MacArthur (CC BY-SA 3.0) + Virtuosity Drums (CC0), แต่งเสียงในแอป"),
     sounds: {
       crash: eq(avl('ZildjianA20Crash', 0, 80), -2, -2, 2),
       tom1: eq(avl('Pearl12Tom', -1, 90), 4, -5, 4),
@@ -108,7 +110,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'salamander',
     name: 'Salamander Garage',
-    description: 'กลองอะคูสติกอัดในโรงรถ เสียงสด ห้องก้องเป็นธรรมชาติ สแนร์ไม้เบิร์ช ฉาบ Paiste ตอบสนองแรงตีหลายระดับ',
+    description: t("กลองอะคูสติกอัดในโรงรถ เสียงสด ห้องก้องเป็นธรรมชาติ สแนร์ไม้เบิร์ช ฉาบ Paiste ตอบสนองแรงตีหลายระดับ"),
     credit: 'Salamander Drumkit — Alexander Holm / Rytmenpinne (CC BY-SA 3.0)',
     sounds: {
       crash: sal('crash', 4, 0, 80),
@@ -125,8 +127,8 @@ export const PRESETS: Preset[] = [
   {
     id: 'synth',
     name: 'Synth Kit',
-    description: 'เสียงกลองสังเคราะห์ คล้ายเครื่องตีจังหวะ',
-    credit: 'สร้างโดยแอป',
+    description: t("เสียงกลองสังเคราะห์ คล้ายเครื่องตีจังหวะ"),
+    credit: t("สร้างโดยแอป"),
     sounds: {
       crash: s(['bi:crash-soft', 'bi:crash-hard']),
       tom1: s(['bi:tom-high']),
@@ -145,5 +147,5 @@ export const SOURCE_LABELS: Record<string, string> = {
   avl: 'Black Pearl / Red Zeppelin',
   sal: 'Salamander Garage',
   synth: 'Synth',
-  user: 'นำเข้าเอง'
+  user: t("นำเข้าเอง")
 };

@@ -1,5 +1,7 @@
 import { useHardware } from '../input/hardware';
 
+import { t } from '../i18n';
+
 /** Shown inside the Electron app when navigator.serial.requestPort() is called. */
 export function PortPicker() {
   const { portChoices, choosePort } = useHardware();
@@ -8,9 +10,9 @@ export function PortPicker() {
   return (
     <div className="scrim" role="presentation" onClick={() => choosePort('')}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="pp-title" onClick={(e) => e.stopPropagation()}>
-        <h2 id="pp-title">เลือกพอร์ตของ Arduino</h2>
+        <h2 id="pp-title">{t("เลือกพอร์ตของ Arduino")}</h2>
         {sorted.length === 0 ? (
-          <p className="empty">ไม่พบบอร์ด Arduino กรุณาถอดสาย USB แล้วเสียบใหม่ จากนั้นกดเชื่อมต่ออีกครั้ง</p>
+          <p className="empty">{t("ไม่พบบอร์ด Arduino กรุณาถอดสาย USB แล้วเสียบใหม่ จากนั้นกดเชื่อมต่ออีกครั้ง")}</p>
         ) : (
           <div className="stack" style={{ gap: 8 }}>
             {sorted.map((p) => (
@@ -25,7 +27,7 @@ export function PortPicker() {
           </div>
         )}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" className="btn ghost" onClick={() => choosePort('')}>ยกเลิก</button>
+          <button type="button" className="btn ghost" onClick={() => choosePort('')}>{t("ยกเลิก")}</button>
         </div>
       </div>
     </div>

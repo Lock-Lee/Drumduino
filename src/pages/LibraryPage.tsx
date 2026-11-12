@@ -6,14 +6,16 @@ import type { SampleCategory, SampleSource } from '../types';
 import { SOURCE_LABELS } from '../kits';
 import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
 
+import { t } from '../i18n';
+
 const CATS: { id: 'all' | SampleCategory; label: string }[] = [
-  { id: 'all', label: 'ทั้งหมด' },
+  { id: 'all', label: t("ทั้งหมด") },
   { id: 'kick', label: 'Kick' },
   { id: 'snare', label: 'Snare' },
   { id: 'hihat', label: 'Hi-hat' },
   { id: 'tom', label: 'Tom' },
-  { id: 'cym', label: 'ฉาบ (Cymbal)' },
-  { id: 'mine', label: 'เครื่องเคาะอื่น ๆ' }
+  { id: 'cym', label: t("ฉาบ (Cymbal)") },
+  { id: 'mine', label: t("เครื่องเคาะอื่น ๆ") }
 ];
 
 function WaveThumb({ id }: { id: string }) {
@@ -79,7 +81,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
 
   const doImport = async (files: FileList | File[]) => {
     const res = await store.importFiles(files);
-    setMsg((res.ok ? `นำเข้า ${res.ok} ไฟล์แล้ว` : '') + (res.failed.length ? `${res.ok ? ' · ' : ''}เปิดไม่ได้: ${res.failed.join(', ')}` : ''));
+    setMsg((res.ok ? t("นำเข้า {0} ไฟล์แล้ว", res.ok) : '') + (res.failed.length ? t("{0}เปิดไม่ได้: {1}", res.ok ? ' · ' : '', res.failed.join(', ')) : ''));
   };
 
   const onDrop = (e: DragEvent) => {
@@ -90,8 +92,8 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
 
   return (
     <main className="lib-page">
-      <nav className="side" aria-label="หมวดเสียง">
-        <span className="label" style={{ padding: '0 12px 8px' }}>หมวดหมู่</span>
+      <nav className="side" aria-label={t("หมวดเสียง")}>
+        <span className="label" style={{ padding: '0 12px 8px' }}>{t("หมวดหมู่")}</span>
         {CATS.map((c) => (
           <button key={c.id} type="button" aria-pressed={cat === c.id} onClick={() => setCat(c.id)}>
             <span>{c.label}</span>
@@ -102,25 +104,26 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
         ))}
       </nav>
 
-      <section className="lib-main" aria-label="รายการเสียง">
+      <section className="lib-main" aria-label={t("รายการเสียง")}>
         <div className="row" style={{ alignItems: 'flex-end', gap: 12 }}>
           <div className="stack" style={{ gap: 2, marginRight: 'auto' }}>
-            <h1 style={{ fontSize: 22 }}>คลังเสียง</h1>
+            <h1 style={{ fontSize: 22 }}>{t("คลังเสียง")}</h1>
             <span className="muted" style={{ fontSize: 14 }}>
-              นำเข้าไฟล์เสียงของคุณ แล้วเพิ่มให้กับชิ้นกลองที่เลือกไว้{target ? ` (ตอนนี้: ${target.name})` : ''}
+              
+              {t("นำเข้าไฟล์เสียงของคุณ แล้วเพิ่มให้กับชิ้นกลองที่เลือกไว้")}{target ? t(" (ตอนนี้: {0})", target.name) : ''}
             </span>
           </div>
           <div className="field" style={{ minWidth: 200 }}>
-            <label htmlFor="src" className="sr-only">ที่มาของเสียง</label>
+            <label htmlFor="src" className="sr-only">{t("ที่มาของเสียง")}</label>
             <select id="src" className="input" value={src} onChange={(e) => setSrc(e.target.value as 'all' | SampleSource)}>
-              <option value="all">ทุกชุดเสียง</option>
+              <option value="all">{t("ทุกชุดเสียง")}</option>
               {Object.entries(SOURCE_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
             </select>
           </div>
           <div className="search">
             <Search />
-            <label htmlFor="q" className="sr-only">ค้นหาเสียง</label>
-            <input id="q" type="search" placeholder="ค้นหาเสียง…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <label htmlFor="q" className="sr-only">{t("ค้นหาเสียง")}</label>
+            <input id="q" type="search" placeholder={t("ค้นหาเสียง…")} value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
         </div>
 
@@ -132,10 +135,10 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
         >
           <Upload />
           <div className="stack" style={{ gap: 2, textAlign: 'left' }}>
-            <span style={{ fontWeight: 600 }}>ลากไฟล์เสียงมาวางที่นี่</span>
-            <span className="faint" style={{ fontSize: 13 }}>รองรับไฟล์ .wav .mp3 .ogg .flac และ .aiff โดยไฟล์จะเก็บไว้ในเครื่องนี้</span>
+            <span style={{ fontWeight: 600 }}>{t("ลากไฟล์เสียงมาวางที่นี่")}</span>
+            <span className="faint" style={{ fontSize: 13 }}>{t("รองรับไฟล์ .wav .mp3 .ogg .flac และ .aiff โดยไฟล์จะเก็บไว้ในเครื่องนี้")}</span>
           </div>
-          <button type="button" className="btn primary" onClick={() => fileRef.current?.click()}>นำเข้าไฟล์</button>
+          <button type="button" className="btn primary" onClick={() => fileRef.current?.click()}>{t("นำเข้าไฟล์")}</button>
           <input ref={fileRef} type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.aif,.aiff" multiple hidden onChange={(e) => { if (e.target.files) void doImport(e.target.files); e.target.value = ''; }} />
           {msg && <span className="muted" style={{ fontSize: 13, width: '100%' }} role="status">{msg}</span>}
         </div>
@@ -144,17 +147,17 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
           <table>
             <thead>
               <tr>
-                <th style={{ width: 60 }}><span className="sr-only">ฟัง</span></th>
-                <th>ชื่อไฟล์</th>
-                <th className="col-wave">รูปคลื่น</th>
-                <th style={{ whiteSpace: 'nowrap' }}>ความยาว</th>
-                <th>ใช้กับ</th>
-                <th style={{ textAlign: 'right' }}><span className="sr-only">การทำงาน</span></th>
+                <th style={{ width: 60 }}><span className="sr-only">{t("ฟัง")}</span></th>
+                <th>{t("ชื่อไฟล์")}</th>
+                <th className="col-wave">{t("รูปคลื่น")}</th>
+                <th style={{ whiteSpace: 'nowrap' }}>{t("ความยาว")}</th>
+                <th>{t("ใช้กับ")}</th>
+                <th style={{ textAlign: 'right' }}><span className="sr-only">{t("การทำงาน")}</span></th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
-                <tr><td colSpan={6} className="muted" style={{ padding: 24, textAlign: 'center' }}>ไม่พบเสียงในหมวดนี้</td></tr>
+                <tr><td colSpan={6} className="muted" style={{ padding: 24, textAlign: 'center' }}>{t("ไม่พบเสียงในหมวดนี้")}</td></tr>
               )}
               {rows.map((s) => {
                 const on = playing === s.id;
@@ -163,7 +166,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
                 return (
                   <tr key={s.id}>
                     <td>
-                      <button type="button" className={'play' + (on ? ' on' : '')} aria-label={(on ? 'หยุด ' : 'ฟัง ') + s.name} onClick={() => toggle(s.id)}>
+                      <button type="button" className={'play' + (on ? ' on' : '')} aria-label={(on ? t("หยุด ") : t("ฟัง ")) + s.name} onClick={() => toggle(s.id)}>
                         {on ? <Stop /> : <PlayIcon />}
                       </button>
                     </td>
@@ -179,7 +182,7 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
                         <button
                           type="button"
                           className="btn sm"
-                          title={inTarget ? `อยู่ใน ${target.name} แล้ว` : `เพิ่มให้ ${target.name}`}
+                          title={inTarget ? t("อยู่ใน {0} แล้ว", target.name) : t("เพิ่มให้ {0}", target.name)}
                           disabled={inTarget}
                           onClick={() => store.updatePad(target.id, { samples: [...target.samples, s.id] })}
                         >
@@ -190,8 +193,8 @@ export function LibraryPage({ goKit }: { goKit: () => void }) {
                         <button
                           type="button"
                           className="icon-btn"
-                          aria-label={'ลบ ' + s.name}
-                          onClick={() => { if (confirm(`ลบ "${s.name}" ออกจากคลังหรือไม่? ชิ้นกลองที่ใช้เสียงนี้จะไม่มีเสียงนี้อีกต่อไป`)) void store.removeSample(s.id); }}
+                          aria-label={t("ลบ ") + s.name}
+                          onClick={() => { if (confirm(t("ลบ \"{0}\" ออกจากคลังหรือไม่? ชิ้นกลองที่ใช้เสียงนี้จะไม่มีเสียงนี้อีกต่อไป", s.name))) void store.removeSample(s.id); }}
                         >
                           <Trash />
                         </button>

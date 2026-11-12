@@ -8,6 +8,8 @@ import type { InputMode, PortInfo } from '../types';
 import { CHANNEL_COUNT, sensitivityToThreshold } from '../types';
 import { SerialLink } from './serial';
 
+import { t } from '../i18n';
+
 type SerialStatus = 'idle' | 'connecting' | 'connected';
 
 interface Hardware {
@@ -148,7 +150,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
         onClose(err) {
           setSerialStatus('idle');
           setBoardInfo('');
-          if (err) setError('การเชื่อมต่อกับบอร์ดขาดหาย: ' + err);
+          if (err) setError(t("การเชื่อมต่อกับบอร์ดขาดหาย: ") + err);
         }
       }),
     [setChannelLevel, pedalMove]
@@ -171,7 +173,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       setSerialStatus('idle');
       const msg = String((e as Error)?.message || e);
-      if (!/No port selected|cancel/i.test(msg)) setError('เชื่อมต่อไม่สำเร็จ: ' + msg);
+      if (!/No port selected|cancel/i.test(msg)) setError(t("เชื่อมต่อไม่สำเร็จ: ") + msg);
     }
   }, [link]);
 
@@ -225,7 +227,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
         refresh();
         acc.onstatechange = refresh;
       })
-      .catch((e) => setError('ไม่สามารถเปิดใช้ MIDI ได้: ' + String(e?.message || e)));
+      .catch((e) => setError(t("ไม่สามารถเปิดใช้ MIDI ได้: ") + String(e?.message || e)));
   }, [mode, midiSupported, midiAccess]);
 
   useEffect(() => {

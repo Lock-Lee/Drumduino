@@ -5,6 +5,8 @@ import { PPQ, ticksPerMeasure } from './types';
 import { LANE_ORDER, PAD_COLOR } from './padColors';
 import { stickingFor } from './sticking';
 
+import { t } from '../i18n';
+
 /**
  * "Note highway": one lane per instrument, notes drawn as little drums / cymbals sliding right → left
  * through a fixed playhead. Each stick note carries L / R (same sticking as the 3-D kit), the kick RF
@@ -216,7 +218,7 @@ export function LaneView({ score, tickRef, bpm, startTick, onSeek }: {
 
   return (
     <div ref={host} className="lane-view">
-      <canvas ref={canvas} role="img" aria-label="เลนโน้ต: โน้ตเลื่อนจากขวาไปซ้ายผ่านเส้นเล่น แต่ละแถวคือกลองหนึ่งชิ้น L/R คือมือที่ใช้ตี คลิกเพื่อเริ่มจากห้องนั้น" />
+      <canvas ref={canvas} role="img" aria-label={t("เลนโน้ต: โน้ตเลื่อนจากขวาไปซ้ายผ่านเส้นเล่น แต่ละแถวคือกลองหนึ่งชิ้น L/R คือมือที่ใช้ตี คลิกเพื่อเริ่มจากห้องนั้น")} />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { PAD_LABEL } from './types';
 import { createSticking } from './sticking';
 import type { Hand, HandPad } from './sticking';
 
+import { t } from '../i18n';
+
 /**
  * A drawn drum kit for the practice page. Every hit the engine reports (the app playing the score,
  * the Arduino, MIDI, the keyboard or a click) flashes that drum and swings a stick onto it;
@@ -122,7 +124,7 @@ export function DrumKitView({ kit }: { kit: Kit }) {
     'data-pad': id,
     role: 'button',
     tabIndex: 0,
-    'aria-label': `ตี ${PAD_LABEL[id]}`,
+    'aria-label': t("ตี {0}", PAD_LABEL[id]),
     className: 'kv-pad',
     onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); hit(id); },
     onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hit(id); } }
@@ -151,7 +153,7 @@ export function DrumKitView({ kit }: { kit: Kit }) {
   );
 
   return (
-    <svg ref={root} className="kv" viewBox="0 0 640 250" role="group" aria-label="ชุดกลอง แตะเพื่อตี">
+    <svg ref={root} className="kv" viewBox="0 0 640 250" role="group" aria-label={t("ชุดกลอง แตะเพื่อตี")}>
       <defs>
         <linearGradient id="kv-bronze" x1="0" x2="1">
           <stop offset="0" stopColor="#a87b25" />

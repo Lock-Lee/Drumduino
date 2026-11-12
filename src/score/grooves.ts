@@ -8,6 +8,8 @@
 import type { Art, PadId, Score, ScoreNote, Section } from './types';
 import { PPQ, sortNotes } from './types';
 
+import { t } from '../i18n';
+
 type Rows = Partial<Record<PadId, string>>;
 
 interface Part {
@@ -68,9 +70,9 @@ const ROCK_FILL: Rows = {
 };
 
 export const GROOVES: Score[] = [
-  build('rock8', 'ร็อก 8 บีต', 'จังหวะพื้นฐาน ไฮแฮทตีโน้ตเขบ็ต 1 ชั้น', 96, [4, 4], 4, [{ rows: ROCK, times: 4 }]),
+  build('rock8', t("ร็อก 8 บีต"), t("จังหวะพื้นฐาน ไฮแฮทตีโน้ตเขบ็ต 1 ชั้น"), 96, [4, 4], 4, [{ rows: ROCK, times: 4 }]),
 
-  build('rock-crash', 'ร็อก พร้อมแครชและไฮแฮทเปิด', 'เปิดไฮแฮทก่อนขึ้นห้องใหม่', 104, [4, 4], 4, [
+  build('rock-crash', t("ร็อก พร้อมแครชและไฮแฮทเปิด"), t("เปิดไฮแฮทก่อนขึ้นห้องใหม่"), 104, [4, 4], 4, [
     {
       rows: {
         crash: 'X---------------|----------------',
@@ -82,31 +84,31 @@ export const GROOVES: Score[] = [
     }
   ]),
 
-  build('pop16', 'ป๊อป 16', 'ไฮแฮทตีโน้ตเขบ็ต 2 ชั้น เน้นตัวแรกของแต่ละจังหวะ', 92, [4, 4], 4, [
+  build('pop16', t("ป๊อป 16"), t("ไฮแฮทตีโน้ตเขบ็ต 2 ชั้น เน้นตัวแรกของแต่ละจังหวะ"), 92, [4, 4], 4, [
     { rows: { hihat: 'XxxxXxxxXxxxXxxx', snare: '----X-------X---', kick: 'x-----x-x-----x-' }, times: 4 }
   ]),
 
-  build('funk', 'ฟังก์ พร้อม ghost note', 'มีสแนร์ตีเบาแทรก (ghost note)', 94, [4, 4], 4, [
+  build('funk', t("ฟังก์ พร้อม ghost note"), t("มีสแนร์ตีเบาแทรก (ghost note)"), 94, [4, 4], 4, [
     { rows: { hihat: 'x-x-x-x-x-x-x-x-', snare: '----X--g-g--X--g', kick: 'x-x-------x--x--' }, times: 4 }
   ]),
 
-  build('disco', 'ดิสโก้ (Four on the floor)', 'กระเดื่องลงทุกจังหวะ ไฮแฮทเปิดที่ตัวหลัง', 120, [4, 4], 4, [
+  build('disco', t("ดิสโก้ (Four on the floor)"), t("กระเดื่องลงทุกจังหวะ ไฮแฮทเปิดที่ตัวหลัง"), 120, [4, 4], 4, [
     { rows: { hihat: 'x-o-x-o-x-o-x-o-', snare: '----X-------X---', kick: 'x---x---x---x---' }, times: 4 }
   ]),
 
-  build('halftime', 'ฮาล์ฟไทม์', 'สแนร์ลงที่จังหวะที่ 3', 140, [4, 4], 4, [
+  build('halftime', t("ฮาล์ฟไทม์"), t("สแนร์ลงที่จังหวะที่ 3"), 140, [4, 4], 4, [
     { rows: { hihat: 'x-x-x-x-x-x-x-x-', snare: '--------X-------', kick: 'x-----x---x-----' }, times: 4 }
   ]),
 
-  build('shuffle', 'ชัฟเฟิล', 'จังหวะสามพยางค์แบบบลูส์', 88, [4, 4], 3, [
+  build('shuffle', t("ชัฟเฟิล"), t("จังหวะสามพยางค์แบบบลูส์"), 88, [4, 4], 3, [
     { rows: { hihat: 'x-xx-xx-xx-x', snare: '---X-----X--', kick: 'x-----x--x--' }, times: 4 }
   ]),
 
-  build('swing', 'สวิงบนไรด์', 'ตีไรด์แบบแจ๊ส และเหยียบไฮแฮทที่จังหวะ 2 กับ 4', 120, [4, 4], 3, [
+  build('swing', t("สวิงบนไรด์"), t("ตีไรด์แบบแจ๊ส และเหยียบไฮแฮทที่จังหวะ 2 กับ 4"), 120, [4, 4], 3, [
     { rows: { ride: 'x--x-xx--x-x', hihat: '---p-----p--', kick: 'g-----g-----' }, times: 4 }
   ]),
 
-  build('bossa', 'บอสซาโนวา', 'ตี cross-stick บนสแนร์ วนรูปแบบ 2 ห้อง', 130, [4, 4], 4, [
+  build('bossa', t("บอสซาโนวา"), t("ตี cross-stick บนสแนร์ วนรูปแบบ 2 ห้อง"), 130, [4, 4], 4, [
     {
       rows: {
         hihat: 'x-x-x-x-x-x-x-x-|x-x-x-x-x-x-x-x-',
@@ -117,16 +119,16 @@ export const GROOVES: Score[] = [
     }
   ]),
 
-  build('ballad68', 'บัลลาด 6/8', 'นับ 1-2-3-4-5-6 สแนร์ลงตัวที่ 4', 66, [6, 8], 2, [
+  build('ballad68', t("บัลลาด 6/8"), t("นับ 1-2-3-4-5-6 สแนร์ลงตัวที่ 4"), 66, [6, 8], 2, [
     { rows: { hihat: 'x-x-x-x-x-x-', snare: '------X-----', kick: 'x---------x-' }, times: 4 }
   ]),
 
-  build('fill-toms', 'ลูกส่งทอม', 'ห้องที่ 2 ไล่ตีสแนร์ ทอม และฟลอร์ทอม', 90, [4, 4], 4, [
+  build('fill-toms', t("ลูกส่งทอม"), t("ห้องที่ 2 ไล่ตีสแนร์ ทอม และฟลอร์ทอม"), 90, [4, 4], 4, [
     { rows: { hihat: 'x-x-x-x-x-x-x-x-|----------------', snare: '----X-------X---|xxxx------------', tom1: '                |----xxxx--------', tom2: '                |--------xx------', floor: '                |----------xxxxxx', kick: 'x-------x-x-----|x---x---x---x---' } },
     { rows: { crash: 'X', kick: 'x' } }
   ]),
 
-  build('song', 'เพลงฝึก: Rock Anthem', 'มีท่อน Intro, Verse, Chorus และ Outro', 100, [4, 4], 4, [
+  build('song', t("เพลงฝึก: Rock Anthem"), t("มีท่อน Intro, Verse, Chorus และ Outro"), 100, [4, 4], 4, [
     { name: 'Intro', rows: { crash: 'X---X---X---X---', kick: 'x---x---x---x---' }, times: 2 },
     { name: 'Verse', rows: ROCK, times: 3 },
     { rows: ROCK_FILL },
@@ -146,20 +148,20 @@ export const GROOVES: Score[] = [
   ]),
 
   // ---- modern rock / metalcore style (original patterns) ----
-  build('fourfloor-rock', 'ร็อกกระเดื่องทุกจังหวะ', 'กระเดื่องลงทุกจังหวะ แบบอัลเทอร์เนทีฟร็อก', 144, [4, 4], 4, [
+  build('fourfloor-rock', t("ร็อกกระเดื่องทุกจังหวะ"), t("กระเดื่องลงทุกจังหวะ แบบอัลเทอร์เนทีฟร็อก"), 144, [4, 4], 4, [
     { rows: { crash: 'X---------------|----------------', hihat: '--x-x-x-x-x-x-x-|x-x-x-x-x-x-x-o-', snare: '----X-------X---|----X-------X---', kick: 'x---x---x---x---|x---x---x---x---' }, times: 2 }
   ]),
-  build('halftime-breakdown', 'เบรกดาวน์ฮาล์ฟไทม์', 'ตีแครชทุก 2 จังหวะ กระเดื่องเป็นจังหวะกระชาก', 144, [4, 4], 4, [
+  build('halftime-breakdown', t("เบรกดาวน์ฮาล์ฟไทม์"), t("ตีแครชทุก 2 จังหวะ กระเดื่องเป็นจังหวะกระชาก"), 144, [4, 4], 4, [
     { rows: { crash: 'X-------X-------', snare: '--------X-------', kick: 'x-x-xx----x-xx--' }, times: 4 }
   ]),
-  build('double-kick', 'ดับเบิลกระเดื่อง', 'กระเดื่องโน้ตเขบ็ต 2 ชั้นต่อเนื่อง (ควรเริ่มฝึกช้า ๆ)', 110, [4, 4], 4, [
+  build('double-kick', t("ดับเบิลกระเดื่อง"), t("กระเดื่องโน้ตเขบ็ต 2 ชั้นต่อเนื่อง (ควรเริ่มฝึกช้า ๆ)"), 110, [4, 4], 4, [
     { rows: { ride: 'x-x-x-x-x-x-x-x-', snare: '----X-------X---', kick: 'xxxxxxxxxxxxxxxx' }, times: 4 }
   ]),
-  build('skank', 'พังก์ (สแกงก์บีต)', 'สแนร์ลงตัวหลังของทุกจังหวะ เร็วและแน่น', 170, [4, 4], 4, [
+  build('skank', t("พังก์ (สแกงก์บีต)"), t("สแนร์ลงตัวหลังของทุกจังหวะ เร็วและแน่น"), 170, [4, 4], 4, [
     { rows: { hihat: 'x-x-x-x-x-x-x-x-', snare: '--X---X---X---X-', kick: 'x---x---x---x---' }, times: 4 }
   ]),
 
-  build('song-metalcore', 'เพลงฝึก: Arena Metalcore', 'มีท่อน Intro, Verse, Pre-chorus, Chorus และ Breakdown ที่ 144 BPM', 144, [4, 4], 4, [
+  build('song-metalcore', t("เพลงฝึก: Arena Metalcore"), t("มีท่อน Intro, Verse, Pre-chorus, Chorus และ Breakdown ที่ 144 BPM"), 144, [4, 4], 4, [
     { name: 'Intro', rows: { floor: 'x-x-x-x-x-x-x-x-|x-x-x-x---------', tom2: '                |--------xx--xx--', tom1: '                |----------xx--xx', kick: 'x---x---x---x---|x---x---x---x---' } },
     {
       name: 'Verse',

@@ -13,6 +13,8 @@ import { deleteSample, putSample } from './audio/sampleDb';
 import { PRESETS } from './kits';
 import type { Preset } from './kits';
 
+import { t } from './i18n';
+
 const STATE_KEY = 'drumduino.state.v3';
 const SAMPLES_KEY = 'drumduino.samples.v1';
 
@@ -249,7 +251,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const slot = EXTRA_SLOTS[Math.max(0, s.pads.length - 8) % EXTRA_SLOTS.length];
       const id = 'pad-' + Date.now().toString(36);
       setSelectedId(id);
-      return { ...s, pads: [...s.pads, pad({ id, name: 'ชิ้นที่ ' + n, th: 'ชิ้นใหม่', channel, x: slot.x, y: slot.y, w: 12, midiNote: 60 + n, key: '' })] };
+      return { ...s, pads: [...s.pads, pad({ id, name: t("ชิ้นที่ ") + n, th: t("ชิ้นใหม่"), channel, x: slot.x, y: slot.y, w: 12, midiNote: 60 + n, key: '' })] };
     });
   }, []);
 
@@ -331,7 +333,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       duplicateKit: () =>
         setSt((s) => {
           const src = s.kits.find((k) => k.id === s.currentKitId) ?? s.kits[0];
-          const copy: KitSounds = { id: 'kit-' + Date.now().toString(36), name: src.name + ' (ของฉัน)', presetId: null, sounds: JSON.parse(JSON.stringify(src.sounds)) };
+          const copy: KitSounds = { id: 'kit-' + Date.now().toString(36), name: src.name + t(" (ของฉัน)"), presetId: null, sounds: JSON.parse(JSON.stringify(src.sounds)) };
           return { ...s, kits: [...s.kits, copy], currentKitId: copy.id };
         }),
       deleteKit: (id) =>

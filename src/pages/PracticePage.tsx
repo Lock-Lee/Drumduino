@@ -19,6 +19,8 @@ import { PAD_LABEL } from '../score/types';
 import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
 import { ScoreEditor, newScore } from './ScoreEditor';
 
+import { t } from '../i18n';
+
 const IMPORTED_KEY = 'drumduino.scores.v1';
 let scanBusy = false;
 const PREFS_KEY = 'drumduino.practice.v1';
@@ -72,7 +74,7 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
       try {
         const bin = Uint8Array.from(atob(f.data), (c) => c.charCodeAt(0));
         const sc = /\.(mid|midi)$/i.test(f.name) ? parseMidi(bin.buffer, f.name) : parseMusicXml(new TextDecoder().decode(bin), f.name);
-        added.push({ ...sc, id: 'file-' + f.key.replace(/[^\w]/g, '').slice(-40), fileKey: f.key, subtitle: 'จากโฟลเดอร์ my-scores' });
+        added.push({ ...sc, id: 'file-' + f.key.replace(/[^\w]/g, '').slice(-40), fileKey: f.key, subtitle: t("จากโฟลเดอร์ my-scores") });
       } catch {
         /* not a drum file */
       }
@@ -80,8 +82,8 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
     if (added.length) {
       setImported((list) => [...list.filter((x) => !added.some((a) => a.title === x.title && x.fileKey)), ...added]);
       setScoreId(added[0].id);
-      setMsg(`เพิ่ม ${added.map((a) => a.title).join(', ')} จากโฟลเดอร์ my-scores`);
-    } else if (announce) setMsg(files.length ? 'ไม่มีไฟล์ใหม่ในโฟลเดอร์' : 'โฟลเดอร์ my-scores ยังว่าง');
+      setMsg(t("เพิ่ม {0} จากโฟลเดอร์ my-scores", added.map((a) => a.title).join(', ')));
+    } else if (announce) setMsg(files.length ? t("ไม่มีไฟล์ใหม่ในโฟลเดอร์") : t("โฟลเดอร์ my-scores ยังว่าง"));
     // let the save effect store them before another scan
     await new Promise((r) => setTimeout(r, 300));
     } finally {
@@ -219,26 +221,26 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
     () =>
       engine.onHit((padId, _v, zone, source) => {
         if (source === 'score' || !player.playing || prefsRef.current.mode !== 'practice') return;
-        const t = engine.ctx.currentTime - prefsRef.current.latency / 1000;
+        const now = engine.ctx.currentTime - prefsRef.current.latency / 1000;
         let best: (typeof expected.current)[number] | null = null;
         for (const e of expected.current) {
           if (e.done || e.pad !== padId) continue;
           if ((e.art === 'pedal') !== (zone === 'pedal')) continue;
-          const d = Math.abs(t - e.time);
-          if (d <= WIN.judge && (!best || d < Math.abs(t - best.time))) best = e;
+          const d = Math.abs(now - e.time);
+          if (d <= WIN.judge && (!best || d < Math.abs(now - best.time))) best = e;
         }
         if (!best) {
           setStats((s) => ({ ...s, extra: s.extra + 1 }));
-          setLast({ text: `ตีเกิน (${PAD_LABEL[padId as PadId] ?? padId})`, cls: 'miss' });
+          setLast({ text: t("ตีเกิน ({0})", PAD_LABEL[padId as PadId] ?? padId), cls: 'miss' });
           return;
         }
         best.done = true;
-        const diff = t - best.time;
+        const diff = now - best.time;
         const ms = Math.round(diff * 1000);
         const st: NoteMark['status'] = Math.abs(diff) <= WIN.ok ? 'ok' : diff < 0 ? 'early' : 'late';
         mark(best.idx, st);
         setStats((s) => ({ ...s, [st]: s[st] + 1, offsets: [...s.offsets.slice(-199), ms] }));
-        setLast(st === 'ok' ? { text: `ตรงจังหวะ (${ms > 0 ? '+' : ''}${ms} ms)`, cls: 'ok' } : st === 'early' ? { text: `เร็วไป ${-ms} ms`, cls: 'early' } : { text: `ช้าไป ${ms} ms`, cls: 'late' });
+        setLast(st === 'ok' ? { text: t("ตรงจังหวะ ({0}{1} ms)", ms > 0 ? '+' : '', ms), cls: 'ok' } : st === 'early' ? { text: t("เร็วไป {0} ms", -ms), cls: 'early' } : { text: t("ช้าไป {0} ms", ms), cls: 'late' });
       }),
     [player, mark]
   );
@@ -355,7 +357,7 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
       setImported((s) => [...s, ...ok]);
       setScoreId(ok[0].id);
     }
-    setMsg(bad.length ? bad.join(' · ') : `นำเข้า ${ok.length} เพลงแล้ว`);
+    setMsg(bad.length ? bad.join(' · ') : t("นำเข้า {0} เพลงแล้ว", ok.length));
   };
 
   const judged = stats.ok + stats.early + stats.late + stats.miss;
@@ -364,51 +366,52 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
 
   return (
     <main className="pr-page">
-      <aside className="pr-list" aria-label="เลือกจังหวะหรือเพลง">
+      <aside className="pr-list" aria-label={t("เลือกจังหวะหรือเพลง")}>
         <div className="search pr-search">
           <Search />
-          <label htmlFor="prq" className="sr-only">ค้นหาจังหวะหรือเพลง</label>
-          <input id="prq" type="search" placeholder="ค้นหาเพลง / จังหวะ / BPM…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <label htmlFor="prq" className="sr-only">{t("ค้นหาจังหวะหรือเพลง")}</label>
+          <input id="prq" type="search" placeholder={t("ค้นหาเพลง / จังหวะ / BPM…")} value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         {q.trim() && !builtIn.length && !mine.length && (
           <div className="pr-online">
-            <span>ไม่พบ “{q.trim()}” ในแอป</span>
-            <span className="faint">ลองค้นหาโน้ตกลองจากเว็บไซต์ แล้วบันทึกเป็นไฟล์ MIDI หรือ MusicXML เพื่อนำเข้าแอป</span>
-            <a href={`https://www.songsterr.com/?pattern=${encodeURIComponent(q.trim())}`} target="_blank" rel="noreferrer">ค้นบน Songsterr ↗</a>
-            <a href={`https://musescore.com/sheetmusic?text=${encodeURIComponent(q.trim() + ' drums')}`} target="_blank" rel="noreferrer">ค้นบน MuseScore ↗</a>
+            <span>{t("ไม่พบ “")}{q.trim()}{t("” ในแอป")}</span>
+            <span className="faint">{t("ลองค้นหาโน้ตกลองจากเว็บไซต์ แล้วบันทึกเป็นไฟล์ MIDI หรือ MusicXML เพื่อนำเข้าแอป")}</span>
+            <a href={`https://www.songsterr.com/?pattern=${encodeURIComponent(q.trim())}`} target="_blank" rel="noreferrer">{t("ค้นบน Songsterr ↗")}</a>
+            <a href={`https://musescore.com/sheetmusic?text=${encodeURIComponent(q.trim() + ' drums')}`} target="_blank" rel="noreferrer">{t("ค้นบน MuseScore ↗")}</a>
           </div>
         )}
-        {builtIn.length > 0 && <span className="label" style={{ padding: '0 10px 6px' }}>จังหวะในแอป</span>}
+        {builtIn.length > 0 && <span className="label" style={{ padding: '0 10px 6px' }}>{t("จังหวะในแอป")}</span>}
         {builtIn.map((s) => (
           <button key={s.id} type="button" className="pr-item" aria-pressed={s.id === score.id} onClick={() => { stop(); setScoreId(s.id); }}>
             <span className="pr-t">{s.title}</span>
-            <span className="pr-s">{s.bpm} BPM · {s.sig[0]}/{s.sig[1]} · {s.measures} ห้อง</span>
+            <span className="pr-s">{s.bpm} BPM · {s.sig[0]}/{s.sig[1]} · {s.measures}  {t("ห้อง")}</span>
           </button>
         ))}
-        <span className="label" style={{ padding: '12px 10px 6px' }}>นำเข้าเอง</span>
-        {q.trim() && imported.length > 0 && !mine.length && <span className="faint" style={{ fontSize: 12, padding: '0 10px' }}>ไม่มีเพลงที่นำเข้าซึ่งตรงกับคำค้นหา</span>}
+        <span className="label" style={{ padding: '12px 10px 6px' }}>{t("นำเข้าเอง")}</span>
+        {q.trim() && imported.length > 0 && !mine.length && <span className="faint" style={{ fontSize: 12, padding: '0 10px' }}>{t("ไม่มีเพลงที่นำเข้าซึ่งตรงกับคำค้นหา")}</span>}
         {mine.map((s) => (
           <div key={s.id} className="row" style={{ gap: 2, flexWrap: 'nowrap' }}>
             <button type="button" className="pr-item" style={{ flex: '1 1 0' }} aria-pressed={s.id === score.id} onClick={() => { stop(); setScoreId(s.id); }}>
               <span className="pr-t">{s.title}</span>
-              <span className="pr-s">{s.bpm} BPM · {s.measures} ห้อง</span>
+              <span className="pr-s">{s.bpm} BPM · {s.measures}  {t("ห้อง")}</span>
             </button>
-            <button type="button" className="icon-btn sm" aria-label={'แก้ไขโน้ต ' + s.title} title="แก้ไขโน้ต" onClick={() => { stop(); setEditing(s); }}>✎</button>
-            <button type="button" className="icon-btn sm" aria-label={'ลบ ' + s.title} onClick={() => { if (confirm(`ลบ "${s.title}"?`)) { stop(); setImported((x) => x.filter((y) => y.id !== s.id)); } }}><Trash /></button>
+            <button type="button" className="icon-btn sm" aria-label={t("แก้ไขโน้ต ") + s.title} title={t("แก้ไขโน้ต")} onClick={() => { stop(); setEditing(s); }}>✎</button>
+            <button type="button" className="icon-btn sm" aria-label={t("ลบ ") + s.title} onClick={() => { if (confirm(t("ลบ \"{0}\"?", s.title))) { stop(); setImported((x) => x.filter((y) => y.id !== s.id)); } }}><Trash /></button>
           </div>
         ))}
-        <button type="button" className="btn sm primary" style={{ margin: '6px 4px 0' }} onClick={() => { stop(); setEditing(newScore()); }}><Plus /> สร้างเพลงใหม่ (ใส่โน้ตเอง)</button>
-        <button type="button" className="btn sm" style={{ margin: '6px 4px' }} onClick={() => fileRef.current?.click()}><Upload /> นำเข้า MIDI / MusicXML</button>
+        <button type="button" className="btn sm primary" style={{ margin: '6px 4px 0' }} onClick={() => { stop(); setEditing(newScore()); }}><Plus />  {t("สร้างเพลงใหม่ (ใส่โน้ตเอง)")}</button>
+        <button type="button" className="btn sm" style={{ margin: '6px 4px' }} onClick={() => fileRef.current?.click()}><Upload />  {t("นำเข้า MIDI / MusicXML")}</button>
         {window.drumduino?.listMyScores && (
           <div className="row" style={{ gap: 4, margin: '0 4px', flexWrap: 'nowrap' }}>
-            <button type="button" className="btn sm ghost" onClick={() => void scanFolder(true)}>โหลดจากโฟลเดอร์</button>
-            <button type="button" className="btn sm ghost" onClick={() => void window.drumduino?.openScoresFolder?.()}>เปิดโฟลเดอร์</button>
+            <button type="button" className="btn sm ghost" onClick={() => void scanFolder(true)}>{t("โหลดจากโฟลเดอร์")}</button>
+            <button type="button" className="btn sm ghost" onClick={() => void window.drumduino?.openScoresFolder?.()}>{t("เปิดโฟลเดอร์")}</button>
           </div>
         )}
         <input ref={fileRef} type="file" accept=".mid,.midi,.musicxml,.xml" multiple hidden onChange={(e) => { void onImport(e.target.files); e.target.value = ''; }} />
         {msg && <span className="faint" style={{ fontSize: 12, padding: '0 8px' }} role="status">{msg}</span>}
         <p className="faint" style={{ fontSize: 11.5, padding: '6px 8px', lineHeight: 1.5 }}>
-          หากมีโน้ตกลองใน MuseScore หรือ Guitar Pro ให้บันทึกเป็นไฟล์ MIDI หรือ MusicXML แล้วนำเข้าได้ทันที
+          
+          {t("หากมีโน้ตกลองใน MuseScore หรือ Guitar Pro ให้บันทึกเป็นไฟล์ MIDI หรือ MusicXML แล้วนำเข้าได้ทันที")}
         </p>
       </aside>
 
@@ -420,63 +423,63 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
           onSave={(sc) => {
             setImported((list) => (list.some((x) => x.id === sc.id) ? list.map((x) => (x.id === sc.id ? sc : x)) : [...list, sc]));
             setScoreId(sc.id);
-            setMsg(`บันทึก “${sc.title}” แล้ว`);
+            setMsg(t("บันทึก “{0}” แล้ว", sc.title));
           }}
         />
       ) : (
       <section className={'pr-main' + (isLanes ? ' lanes-variant' : '')}>
         <div className="pr-transport">
-          <button type="button" className={'btn play-btn' + (playing ? '' : ' primary')} onClick={() => (playing ? stop() : start())} aria-label={playing ? 'หยุด' : 'เล่น'}>
-            {playing ? <Stop /> : <PlayIcon />} {playing ? 'หยุด' : 'เล่น'}
+          <button type="button" className={'btn play-btn' + (playing ? '' : ' primary')} onClick={() => (playing ? stop() : start())} aria-label={playing ? t("หยุด") : t("เล่น")}>
+            {playing ? <Stop /> : <PlayIcon />} {playing ? t("หยุด") : t("เล่น")}
           </button>
-          <div className="seg pr-seg" role="group" aria-label="โหมด">
-            <button type="button" aria-pressed={prefs.mode === 'listen'} onClick={() => setPrefs((p) => ({ ...p, mode: 'listen' }))}>แอปตีให้ฟัง</button>
-            <button type="button" aria-pressed={prefs.mode === 'practice'} onClick={() => setPrefs((p) => ({ ...p, mode: 'practice' }))}>ฉันตีเอง (มีคะแนน)</button>
+          <div className="seg pr-seg" role="group" aria-label={t("โหมด")}>
+            <button type="button" aria-pressed={prefs.mode === 'listen'} onClick={() => setPrefs((p) => ({ ...p, mode: 'listen' }))}>{t("แอปตีให้ฟัง")}</button>
+            <button type="button" aria-pressed={prefs.mode === 'practice'} onClick={() => setPrefs((p) => ({ ...p, mode: 'practice' }))}>{t("ฉันตีเอง (มีคะแนน)")}</button>
           </div>
           <div className="pr-bpm">
-            <label htmlFor="bpm" className="label">ความเร็ว</label>
+            <label htmlFor="bpm" className="label">{t("ความเร็ว")}</label>
             <input id="bpm" type="range" min={30} max={240} value={bpm} onChange={(e) => setBpm(Number(e.target.value))} />
             <input className="num" type="number" min={30} max={240} value={bpm} aria-label="BPM" onChange={(e) => setBpm(Math.max(30, Math.min(240, Number(e.target.value) || score.bpm)))} />
-            <button type="button" className="btn sm ghost" onClick={() => setBpm(bkMeta?.songBpm ? Math.round(bkMeta.songBpm * 100) / 100 : score.bpm)} title="ความเร็วเดิมของเพลง">{bkMeta?.songBpm ? bkMeta.songBpm.toFixed(1) : score.bpm}</button>
+            <button type="button" className="btn sm ghost" onClick={() => setBpm(bkMeta?.songBpm ? Math.round(bkMeta.songBpm * 100) / 100 : score.bpm)} title={t("ความเร็วเดิมของเพลง")}>{bkMeta?.songBpm ? bkMeta.songBpm.toFixed(1) : score.bpm}</button>
           </div>
           <div className="pr-kit">
-            <label htmlFor="prkit" className="label">ชุดกลอง</label>
-            <select id="prkit" className="input sm" value={kit.id} onChange={(e) => store.selectKit(e.target.value)} title="เปลี่ยนเสียงกลองได้ทันที แม้เพลงกำลังเล่นอยู่">
-              <optgroup label="ชุดกลองในแอป">
+            <label htmlFor="prkit" className="label">{t("ชุดกลอง")}</label>
+            <select id="prkit" className="input sm" value={kit.id} onChange={(e) => store.selectKit(e.target.value)} title={t("เปลี่ยนเสียงกลองได้ทันที แม้เพลงกำลังเล่นอยู่")}>
+              <optgroup label={t("ชุดกลองในแอป")}>
                 {store.kits.filter((k) => k.presetId).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
               </optgroup>
               {store.kits.some((k) => !k.presetId) && (
-                <optgroup label="ชุดของฉัน">
+                <optgroup label={t("ชุดของฉัน")}>
                   {store.kits.filter((k) => !k.presetId).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
                 </optgroup>
               )}
             </select>
-            {store.kitLoading && <span className="faint" style={{ fontSize: 12 }}>กำลังโหลดเสียง…</span>}
+            {store.kitLoading && <span className="faint" style={{ fontSize: 12 }}>{t("กำลังโหลดเสียง…")}</span>}
           </div>
           <div className="pr-toggles">
-            <label><input type="checkbox" checked={prefs.metronome} onChange={(e) => setPrefs((p) => ({ ...p, metronome: e.target.checked }))} /> เมโทรนอม</label>
-            <label><input type="checkbox" checked={prefs.countIn} onChange={(e) => setPrefs((p) => ({ ...p, countIn: e.target.checked }))} /> นับจังหวะก่อนเริ่ม</label>
-            {prefs.mode === 'practice' && <label><input type="checkbox" checked={prefs.guide} onChange={(e) => setPrefs((p) => ({ ...p, guide: e.target.checked }))} /> เปิดเสียงนำเบา ๆ</label>}
-            <label><input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> วนซ้ำ</label>
-            {!isLanes && <label><input type="checkbox" checked={prefs.kitView} onChange={(e) => setPrefs((p) => ({ ...p, kitView: e.target.checked }))} /> แสดงชุดกลอง</label>}
-            <span className="row" style={{ gap: 2, flexWrap: 'nowrap' }} title="ซ่อนเมนูทั้งหมด เหลือโน้ตกับชุดกลองในหน้าต่างขนาดพอดีสำหรับ OBS · กด Space เล่น/หยุด · Esc ออก">
-              <span className="faint">● อัดคลิป</span>
-              <button type="button" className="btn sm ghost" onClick={() => setRec('portrait')}>แนวตั้ง</button>
-              <button type="button" className="btn sm ghost" onClick={() => setRec('landscape')}>แนวนอน (เต็มจอ)</button>
+            <label><input type="checkbox" checked={prefs.metronome} onChange={(e) => setPrefs((p) => ({ ...p, metronome: e.target.checked }))} />  {t("เมโทรนอม")}</label>
+            <label><input type="checkbox" checked={prefs.countIn} onChange={(e) => setPrefs((p) => ({ ...p, countIn: e.target.checked }))} />  {t("นับจังหวะก่อนเริ่ม")}</label>
+            {prefs.mode === 'practice' && <label><input type="checkbox" checked={prefs.guide} onChange={(e) => setPrefs((p) => ({ ...p, guide: e.target.checked }))} />  {t("เปิดเสียงนำเบา ๆ")}</label>}
+            <label><input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} />  {t("วนซ้ำ")}</label>
+            {!isLanes && <label><input type="checkbox" checked={prefs.kitView} onChange={(e) => setPrefs((p) => ({ ...p, kitView: e.target.checked }))} />  {t("แสดงชุดกลอง")}</label>}
+            <span className="row" style={{ gap: 2, flexWrap: 'nowrap' }} title={t("ซ่อนเมนูทั้งหมด เหลือโน้ตกับชุดกลองในหน้าต่างขนาดพอดีสำหรับ OBS · กด Space เล่น/หยุด · Esc ออก")}>
+              <span className="faint">{t("● อัดคลิป")}</span>
+              <button type="button" className="btn sm ghost" onClick={() => setRec('portrait')}>{t("แนวตั้ง")}</button>
+              <button type="button" className="btn sm ghost" onClick={() => setRec('landscape')}>{t("แนวนอน (เต็มจอ)")}</button>
             </span>
             <span className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-              <span className="faint">ห้อง</span>
-              <input className="num" style={{ width: 54 }} type="number" min={1} max={score.measures} value={range[0] + 1} aria-label="เริ่มห้อง" onChange={(e) => { const v = Math.max(1, Math.min(score.measures, Number(e.target.value) || 1)) - 1; setRange(([, b]) => [v, Math.max(v + 1, b)]); }} />
+              <span className="faint">{t("ห้อง")}</span>
+              <input className="num" style={{ width: 54 }} type="number" min={1} max={score.measures} value={range[0] + 1} aria-label={t("เริ่มห้อง")} onChange={(e) => { const v = Math.max(1, Math.min(score.measures, Number(e.target.value) || 1)) - 1; setRange(([, b]) => [v, Math.max(v + 1, b)]); }} />
               <span className="faint">–</span>
-              <input className="num" style={{ width: 54 }} type="number" min={1} max={score.measures} value={range[1]} aria-label="ถึงห้อง" onChange={(e) => { const v = Math.max(1, Math.min(score.measures, Number(e.target.value) || score.measures)); setRange(([a]) => [Math.min(a, v - 1), v]); }} />
-              {(range[0] > 0 || range[1] < score.measures) && <button type="button" className="btn sm ghost" onClick={() => setRange([0, score.measures])}>ทั้งเพลง</button>}
+              <input className="num" style={{ width: 54 }} type="number" min={1} max={score.measures} value={range[1]} aria-label={t("ถึงห้อง")} onChange={(e) => { const v = Math.max(1, Math.min(score.measures, Number(e.target.value) || score.measures)); setRange(([a]) => [Math.min(a, v - 1), v]); }} />
+              {(range[0] > 0 || range[1] < score.measures) && <button type="button" className="btn sm ghost" onClick={() => setRange([0, score.measures])}>{t("ทั้งเพลง")}</button>}
             </span>
           </div>
         </div>
 
         <BackingPanel score={score} meta={bkMeta} setMeta={setBkMeta} playing={playing} stopPlayer={stop} onTempo={(b) => setBpm(Math.round(b * 100) / 100)} />
 
-        {rec && <button type="button" className="rec-exit" onClick={() => setRec(false)}>ออกจากโหมดอัดคลิป (Esc)</button>}
+        {rec && <button type="button" className="rec-exit" onClick={() => setRec(false)}>{t("ออกจากโหมดอัดคลิป (Esc)")}</button>}
         {(() => {
           const sheetBlock = (
             <>
@@ -484,7 +487,7 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
             <div className="pr-sheet-head">
               <h2>{score.title}</h2>
               <span className="faint">{score.subtitle}{score.sections ? ' · ' + score.sections.map((s) => s.name).join(' → ') : ''}</span>
-              <span className="faint" style={{ marginLeft: 'auto' }}>คลิกที่ห้องใดก็ได้เพื่อเริ่มเล่นจากห้องนั้น</span>
+              <span className="faint" style={{ marginLeft: 'auto' }}>{t("คลิกที่ห้องใดก็ได้เพื่อเริ่มเล่นจากห้องนั้น")}</span>
             </div>
             {isLanes && (
               <div className="pr-lane-wrap">
@@ -523,9 +526,9 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
             <div className={'pr-kitview' + (look === 'neon' ? ' neon' : '')}>
               <DrumKit3D kit={kit} look={look} />
               <KitCaption score={score} tickRef={tickRef} />
-              <span className="seg kv-look" role="group" aria-label="หน้าตาชุดกลอง">
-                <button type="button" aria-pressed={look === 'neon'} onClick={() => setLook('neon')}>นีออน</button>
-                <button type="button" aria-pressed={look === 'real'} onClick={() => setLook('real')}>สมจริง</button>
+              <span className="seg kv-look" role="group" aria-label={t("หน้าตาชุดกลอง")}>
+                <button type="button" aria-pressed={look === 'neon'} onClick={() => setLook('neon')}>{t("นีออน")}</button>
+                <button type="button" aria-pressed={look === 'real'} onClick={() => setLook('real')}>{t("สมจริง")}</button>
               </span>
             </div>
           )}
@@ -536,27 +539,28 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
         <div className="pr-stats">
           {prefs.mode === 'practice' ? (
             <>
-              <div className={'pr-last ' + (last?.cls ?? '')} role="status">{last?.text ?? (playing ? 'ตีตามโน้ตได้เลย' : 'กดปุ่มเล่น แล้วตีตามโน้ต (ใช้คีย์บอร์ดแทนกลองได้)')}</div>
+              <div className={'pr-last ' + (last?.cls ?? '')} role="status">{last?.text ?? (playing ? t("ตีตามโน้ตได้เลย") : t("กดปุ่มเล่น แล้วตีตามโน้ต (ใช้คีย์บอร์ดแทนกลองได้)"))}</div>
               <div className="pr-score"><b>{acc ?? '—'}</b><span>%</span></div>
               <div className="pr-counts">
-                <span className="c ok">ตรง {stats.ok}</span>
-                <span className="c early">เร็วไป {stats.early}</span>
-                <span className="c late">ช้าไป {stats.late}</span>
-                <span className="c miss">พลาด {stats.miss}</span>
-                <span className="c">ตีเกิน {stats.extra}</span>
-                {avg !== null && <span className="c">คลาดเคลื่อนเฉลี่ย {avg > 0 ? '+' : ''}{avg} ms</span>}
-                {loop && pass > 0 && <span className="c">รอบที่ {pass + 1}</span>}
+                <span className="c ok">{t("ตรง")} {stats.ok}</span>
+                <span className="c early">{t("เร็วไป")} {stats.early}</span>
+                <span className="c late">{t("ช้าไป")} {stats.late}</span>
+                <span className="c miss">{t("พลาด")} {stats.miss}</span>
+                <span className="c">{t("ตีเกิน")} {stats.extra}</span>
+                {avg !== null && <span className="c">{t("คลาดเคลื่อนเฉลี่ย")} {avg > 0 ? '+' : ''}{avg} ms</span>}
+                {loop && pass > 0 && <span className="c">{t("รอบที่")} {pass + 1}</span>}
               </div>
               <div className="pr-lat">
-                <label htmlFor="lat" className="label">ชดเชยความหน่วง</label>
+                <label htmlFor="lat" className="label">{t("ชดเชยความหน่วง")}</label>
                 <input id="lat" type="range" min={0} max={150} value={prefs.latency} onChange={(e) => setPrefs((p) => ({ ...p, latency: Number(e.target.value) }))} />
                 <span className="mono" style={{ fontSize: 12 }}>{prefs.latency} ms</span>
               </div>
             </>
           ) : (
             <div className="faint" style={{ fontSize: 13 }}>
-              โหมดฟัง: แอปจะตีตามโน้ตด้วยชุดกลอง “{kit.name}” กด Space เพื่อเล่นหรือหยุด และเลือก “ฉันตีเอง” เมื่อต้องการฝึกและดูคะแนน
-              <span className="legend"><span className="mark ok" /> ตรง <span className="mark early" /> เร็ว <span className="mark late" /> ช้า <span className="mark miss" /> พลาด</span>
+              
+              {t("โหมดฟัง: แอปจะตีตามโน้ตด้วยชุดกลอง “")}{kit.name}{t("” กด Space เพื่อเล่นหรือหยุด และเลือก “ฉันตีเอง” เมื่อต้องการฝึกและดูคะแนน")}
+              <span className="legend"><span className="mark ok" />  {t("ตรง")} <span className="mark early" />  {t("เร็ว")} <span className="mark late" />  {t("ช้า")} <span className="mark miss" />  {t("พลาด")}</span>
             </div>
           )}
         </div>

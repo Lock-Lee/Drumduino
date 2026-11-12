@@ -418,3 +418,4 @@ body.rec-mode .pr-sheet-head .seg { display: none; }
 body.rec-mode .pr-main.lanes-variant .pr-kitview { flex: 1 1 56%; }
 body.rec-mode .pr-main.lanes-variant .pr-sheet-scroll.lanes { flex: 0 0 44%; }
 body.rec-mode .pr-main.lanes-variant .pr-sheet-head { display: none; }
+.lang-switch { margin-right: 4px; }

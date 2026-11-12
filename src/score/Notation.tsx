@@ -4,6 +4,8 @@ import { Articulation, Beam, Formatter, Fraction, Modifier, Parenthesis, Rendere
 import type { Art, PadId, Score, ScoreNote } from './types';
 import { PPQ, ticksPerMeasure } from './types';
 
+import { t } from '../i18n';
+
 /** Staff position and notehead per pad/articulation (common drum-set key). */
 function keyFor(pad: PadId, art: Art): string {
   switch (pad) {
@@ -341,7 +343,7 @@ export function Notation({
           return <span key={i} className={'mark ' + mk.status} style={{ left: p.x - 7, top: p.y - 7 }} />;
         })}
       <div ref={cursor} className="playhead" aria-hidden="true" />
-      {approx && <div className="sheet-note">โน้ตบางตัวแสดงแบบปัดค่า เพราะไฟล์มีจังหวะละเอียดกว่าที่แสดงได้ แต่เสียงที่เล่นยังตรงตามไฟล์</div>}
+      {approx && <div className="sheet-note">{t("โน้ตบางตัวแสดงแบบปัดค่า เพราะไฟล์มีจังหวะละเอียดกว่าที่แสดงได้ แต่เสียงที่เล่นยังตรงตามไฟล์")}</div>}
     </div>
   );
 }

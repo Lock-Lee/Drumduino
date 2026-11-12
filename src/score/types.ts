@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 // A drum score in the app's own format. Times are in ticks, PPQ ticks per quarter note.
 
 export const PPQ = 480;
@@ -55,12 +56,12 @@ export function sortNotes(notes: ScoreNote[]): ScoreNote[] {
 }
 
 export const PAD_LABEL: Record<PadId, string> = {
-  kick: 'กระเดื่อง',
-  snare: 'สแนร์',
-  hihat: 'ไฮแฮท',
-  tom1: 'ทอม 1',
-  tom2: 'ทอม 2',
-  floor: 'ฟลอร์ทอม',
-  crash: 'แครช',
-  ride: 'ไรด์'
+  kick: t("กระเดื่อง"),
+  snare: t("สแนร์"),
+  hihat: t("ไฮแฮท"),
+  tom1: t("ทอม 1"),
+  tom2: t("ทอม 2"),
+  floor: t("ฟลอร์ทอม"),
+  crash: t("แครช"),
+  ride: t("ไรด์")
 };

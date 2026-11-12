@@ -3,8 +3,10 @@ import { fromGM } from './gm';
 import type { Art, PadId, Score, ScoreNote } from './types';
 import { PPQ, sortNotes, ticksPerMeasure } from './types';
 
+import { t } from '../i18n';
+
 function finish(title: string, bpm: number, sig: [number, number], notes: ScoreNote[], marks: { tick: number; name: string }[] = []): Score {
-  if (!notes.length) throw new Error('ไม่พบโน้ตกลองในไฟล์นี้');
+  if (!notes.length) throw new Error(t("ไม่พบโน้ตกลองในไฟล์นี้"));
   const sorted = sortNotes(notes);
   const tpm = ticksPerMeasure({ sig });
   // drop leading empty bars beyond one (pickup-friendly)
@@ -12,7 +14,7 @@ function finish(title: string, bpm: number, sig: [number, number], notes: ScoreN
   return {
     id: 'imp-' + Date.now().toString(36),
     title,
-    subtitle: 'นำเข้าเอง',
+    subtitle: t("นำเข้าเอง"),
     bpm: Math.round(bpm),
     sig,
     measures,
@@ -51,13 +53,13 @@ export function parseMidi(buf: ArrayBuffer, fileName = 'MIDI'): Score {
     return v;
   };
 
-  if (str(4) !== 'MThd') throw new Error('ไม่ใช่ไฟล์ MIDI');
+  if (str(4) !== 'MThd') throw new Error(t("ไม่ใช่ไฟล์ MIDI"));
   const hlen = u32();
   u16(); // format
   const ntrks = u16();
   const division = u16();
   p = 8 + hlen;
-  if (division & 0x8000) throw new Error('ยังไม่รองรับไฟล์ MIDI แบบ SMPTE');
+  if (division & 0x8000) throw new Error(t("ยังไม่รองรับไฟล์ MIDI แบบ SMPTE"));
   const scale = PPQ / division;
 
   let bpm = 0;
@@ -141,8 +143,8 @@ function guessFromName(name: string): [PadId, Art] | null {
 
 export function parseMusicXml(text: string, fileName = 'MusicXML'): Score {
   const doc = new DOMParser().parseFromString(text, 'application/xml');
-  if (doc.querySelector('parsererror')) throw new Error('อ่านไฟล์ MusicXML ไม่ได้');
-  if (doc.documentElement.nodeName === 'score-timewise') throw new Error('ยังไม่รองรับ MusicXML แบบ timewise กรุณาบันทึกเป็นแบบ partwise');
+  if (doc.querySelector('parsererror')) throw new Error(t("อ่านไฟล์ MusicXML ไม่ได้"));
+  if (doc.documentElement.nodeName === 'score-timewise') throw new Error(t("ยังไม่รองรับ MusicXML แบบ timewise กรุณาบันทึกเป็นแบบ partwise"));
 
   const txt = (el: Element | null | undefined, sel: string) => el?.querySelector(sel)?.textContent?.trim() ?? '';
   const title = txt(doc.documentElement, 'work > work-title') || txt(doc.documentElement, 'movement-title') || fileName.replace(/\.(musicxml|xml)$/i, '');
@@ -162,7 +164,7 @@ export function parseMusicXml(text: string, fileName = 'MusicXML'): Score {
   // pick the first part that has unpitched notes
   const parts = Array.from(doc.querySelectorAll('part'));
   const part = parts.find((pt) => pt.querySelector('unpitched')) ?? parts[0];
-  if (!part) throw new Error('ไม่พบโน้ตในไฟล์');
+  if (!part) throw new Error(t("ไม่พบโน้ตในไฟล์"));
 
   let divisions = 1;
   let sig: [number, number] | null = null;
@@ -243,8 +245,8 @@ export function parseMusicXml(text: string, fileName = 'MusicXML'): Score {
 
 export async function importScoreFile(f: File): Promise<Score> {
   const name = f.name.toLowerCase();
-  if (name.endsWith('.mxl')) throw new Error('ไฟล์ .mxl เป็นไฟล์บีบอัด กรุณาบันทึกเป็น .musicxml แบบไม่บีบอัด');
+  if (name.endsWith('.mxl')) throw new Error(t("ไฟล์ .mxl เป็นไฟล์บีบอัด กรุณาบันทึกเป็น .musicxml แบบไม่บีบอัด"));
   if (name.endsWith('.mid') || name.endsWith('.midi')) return parseMidi(await f.arrayBuffer(), f.name);
   if (name.endsWith('.musicxml') || name.endsWith('.xml')) return parseMusicXml(await f.text(), f.name);
-  throw new Error('รองรับเฉพาะไฟล์ .mid และ .musicxml');
+  throw new Error(t("รองรับเฉพาะไฟล์ .mid และ .musicxml"));
 }
