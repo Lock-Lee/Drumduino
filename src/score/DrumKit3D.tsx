@@ -541,17 +541,37 @@ export function DrumKit3D({ kit, look = 'real', score, tickRef, bpm, follow = fa
       return { tip: up(tipBase, back, Math.max(0, hgt)), hand: handPos };
     };
     const tmp2 = new THREE.Vector3();
+    /** no notes nearby while the song plays: the hands softly keep the beat in the air */
+    const keepTime = (h: Hand, sec: number) => {
+      const tl = timeline.current!, list = tl[h];
+      let lo = 0, hi = list.length;
+      while (lo < hi) {
+        const m = (lo + hi) >> 1;
+        if (list[m].sec <= sec) lo = m + 1;
+        else hi = m;
+      }
+      const prev = list[lo - 1], next = list[lo];
+      const fade = (prev ? smooth((sec - prev.sec - 0.25) / 0.4) : 1) * (next ? smooth((next.sec - sec - 0.45) / 0.5) : 1);
+      if (fade <= 0) return 0;
+      const beat = sec / (tl.spt * PPQ);
+      const ph = ((beat % 1) + 1) % 1;
+      return (h === 'R' ? 0.035 : 0.014) * Math.sin(Math.PI * ph) * fade;
+    };
+    /** resting hands are never perfectly still */
+    const breathe = (h: Hand, now: number, since: number) =>
+      0.012 * Math.sin(2 * Math.PI * 0.33 * now + (h === 'L' ? 0 : 1.9)) * smooth((since - 0.3) / 0.6);
     const poseStick = (h: Hand, now: number) => {
       const tr = tickSrc.current?.current;
       if (followRef.current && timeline.current && tr != null && !reduce) {
         const sec = tr * timeline.current.spt;
         const p = followPose(h, sec);
+        p.tip.y += keepTime(h, sec);
         lastPose[h] = p;
         const s = sticks[h];
         s.target = p.tip.clone();
         s.hand = p.hand.clone();
         s.up = 0;
-        s.t0 = 0;
+        s.t0 = now;
         s.from = undefined;
         place(h, p.tip, p.hand);
         return;
@@ -571,6 +591,7 @@ export function DrumKit3D({ kit, look = 'real', score, tickRef, bpm, follow = fa
       const k = reduce ? 1 : Math.min(1, (dt - 0.03) / 0.2);
       const lift = s.up * (1 - (1 - Math.max(0, k)) ** 3);
       const tipPos = up(s.target, back, lift);
+      if (!reduce) tipPos.y += breathe(h, now, dt);
       lastPose[h] = { tip: tipPos, hand: s.hand.clone() };
       place(h, tipPos, s.hand);
     };
@@ -662,7 +683,7 @@ export function DrumKit3D({ kit, look = 'real', score, tickRef, bpm, follow = fa
       raf = requestAnimationFrame(frame);
       const now = performance.now() / 1000;
       controls.update();
-      if (followRef.current && tickSrc.current?.current != null) wake(0.3);
+      if (!reduce) wake(0.3); // the sticks always move a little
       if (now > busyUntil) return;
       for (const p of pads.values()) {
         const dt = now - p.t0;
