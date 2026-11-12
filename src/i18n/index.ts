@@ -13,7 +13,7 @@ function initial(): Lang {
   } catch {
     /* ignore */
   }
-  return typeof navigator !== 'undefined' && !/^th\b/i.test(navigator.language) ? 'en' : 'th';
+  return 'th'; // Thai until the user picks EN in the top bar
 }
 
 export const lang: Lang = initial();

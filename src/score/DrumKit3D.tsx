@@ -4,9 +4,11 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { engine } from '../audio/engine';
 import type { Kit } from '../types';
-import type { PadId } from './types';
+import type { PadId, Score } from './types';
+import { PPQ } from './types';
+import type { MutableRefObject } from 'react';
 import { DrumKitView } from './DrumKitView';
-import { createSticking } from './sticking';
+import { createSticking, stickingFor } from './sticking';
 import { PAD_COLOR } from './padColors';
 import type { Hand, HandPad } from './sticking';
 
@@ -122,10 +124,51 @@ interface PadVis {
 /** 'real' = lacquered shells, coated heads, bronze; 'neon' = see-through glowing kit, one colour per drum (matches the lanes) */
 export type KitLook = 'real' | 'neon';
 
-export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) {
+interface StickHit { sec: number; pad: HandPad; v: number }
+interface Timeline { L: StickHit[]; R: StickHit[]; kick: number[]; spt: number }
+
+/**
+ * When `follow` is on (the app is playing the score), the sticks are driven by the score itself:
+ * each stick knows its next note, so it rebounds, travels over and strikes down exactly on time —
+ * like real hands. Otherwise (you play) the sticks react to your hits.
+ */
+export function DrumKit3D({ kit, look = 'real', score, tickRef, bpm, follow = false }: {
+  kit: Kit;
+  look?: KitLook;
+  score?: Score;
+  tickRef?: MutableRefObject<number | null>;
+  bpm?: number;
+  follow?: boolean;
+}) {
   const host = useRef<HTMLDivElement>(null);
   const kitRef = useRef(kit);
   kitRef.current = kit;
+  const followRef = useRef(follow);
+  followRef.current = follow && !!tickRef;
+  const tickSrc = useRef(tickRef);
+  tickSrc.current = tickRef;
+  // per-hand list of stick notes in seconds, with the same sticking as the lane view
+  const timeline = useRef<Timeline | null>(null);
+  useEffect(() => {
+    if (!score || !bpm) {
+      timeline.current = null;
+      return;
+    }
+    const spt = 60 / (PPQ * bpm);
+    const notes = score.notes.slice().sort((a, b) => a.tick - b.tick);
+    const hands = stickingFor(notes.map((n) => ({ t: n.tick * spt, pad: n.pad, foot: n.pad === 'hihat' && n.art === 'pedal' })));
+    const tl: Timeline = { L: [], R: [], kick: [], spt };
+    notes.forEach((n, i) => {
+      const h = hands[i];
+      if (h) {
+        // one stick can only hit one drum at a time (a 3-note chord gives L two notes: keep one)
+        const last = tl[h][tl[h].length - 1];
+        if (!last || n.tick * spt - last.sec > 0.008) tl[h].push({ sec: n.tick * spt, pad: n.pad as HandPad, v: n.vel });
+      }
+      else if (n.pad === 'kick') tl.kick.push(n.tick * spt);
+    });
+    timeline.current = tl;
+  }, [score, bpm]);
   const [noGL, setNoGL] = useState(false);
 
   useEffect(() => {
@@ -405,7 +448,7 @@ export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) 
       return new THREE.LatheGeometry(prof, 18);
     })();
     const stickMat = neon ? M(new THREE.MeshBasicMaterial({ color: 0xf2f4f8 })) : wood;
-    const sticks: Record<Hand, { mesh: THREE.Mesh; target: THREE.Vector3; hand: THREE.Vector3; t0: number; up: number }> = {
+    const sticks: Record<Hand, { mesh: THREE.Mesh; target: THREE.Vector3; hand: THREE.Vector3; t0: number; up: number; from?: { tip: THREE.Vector3; hand: THREE.Vector3 } }> = {
       L: { mesh: add(scene, stickGeo, stickMat), target: pads.get(IDLE.L)!.strike.clone(), hand: HAND_BASE.L.clone(), t0: -10, up: 0.12 },
       R: { mesh: add(scene, stickGeo, stickMat), target: pads.get(IDLE.R)!.strike.clone(), hand: HAND_BASE.R.clone(), t0: -10, up: 0.12 }
     };
@@ -441,7 +484,6 @@ export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) 
     lf?.position.set(-0.59, 0.12, 0.25);
     const Y = new THREE.Vector3(0, 1, 0);
     const tmp = new THREE.Vector3();
-    const tip = new THREE.Vector3();
     const handFor = (h: Hand, target: THREE.Vector3) => {
       // the hand stays near the drummer but leans toward the drum it plays
       const base = HAND_BASE[h];
@@ -449,16 +491,88 @@ export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) 
       return target.clone().addScaledVector(dir, STICK_LEN * 0.92);
     };
     for (const h of ['L', 'R'] as Hand[]) sticks[h].hand = handFor(h, sticks[h].target);
-    const poseStick = (h: Hand, now: number) => {
+    const lerpV = (a: THREE.Vector3, b: THREE.Vector3, k: number) => a.clone().lerp(b, k);
+    const smooth = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const restOf = (h: Hand) => pads.get(IDLE[h])!.strike;
+    const place = (h: Hand, tipPos: THREE.Vector3, handPos: THREE.Vector3) => {
       const s = sticks[h];
-      const k = reduce ? 1 : Math.min(1, (now - s.t0) / 0.17);
-      const lift = s.up * (1 - (1 - k) ** 3); // ease-out: contact → raised
-      const back = tmp.copy(s.hand).sub(s.target).normalize();
-      tip.copy(s.target).addScaledVector(Y, lift).addScaledVector(back, lift * 0.25);
-      s.mesh.position.copy(tip);
-      tmp.copy(s.hand).sub(tip).normalize();
+      s.mesh.position.copy(tipPos);
+      tmp.copy(handPos).sub(tipPos).normalize();
       s.mesh.quaternion.setFromUnitVectors(Y, tmp);
-      if (badges) badges[h].position.copy(tip).addScaledVector(tmp, STICK_LEN * 0.9);
+      if (badges) badges[h].position.copy(tipPos).addScaledVector(tmp, STICK_LEN * 0.9);
+    };
+    const lastPose: Record<Hand, { tip: THREE.Vector3; hand: THREE.Vector3 }> = {
+      L: { tip: restOf('L').clone(), hand: handFor('L', restOf('L')) },
+      R: { tip: restOf('R').clone(), hand: handFor('R', restOf('R')) }
+    };
+    const up = (p: THREE.Vector3, back: THREE.Vector3, hgt: number) => p.clone().addScaledVector(Y, hgt).addScaledVector(back, hgt * 0.25);
+    /** score-driven: where is this hand between its previous and next note? */
+    const followPose = (h: Hand, sec: number) => {
+      const list = timeline.current![h];
+      let lo = 0, hi = list.length;
+      while (lo < hi) {
+        const m = (lo + hi) >> 1;
+        if (list[m].sec <= sec) lo = m + 1;
+        else hi = m;
+      }
+      const prev = list[lo - 1], next = list[lo];
+      const A = prev ? pads.get(prev.pad)!.strike : restOf(h);
+      const hA = handFor(h, A);
+      // after a hit the stick rebounds and hovers above that drum
+      const restH = 0.13 * (prev ? smooth((sec - prev.sec) / 0.22) : 1);
+      if (!next || next.sec - sec > 1.4) {
+        const back = tmp2.copy(hA).sub(A).normalize();
+        return { tip: up(A, back, restH), hand: hA };
+      }
+      const B = pads.get(next.pad)!.strike;
+      const hB = handFor(h, B);
+      const t0 = prev && next.sec - prev.sec < 1.4 ? prev.sec : next.sec - 0.5;
+      const dur = Math.max(0.03, next.sec - t0);
+      const u = Math.min(1, Math.max(0, (sec - t0) / dur));
+      // lift height grows with the time available and with how hard the next note is
+      const H = Math.min(0.2, 0.025 + 0.32 * dur) * (0.55 + 0.45 * (next.v / 127));
+      const fromRest = !prev || next.sec - prev.sec >= 1.4;
+      // quick rebound, glide over, accelerate down onto the next note
+      const hgt = fromRest ? H + (restH - H) * (1 - smooth(u)) * (1 - u ** 3) - H * u ** 3 : H * Math.sin(Math.PI * u ** 0.72);
+      const travel = smooth((u - 0.08) / 0.72);
+      const tipBase = lerpV(A, B, travel);
+      const handPos = lerpV(hA, hB, travel);
+      const back = tmp2.copy(handPos).sub(tipBase).normalize();
+      return { tip: up(tipBase, back, Math.max(0, hgt)), hand: handPos };
+    };
+    const tmp2 = new THREE.Vector3();
+    const poseStick = (h: Hand, now: number) => {
+      const tr = tickSrc.current?.current;
+      if (followRef.current && timeline.current && tr != null && !reduce) {
+        const sec = tr * timeline.current.spt;
+        const p = followPose(h, sec);
+        lastPose[h] = p;
+        const s = sticks[h];
+        s.target = p.tip.clone();
+        s.hand = p.hand.clone();
+        s.up = 0;
+        s.t0 = 0;
+        s.from = undefined;
+        place(h, p.tip, p.hand);
+        return;
+      }
+      // live: glide to the drum in 30 ms, then rebound
+      const s = sticks[h];
+      const dt = now - s.t0;
+      const back = tmp2.copy(s.hand).sub(s.target).normalize();
+      if (!reduce && dt < 0.03 && s.from) {
+        const k = smooth(dt / 0.03);
+        const tipPos = lerpV(s.from.tip, s.target, k);
+        const handPos = lerpV(s.from.hand, s.hand, k);
+        lastPose[h] = { tip: tipPos, hand: handPos };
+        place(h, tipPos, handPos);
+        return;
+      }
+      const k = reduce ? 1 : Math.min(1, (dt - 0.03) / 0.2);
+      const lift = s.up * (1 - (1 - Math.max(0, k)) ** 3);
+      const tipPos = up(s.target, back, lift);
+      lastPose[h] = { tip: tipPos, hand: s.hand.clone() };
+      place(h, tipPos, s.hand);
     };
 
     // ---------- reacting to hits ----------
@@ -467,7 +581,9 @@ export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) 
     const sticking = createSticking((hand, id, v) => {
       const p = pads.get(id);
       if (!p) return;
+      if (followRef.current) return; // the score drives the sticks
       const s = sticks[hand];
+      s.from = { tip: lastPose[hand].tip.clone(), hand: lastPose[hand].hand.clone() };
       s.target = p.strike.clone();
       s.hand = handFor(hand, s.target);
       s.t0 = performance.now() / 1000;
@@ -546,6 +662,7 @@ export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) 
       raf = requestAnimationFrame(frame);
       const now = performance.now() / 1000;
       controls.update();
+      if (followRef.current && tickSrc.current?.current != null) wake(0.3);
       if (now > busyUntil) return;
       for (const p of pads.values()) {
         const dt = now - p.t0;
@@ -566,7 +683,22 @@ export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) 
       }
       // kick beater: at the head on the hit, then swings back
       const kd = now - kickT;
-      beater.rotation.x = kickT < 0 || reduce ? BEATER_REST : BEATER_HIT + (BEATER_REST - BEATER_HIT) * (1 - Math.exp(-kd * 16));
+      const trk = tickSrc.current?.current;
+      if (followRef.current && timeline.current && trk != null && !reduce) {
+        // beater swings in to land on the note, then bounces back
+        const sec = trk * timeline.current.spt, ks = timeline.current.kick;
+        let lo = 0, hi = ks.length;
+        while (lo < hi) {
+          const m = (lo + hi) >> 1;
+          if (ks[m] <= sec) lo = m + 1;
+          else hi = m;
+        }
+        const since = lo > 0 ? sec - ks[lo - 1] : 9, until = lo < ks.length ? ks[lo] - sec : 9;
+        const back = 1 - Math.exp(-since * 16);
+        const pre = until < 0.09 ? smooth(1 - until / 0.09) : 0;
+        const k = Math.max(1 - back, pre);
+        beater.rotation.x = BEATER_REST + (BEATER_HIT - BEATER_REST) * k;
+      } else beater.rotation.x = kickT < 0 || reduce ? BEATER_REST : BEATER_HIT + (BEATER_REST - BEATER_HIT) * (1 - Math.exp(-kd * 16));
       // hi-hat pedal: cymbals clap together, then open again
       const hd = now - hhPedalT;
       const close = hhPedalT < 0 ? 0 : Math.exp(-hd * 7);

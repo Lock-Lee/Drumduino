@@ -524,7 +524,7 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
             <>
           {(prefs.kitView || rec || isLanes) && (
             <div className={'pr-kitview' + (look === 'neon' ? ' neon' : '')}>
-              <DrumKit3D kit={kit} look={look} />
+              <DrumKit3D kit={kit} look={look} score={score} tickRef={tickRef} bpm={bpm} follow={playing && prefs.mode === 'listen'} />
               <KitCaption score={score} tickRef={tickRef} />
               <span className="seg kv-look" role="group" aria-label={t("หน้าตาชุดกลอง")}>
                 <button type="button" aria-pressed={look === 'neon'} onClick={() => setLook('neon')}>{t("นีออน")}</button>
