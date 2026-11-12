@@ -57,3 +57,46 @@ export function createSticking(play: (hand: Hand, id: HandPad, velocity: number)
     }
   };
 }
+
+/**
+ * The same sticking worked out ahead of time for a whole score (for showing L / R on the notes).
+ * `times` are seconds, sorted; returns one entry per note: 'L' | 'R' for stick notes, null for feet.
+ */
+export function stickingFor(notes: { t: number; pad: string; foot?: boolean }[]): (Hand | null)[] {
+  const out: (Hand | null)[] = notes.map(() => null);
+  let prev = { hand: 'R' as Hand, t: -1e9 };
+  let lastCymR = -1e9;
+  for (let i = 0; i < notes.length; ) {
+    // group of notes played together (within 8 ms)
+    let j = i;
+    const group: number[] = [];
+    while (j < notes.length && notes[j].t - notes[i].t < 0.008) {
+      if (!notes[j].foot && notes[j].pad !== 'kick') group.push(j);
+      j++;
+    }
+    const t = notes[i].t;
+    if (group.length) {
+      const sorted = group.sort((a, b) => RANK[notes[b].pad as HandPad] - RANK[notes[a].pad as HandPad]);
+      if (sorted.length >= 2) {
+        out[sorted[0]] = 'R';
+        out[sorted[1]] = 'L';
+        for (const k of sorted.slice(2)) out[k] = 'L';
+        if (CYM.has(notes[sorted[0]].pad as HandPad)) lastCymR = t;
+        prev = { hand: 'R', t };
+      } else {
+        const id = notes[sorted[0]].pad as HandPad;
+        const gap = t - prev.t;
+        let hand: Hand;
+        if (gap < (CYM.has(id) ? 0.13 : 0.26)) hand = prev.hand === 'R' ? 'L' : 'R';
+        else if (CYM.has(id)) hand = 'R';
+        else if (id === 'snare' || id === 'tom1') hand = t - lastCymR < 0.5 ? 'L' : 'R';
+        else hand = 'R';
+        out[sorted[0]] = hand;
+        if (hand === 'R' && CYM.has(id)) lastCymR = t;
+        prev = { hand, t };
+      }
+    }
+    i = j;
+  }
+  return out;
+}
