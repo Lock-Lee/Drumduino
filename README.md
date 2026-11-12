@@ -1,240 +1,244 @@
 # DrumDuino
 
-แอปกลองไฟฟ้าสำหรับ macOS และ Windows ที่ต่อกับ Arduino และเซนเซอร์ piezo
-ตีแป้นแล้วได้เสียงกลองจริง ฝึกตีตามโน้ตพร้อมเพลงต้นฉบับ และอัดคลิปลงโซเชียลได้ในแอปเดียว
+**English** · [ภาษาไทย](README.th.md)
 
-![หน้าฝึกตี: โน้ตกลอง เพลงประกอบที่ซิงก์แล้ว และชุดกลอง 3 มิติที่ไม้ตีตามโน้ต](docs/images/practice.png)
+An electronic drum app for macOS and Windows that works with an Arduino and piezo sensors.
+Hit a pad and hear a real drum sample, practice along with the score and the original song, and record clips for social media, all in one app.
+The app speaks Thai and English (switch with **ไทย | EN** in the top right).
 
-## สิ่งที่ทำได้
+![Practice tab: drum notation, a synced backing track, and a 3D kit whose sticks play the notes](docs/images/practice.png)
 
-**เสียงกลอง**
-- ชุดกลองให้เลือก 6 ชุด: Studio Maple, Black Pearl, Red Zeppelin, Arena Metal, Salamander Garage (กลองอะคูสติกจริง หลายระดับแรงตี) และ Synth Kit
-- ทำสำเนาเป็น "ชุดของฉัน" แล้วแก้เสียงได้ ปรับ EQ ทุ้ม / กลาง / แหลม แยกแต่ละชิ้น
-- **ใส่ไฟล์เสียงเองได้หลายไฟล์ต่อชิ้น**: .wav .mp3 .ogg .flac .aiff (ลากมาวางได้) เล่นตามแรงตี (velocity layers) · วนตามลำดับ (round robin) · สุ่ม
-- ปรับความดัง, pitch, ความไวเซนเซอร์, scan / mask time แยกแต่ละชิ้น แล้วส่งค่าไปบอร์ดให้อัตโนมัติ
-- **ตีขอบได้ (dual-zone)**: piezo หนัง + piezo ขอบ มีเสียงขอบแยก (rimshot, ride bell, ขอบทอม)
-- **แป้นไฮแฮท**: ปิด / ครึ่งเปิด / เปิด ตามความลึกที่เหยียบ, เสียงเหยียบ (chick), ปิดแป้นแล้วไฮแฮทเปิดหยุดทันที (choke), รองรับ MIDI CC4
+## Features
 
-**ฝึกตี**
-- โน้ตกลองบนบรรทัด 5 เส้นแบบมาตรฐาน มีเคอร์เซอร์วิ่งตาม คลิกห้องไหนก็เริ่มเล่นจากห้องนั้น
-- โหมด **แอปตีให้ฟัง** และ **ฉันตีเอง** (บอกว่าตีเร็ว / ช้ากี่ ms พร้อมคะแนน) · เมโทรนอม · นับก่อนเริ่ม · ปรับ BPM · วนซ้ำเฉพาะห้อง · เปลี่ยนชุดกลองได้ในหน้านี้
-- **แท็บฝึกแบบเลน**: โน้ตวิ่งเป็นเลนสีตามแต่ละชิ้น บอกมือ L / R และเท้า RF / LF บนทุกโน้ต พร้อมชุดกลองนีออน
-- **ชุดกลอง 3 มิติ**: ไม้กลองตีตามโน้ตจริงแบบลื่นเหมือนมือจับ (เงื้อรอโน้ตถัดไป แล้วฟาดลงตรงจังหวะ) สลับมือซ้าย-ขวาแบบมือกลอง (รัว / ฟิลล์ใช้ R L R L) ฉาบโยก หัวกระเดื่องฟาด คลิกที่กลองเพื่อตี ลากเพื่อหมุนมุมมอง
-- **เพลงประกอบ + Auto Sync (ซิงก์เพลงอัตโนมัติ)**: ใส่ไฟล์เพลงจริง แอปหาเองว่าห้อง 1 อยู่วินาทีไหนและเพลงเร็วกี่ BPM แล้วเล่นเพลงตรงกับโน้ตทั้งเพลง ลดความเร็วแล้วเสียงไม่เพี้ยน
-- จังหวะสำเร็จรูป (ร็อก ป๊อป ฟังก์ ดิสโก้ ชัฟเฟิล สวิง บอสซา 6/8 ลูกส่ง เพลงฝึกแบบมีท่อน) และนำเข้าโน้ตจาก MIDI / MusicXML (export จาก MuseScore ได้)
+**Drum sounds**
+- 6 kits to choose from: Studio Maple, Black Pearl, Red Zeppelin, Arena Metal, Salamander Garage (real acoustic drums with several velocity layers) and Synth Kit
+- Duplicate a kit into "My kit" and change its sounds; 3-band EQ (low / mid / high) per piece
+- **Use your own samples, several per piece**: .wav .mp3 .ogg .flac .aiff (drag and drop), played by velocity layer · round robin · random
+- Volume, pitch, sensor sensitivity and scan / mask time per piece, sent to the board automatically
+- **Dual-zone pads**: head piezo + rim piezo with separate rim sounds (rimshot, ride bell, tom rim)
+- **Hi-hat pedal**: closed / half-open / open by pedal depth, pedal "chick", open hi-hat chokes when the pedal closes, MIDI CC4 supported
 
-<p align="center"><img src="docs/images/lanes.gif" width="720" alt="แท็บฝึกแบบเลน: ชุดกลองนีออน 3 มิติ ไม้กลอง L/R ยกขึ้นแล้วตีลงตามโน้ตที่วิ่งมาในเลน"></p>
+**Practice**
+- Standard 5-line drum notation with a moving cursor; click any bar to start from there
+- **App plays** and **I play (scored)** modes (shows how many ms early / late, with a score) · metronome · count-in · BPM control · loop a range of bars · change kit right on the page
+- **Lanes tab**: notes scroll toward you in colored lanes per piece, every note marked with its hand L / R or foot RF / LF, with a neon kit
+- **3D drum kit**: the sticks move like real hands, lifting ahead of the next note and striking exactly on the beat. Hands alternate like a drummer (rolls and fills go R L R L), cymbals wobble, the kick beater swings. Click a drum to hit it, drag to orbit the view
+- **Backing track + Auto Sync**: add the real song and the app works out which second bar 1 starts at and the song's actual BPM, then keeps the song in time with the score all the way through. Slowing down keeps the pitch
+- Built-in grooves (rock, pop, funk, disco, shuffle, swing, bossa, 6/8, fills, practice songs with sections) and MIDI / MusicXML import (exports from MuseScore work)
 
-**อัดคลิป**
-- **โหมดอัดคลิป** แนวตั้งหรือแนวนอน 16:9 ซ่อนเมนูทั้งหมด เหลือโน้ตกับชุดกลอง 3 มิติ
-- สคริปต์ตั้งค่า OBS ให้ครบ: กล้อง + หน้าต่างแอป + เสียงจากแอปโดยตรง
+<p align="center"><img src="docs/images/lanes.gif" width="720" alt="Lanes tab: neon 3D kit with L/R sticks lifting and striking in time with notes scrolling down the lanes"></p>
 
-**ฮาร์ดแวร์**
-- รับสัญญาณผ่าน USB Serial (ทุกบอร์ด) หรือ USB MIDI (Leonardo / Pro Micro) รองรับ Arduino Mega 16 ช่อง (A0–A15)
-- มีแบบแผ่น PCB สำหรับ Mega 2560 PRO พร้อมแจ็ค 6.35 มม. 16 ช่อง และกล่องพิมพ์ 3D
-- ไม่มี Arduino ก็ทดสอบด้วยคีย์บอร์ดได้
-- บันทึกอัตโนมัติ ไฟล์เสียงเก็บไว้ในเครื่อง
+**Recording**
+- **Recording mode** in portrait or 16:9 landscape hides all menus, leaving only the notes and the 3D kit
+- A script sets up OBS completely: camera + app window + the app's audio captured directly
 
-## ตัวอย่างการใช้งาน
+**Hardware**
+- Input over USB Serial (any board) or USB MIDI (Leonardo / Pro Micro); Arduino Mega gives 16 channels (A0–A15)
+- PCB design for the Mega 2560 PRO with 16 × 6.35 mm jacks, plus a 3D-printed case
+- No Arduino? Test with the keyboard
+- Everything saves automatically; sample files stay on your computer
 
-### ตัวอย่างที่ 1: ฝึกตีตามเพลงจริงด้วย Auto Sync
+## Examples
 
-1. ไปที่แท็บ **ฝึกตี** เลือกเพลงจากรายการทางซ้าย
-2. ที่แถบ **เพลงประกอบ** กด **เลือกไฟล์เพลง…** แล้วเลือกไฟล์ mp3 / m4a / wav ของเพลงนั้น
-3. รอ 3–5 วินาที แอปจะซิงก์ให้เอง แล้วขึ้นว่า ✓ ตรงกับโน้ตแล้ว
-4. กด **Space** เพื่อเล่น เพลงจะเล่นอินโทรก่อน แล้วโน้ตเริ่มเดินตอนห้อง 1 พอดี
+### Example 1: practice along with a real song using Auto Sync
 
-![แถบเพลงประกอบหลังซิงก์: ห้อง 1 อยู่ที่ 0:04.0 ความเร็วจริง 145.9 BPM](docs/images/auto-sync.png)
+1. Open the **Practice** tab and pick a song from the list on the left
+2. In the **Backing track** strip, press **♪ Choose audio file…** and pick the song's mp3 / m4a / wav
+3. Wait 3–5 seconds: the app syncs it by itself and shows ✓ Synced
+4. Press **Space** to play. The song plays its intro first, and the notes start moving exactly at bar 1
 
-ภาพนี้ใช้เพลงตัวอย่างที่สร้างจากโน้ต "เพลงฝึก: Arena Metalcore" (ในโน้ตเขียนไว้ 144 BPM)
-โดยให้มีอินโทร 4 วินาทีก่อนกลองเข้า และเล่นเร็วกว่าโน้ตเล็กน้อยที่ 146 BPM
-แอปหาได้ว่าห้อง 1 อยู่ที่ **0:04.0** และเพลงเร็ว **145.9 BPM** แล้วตั้งความเร็วตามเพลงให้เอง
+![Backing track strip after syncing: bar 1 at 0:04.0, real tempo 145.9 BPM](docs/images/auto-sync.png)
 
-| อยากทำ | ทำแบบนี้ |
+This screenshot uses a test track rendered from the "เพลงฝึก: Arena Metalcore" score (written at 144 BPM),
+with a 4-second intro before the drums and played slightly faster than the score, at 146 BPM.
+The app found bar 1 at **0:04.0** and the tempo at **145.9 BPM**, and set the playback speed to match.
+
+| To do this | Do this |
 |---|---|
-| ฝึกช้าลง | เลื่อนแถบความเร็ว เพลงจะช้าลงตาม แต่เสียงร้องไม่เพี้ยน |
-| ซ้อมเฉพาะท่อน | ใส่เลขห้องเริ่ม–จบ แล้วติ๊ก **วนซ้ำ** เพลงจะกระโดดตามไปท่อนนั้น |
-| ได้ยินแต่เพลง แล้วตีเอง | เลือกโหมด **ฉันตีเอง** กลองของแอปจะเงียบ และมีคะแนนให้ |
-| เพลงยังคลาดนิดหน่อย | กด **ปรับเอง** แล้วใช้ −/+ (เพลงมาก่อนกลอง → −, เพลงมาช้า → +) |
+| Practice slower | Move the speed slider: the song slows down too, without changing pitch |
+| Drill one section | Enter the start–end bars and tick **Loop**: the song jumps along with it |
+| Hear only the song and play yourself | Choose **I play (scored)**: the app's drums go quiet and you get a score |
+| Song still slightly off | Press **Adjust** and use −/+ (song ahead of the drums → −, song behind → +) |
 
-Auto Sync ได้ผลดีกับเพลงอัดในห้องอัดที่ความเร็วคงที่ และโน้ตเป็นเวอร์ชันเดียวกับไฟล์เพลง
-ถ้าเพลงเร่งหรือช้าลงกลางเพลง หรือโน้ตมีจำนวนห้องไม่ตรงกับเพลง จะเริ่มคลาดตรงท่อนนั้น
+Auto Sync works best on studio recordings at a steady tempo where the score matches the recording's version.
+If the song speeds up or slows down partway, or the score has a different number of bars than the song, it drifts from that point on.
 
-### ตัวอย่างที่ 2: นำเข้าโน้ตจาก MuseScore
+### Example 2: import a score from MuseScore
 
-1. ใน MuseScore เปิดโน้ตกลองแล้วกด *File → Export → MIDI* (หรือ MusicXML)
-2. ในแอปกด **นำเข้า MIDI / MusicXML** แล้วเลือกไฟล์
+1. In MuseScore, open the drum score and choose *File → Export → MIDI* (or MusicXML)
+2. In the app press **Import MIDI / MusicXML** and pick the file
 
-ถ้ามีหลายเพลง ให้กด **เปิดโฟลเดอร์** แล้ววางไฟล์ไว้ในโฟลเดอร์ `my-scores` แอปจะโหลดให้ทุกครั้งที่เปิด
+For many songs, press **Open folder** and put the files in the `my-scores` folder; the app loads them every time it starts.
 
 ```
 my-scores/
-├── เพลงที่ 1.mid
-├── เพลงที่ 2.musicxml
+├── song 1.mid
+├── song 2.musicxml
 └── ...
 ```
 
-ตอนพัฒนาโฟลเดอร์นี้อยู่ที่ `./my-scores` ในโปรเจกต์ (ถูก gitignore ไว้ ไฟล์โน้ตส่วนตัวไม่ขึ้น git)
-ส่วนแอปที่ติดตั้งแล้ว โฟลเดอร์จะอยู่ในโฟลเดอร์ข้อมูลของแอป
-ชื่อท่อน (Marker) ในไฟล์ MIDI จะขึ้นเป็นกรอบชื่อท่อนบนโน้ต และกระโดดไปท่อนนั้นได้
+During development this folder is `./my-scores` in the project (gitignored, so personal scores never reach git).
+In the installed app it lives in the app's data folder.
+Section names (Markers) in a MIDI file appear as section labels on the score, and you can jump to them.
 
-### ตัวอย่างที่ 3: ใส่เสียงสแนร์ของตัวเอง 6 ระดับแรงตี
+### Example 3: add your own snare with 6 velocity layers
 
-![หน้าชุดกลอง: สแนร์มี 6 ไฟล์ แบ่งตามแรงตี 1–127](docs/images/kit.png)
+![Kit tab: the snare has 6 files split by velocity 1–127](docs/images/kit.png)
 
-1. แท็บ **ชุดกลอง** กด **ทำสำเนา** เพื่อสร้างชุดของฉัน
-2. คลิกที่ **Snare** แล้วลากไฟล์ `snare_01.wav` … `snare_06.wav` (เบาไปดัง) มาวางในกรอบด้านขวา
-3. ตั้ง **การเล่นหลายไฟล์ → ตามแรงตี** แอปจะแบ่งช่วงแรงตีให้เอง (1–21, 22–42, … 107–127)
-4. แท็บ **ตั้งค่า** ปรับความดัง pitch และ EQ ทุ้ม/กลาง/แหลม
+1. In the **Kit** tab press **Duplicate** to make your own kit
+2. Click **Snare** and drag `snare_01.wav` … `snare_06.wav` (soft to loud) into the box on the right
+3. Set **Multiple files → By velocity**: the app splits the velocity range for you (1–21, 22–42, … 107–127)
+4. In **Settings**, adjust volume, pitch and the low/mid/high EQ
 
-### ตัวอย่างที่ 4: อัดคลิปตีกลองด้วย OBS
+### Example 4: record a drum clip with OBS
 
-![โหมดอัดคลิปแนวนอน 16:9: โน้ตด้านบน ชุดกลอง 3 มิติด้านล่าง](docs/images/rec-landscape.png)
+![Landscape 16:9 recording mode: notes on top, 3D kit below](docs/images/rec-landscape.png)
 
 ```bash
-# ปิด OBS ก่อน แล้วรันครั้งเดียว (macOS)
+# Close OBS first, then run once (macOS)
 python3 obs/setup_obs.py
 open -a OBS --args --collection DrumDuino --profile DrumDuino
 ```
 
-สคริปต์จะสร้างชุดฉาก **DrumDuino** (1920×1080, 60 fps, คลิปเก็บที่ `~/Movies/DrumDuino`)
+The script creates a **DrumDuino** scene collection (1920×1080, 60 fps, clips saved to `~/Movies/DrumDuino`).
 
-| ฉากใน OBS | ใช้กับโหมดอัดคลิป | ในภาพ |
+| OBS scene | Use with recording mode | In the frame |
 |---|---|---|
-| ตีกลอง: กล้อง + แอป | แนวตั้ง | กล้องทางซ้าย โน้ตกับกลองทางขวา |
-| กล้องเต็มจอ | อะไรก็ได้ | กล้องอย่างเดียว |
-| แอปเต็มจอ (แนวนอน) | แนวนอน | โน้ตกับกลอง 3 มิติเต็มภาพ |
-| แอปเต็มจอ + กล้องมุมเล็ก | แนวนอน | แบบเดียวกัน มีกล้องภาพเล็กมุมขวาล่าง |
+| ตีกลอง: กล้อง + แอป | Portrait | Camera on the left, notes and kit on the right |
+| กล้องเต็มจอ | Any | Camera only |
+| แอปเต็มจอ (แนวนอน) | Landscape | Notes and 3D kit fill the frame |
+| แอปเต็มจอ + กล้องมุมเล็ก | Landscape | The same, with a small camera in the bottom-right corner |
 
-ในแอปหน้าฝึกตี กด **● อัดคลิป → แนวตั้ง** หรือ **แนวนอน (เต็มจอ)** หน้าต่างจะย่อแล้วย้ายไปตำแหน่งที่ OBS จับภาพไว้ (อย่าลากหน้าต่าง)
-กด Space เพื่อเล่น / หยุด กด Esc เพื่อออก
-เสียงกลองและเพลงประกอบอัดจากแอปโดยตรง หน่วงไว้ 100 ms ให้ตรงกับภาพกล้อง ส่วนไมค์ใส่ไว้แต่ปิดเสียงไว้
+In the app's Practice tab, press **● Record → Portrait** or **Landscape (full)**. The window shrinks and moves to exactly where OBS captures it (don't drag the window).
+Space plays / stops, Esc leaves recording mode.
+Drums and the backing track are recorded straight from the app, delayed 100 ms to line up with the camera. A microphone source is included but muted.
 
-### ตัวอย่างที่ 5: ลองเล่นโดยไม่มี Arduino
+### Example 5: try it without an Arduino
 
-เปิดแอปแล้วใช้คีย์บอร์ดแทนแป้นกลอง
+Open the app and use the keyboard as drum pads.
 
-| ปุ่ม | กลอง | | ปุ่ม | กลอง |
+| Key | Drum | | Key | Drum |
 |---|---|---|---|---|
 | Q | Crash | | A | Hi-hat |
 | W | Tom 1 | | S | Snare |
 | E | Tom 2 | | D | Kick |
 | R | Ride | | F | Floor Tom |
 
-Shift ค้าง = ตีเบา · Option/Alt = ตีขอบ · X ค้าง = ไฮแฮทเปิด · Z = เหยียบแป้นไฮแฮท
+Hold Shift = soft hit · Option/Alt = rim · hold X = open hi-hat · Z = hi-hat pedal
 
-## ฮาร์ดแวร์
+## Hardware
 
-| บอร์ด | ช่อง | วิธีส่ง |
+| Board | Channels | Connection |
 |---|---|---|
 | Arduino Nano | 8 (A0–A7) | USB Serial |
 | Arduino Uno | 6 (A0–A5) | USB Serial |
 | Arduino Mega | 16 (A0–A15) | USB Serial |
 | Leonardo / Pro Micro | 8 | USB Serial + USB MIDI |
 
-ต่อสายแต่ละช่อง: piezo (+) → ขาอนาล็อก, piezo (−) → GND, ตัวต้านทาน 1 MΩ คร่อมขาอนาล็อกกับ GND
-(แนะนำ) ไดโอดซีเนอร์ 5.1V คร่อมกันแรงดันเกิน
+Wiring per channel: piezo (+) → analog pin, piezo (−) → GND, a 1 MΩ resistor across the analog pin and GND.
+Recommended: a 5.1 V Zener diode across them for overvoltage protection.
 
-ลงเฟิร์มแวร์: เปิด `firmware/DrumDuino/DrumDuino.ino` ด้วย Arduino IDE → เลือกบอร์ด/พอร์ต → Upload
-(Leonardo / Pro Micro ต้องติดตั้งไลบรารี `MIDIUSB` ก่อน)
+Firmware: open `firmware/DrumDuino/DrumDuino.ino` in the Arduino IDE → pick the board/port → Upload
+(Leonardo / Pro Micro need the `MIDIUSB` library installed first).
 
-ค่าเริ่มต้นของขา: A0 Crash · A1 Hi-hat · A2 Snare · A3 Kick · A4 Tom 1 · A5 Tom 2 · A6 Floor Tom · A7 Ride
+Default pins: A0 Crash · A1 Hi-hat · A2 Snare · A3 Kick · A4 Tom 1 · A5 Tom 2 · A6 Floor Tom · A7 Ride
 
-### แผ่น PCB และกล่อง (Mega 2560 PRO)
+### PCB and case (Mega 2560 PRO)
 
-<img src="hardware/drumduino-carrier/fab/drumduino-carrier-v2-3d.png" width="49%" alt="แผ่น DrumDuino Carrier v2 มุมมอง 3D"> <img src="hardware/enclosure/drumduino-enclosure-assembled.png" width="49%" alt="กล่องพิมพ์ 3D ที่ประกอบแล้ว">
+<img src="hardware/drumduino-carrier/fab/drumduino-carrier-v2-3d.png" width="49%" alt="DrumDuino Carrier v2 board, 3D view"> <img src="hardware/enclosure/drumduino-enclosure-assembled.png" width="49%" alt="Assembled 3D-printed case">
 
-- **แผ่น PCB 140 × 120 มม.:** แจ็ค 6.35 มม. 16 ช่อง มีวงจรป้องกันทุกช่อง (1 MΩ + ซีเนอร์ 5.1V) ช่องแป้นไฮแฮท และแจ็คไฟ DC
-  ไฟล์ KiCad, Gerber สำหรับสั่ง JLCPCB และ BOM อยู่ที่ [`hardware/drumduino-carrier/`](hardware/drumduino-carrier/README.md)
-- **กล่องพิมพ์ 3D:** ฐานกับฝาแยกกัน ยึดด้วยสกรู M3 × 25 มม. 4 ตัว ไฟล์ STL อยู่ที่ [`hardware/enclosure/`](hardware/enclosure/README.md)
+- **140 × 120 mm PCB:** 16 × 6.35 mm jacks, each channel protected (1 MΩ + 5.1 V Zener), a hi-hat pedal channel and a DC power jack.
+  KiCad files, Gerbers for JLCPCB and the BOM are in [`hardware/drumduino-carrier/`](hardware/drumduino-carrier/README.md)
+- **3D-printed case:** separate base and lid held by 4 × M3 × 25 mm screws. STL files are in [`hardware/enclosure/`](hardware/enclosure/README.md)
 
-ตัวอย่างการต่อแป้น: สาย piezo → แจ็คตัวผู้โมโน → เสียบช่อง A2 บนกล่อง → ในแอปจะขึ้นเป็น Snare ทันที
+Example pad hookup: piezo cable → mono 1/4" plug → jack A2 on the case → shows up as Snare in the app right away.
 
-## รันตอนพัฒนา
+## Development
 
-ต้องมี [Node.js](https://nodejs.org) 20 ขึ้นไป
+Requires [Node.js](https://nodejs.org) 20 or newer.
 
 ```bash
 npm install
-npm run dev        # เปิดแอปพร้อม hot reload
+npm run dev        # run the app with hot reload
 ```
 
-## ทำตัวติดตั้ง
+## Building installers
 
 ```bash
-npm run dist:mac   # ต้องรันบน Mac  → release/DrumDuino-x.y.z-arm64.dmg และ -x64.dmg
-npm run dist:win   # ต้องรันบน Windows → release/DrumDuino Setup x.y.z.exe
+npm run dist:mac   # must run on a Mac     → release/DrumDuino-x.y.z-arm64.dmg and -x64.dmg
+npm run dist:win   # must run on Windows   → release/DrumDuino Setup x.y.z.exe
 ```
 
-### ให้ GitHub สร้างให้ทั้งสองระบบ (ไม่ต้องมีเครื่อง Mac/Windows)
+### Let GitHub build both (no Mac/Windows machine needed)
 
-มี workflow อยู่ที่ `.github/workflows/build.yml` แล้ว
+The workflow is already in `.github/workflows/build.yml`.
 
-1. push โปรเจกต์นี้ขึ้น GitHub
-2. ติด tag เวอร์ชันแล้ว push: `git tag v0.1.0 && git push --tags`
-3. รอประมาณ 10 นาที ไฟล์ `.dmg` และ `.exe` จะอยู่ในหน้า **Releases**
-   (หรือกด Run workflow ในแท็บ Actions แล้วโหลดจาก Artifacts)
+1. Push this project to GitHub
+2. Tag a version and push it: `git tag v0.1.0 && git push --tags`
+3. After about 10 minutes the `.dmg` and `.exe` files appear on the **Releases** page
+   (or press Run workflow in the Actions tab and download from Artifacts)
 
-### หมายเหตุตอนติดตั้ง
+### Installing notes
 
-ตัวติดตั้งยังไม่ได้เซ็นด้วยใบรับรองของ Apple/Microsoft จึงจะมีคำเตือนครั้งแรก:
+The installers aren't signed with an Apple/Microsoft certificate yet, so the first launch shows a warning:
 
-- **macOS**: ลากแอปไปที่ Applications แล้วคลิกขวาที่แอป → Open → Open
-  ถ้าขึ้นว่าแอป “เสียหาย” ให้รันใน Terminal: `xattr -cr /Applications/DrumDuino.app`
-- **Windows**: ถ้าขึ้น SmartScreen ให้กด *More info* → *Run anyway*
+- **macOS**: drag the app to Applications, then right-click it → Open → Open.
+  If it says the app is "damaged", run in Terminal: `xattr -cr /Applications/DrumDuino.app`
+- **Windows**: if SmartScreen appears, click *More info* → *Run anyway*
 
-ถ้าจะแจกให้คนทั่วไป ควรซื้อ Apple Developer ID ($99/ปี) และใบรับรอง code signing ของ Windows แล้วตั้งค่าใน electron-builder
+To distribute to the public, get an Apple Developer ID ($99/year) and a Windows code-signing certificate and configure them in electron-builder.
 
-## โปรโตคอล Serial (115200 baud)
+## Serial protocol (115200 baud)
 
-ตัวอย่างข้อความจริงตอนเสียบบอร์ดแล้วตีสแนร์ ตีขอบสแนร์ และเหยียบไฮแฮทครึ่งทาง:
-
-```
-← I DRUMDUINO 1.2 16        บอร์ดแนะนำตัว: เฟิร์มแวร์ 1.2 มี 16 ช่อง
-→ T 2 40                    แอปตั้ง threshold ของ A2 (Snare) = 40
-← H 2 96                    ตีหนังสแนร์ แรง 96
-← H 2 110 R                 ตีขอบสแนร์ แรง 110
-← C 15 512                  แป้นไฮแฮท (A15) ค่ากลางระยะ ≈ ครึ่งเปิด (ขึ้นกับการตั้งแป้น)
-```
-
-รูปแบบข้อความทั้งหมด:
+Real messages after plugging in the board, then hitting the snare, the snare rim, and pressing the hi-hat pedal halfway:
 
 ```
-บอร์ด → แอป   I DRUMDUINO <version> <channels>
-              H <channel> <velocity 1–127> [R]     R = ตีขอบ
-              C <channel> <raw 0–1023>             ตำแหน่งแป้นไฮแฮท
-แอป → บอร์ด   E <channel> <0|1>                    เปิด/ปิดขา
+← I DRUMDUINO 1.2 16        board introduces itself: firmware 1.2, 16 channels
+→ T 2 40                    app sets the threshold of A2 (Snare) = 40
+← H 2 96                    snare head hit, velocity 96
+← H 2 110 R                 snare rim hit, velocity 110
+← C 15 512                  hi-hat pedal (A15) mid-travel ≈ half-open (depends on pedal calibration)
+```
+
+All messages:
+
+```
+board → app   I DRUMDUINO <version> <channels>
+              H <channel> <velocity 1–127> [R]     R = rim
+              C <channel> <raw 0–1023>             hi-hat pedal position
+app → board   E <channel> <0|1>                    enable / disable a pin
               T <channel> <threshold 0–1023>
               S <channel> <scan ms>
               M <channel> <mask ms>
-              P <head channel> <rim channel|-1>    จับคู่ขาขอบกับขาหนัง
-              X <head channel> <ratio %>           ตีขอบเมื่อ ขอบ ≥ หนัง × ratio/100
-              K <channel> <0|1>                    1 = ขานี้เป็นแป้น (เซนเซอร์ต่อเนื่อง)
+              P <head channel> <rim channel|-1>    pair a rim pin with a head pin
+              X <head channel> <ratio %>           rim hit when rim ≥ head × ratio/100
+              K <channel> <0|1>                    1 = this pin is a pedal (continuous sensor)
               ?
 ```
 
-## โครงสร้าง
+## Project layout
 
 ```
-electron/        main process (หน้าต่าง, สิทธิ์ Serial/MIDI, ตัวเลือกพอร์ต, โหมดอัดคลิป)
-src/audio/       เอนจินเสียง, ชุดเสียงในตัว, เพลงประกอบ + Auto Sync (backing.ts, align.ts)
-src/input/       Serial, MIDI, คีย์บอร์ด
-src/score/       โน้ต (VexFlow), ตัวเล่นโน้ต, นำเข้า MIDI/MusicXML, ชุดกลอง 3 มิติ, การสลับมือ
-src/pages/       หน้าชุดกลอง / ฝึกตี / คลังเสียง / ฮาร์ดแวร์
-firmware/        โค้ด Arduino
-hardware/        แผ่น PCB (KiCad) และกล่องพิมพ์ 3D
-obs/             สคริปต์ตั้งค่า OBS สำหรับอัดคลิป
-docs/images/     ภาพประกอบใน README
+electron/        main process (window, Serial/MIDI permissions, port picker, recording mode)
+src/audio/       audio engine, built-in kits, backing track + Auto Sync (backing.ts, align.ts)
+src/input/       Serial, MIDI, keyboard
+src/score/       notation (VexFlow), score player, MIDI/MusicXML import, 3D kit, lane view, sticking
+src/pages/       Kit / Practice / Lanes / Sounds / Hardware pages
+src/i18n/        Thai / English UI text
+firmware/        Arduino code
+hardware/        PCB (KiCad) and 3D-printed case
+obs/             OBS setup script for recording
+docs/images/     README images
 ```
 
-## เครดิตเสียง
+## Sound credits
 
-- **Studio Maple** — [Virtuosity Drums](https://versilian-studios.com/virtuosity-drums/) โดย Versilian Studios, ไลเซนส์ CC0
-  มิกซ์จากไมค์ kick + snare + overhead และเลือกบางระดับแรงตีมาใช้ (`public/samples/LICENSE-VirtuosityDrums-CC0.txt`)
-- **Black Pearl / Red Zeppelin** — [AVL Drumkits](https://github.com/studiorack/avl-drumkits) โดย Glen MacArthur ([bandshed.net](http://www.bandshed.net/avldrumkits/)),
-  ไลเซนส์ [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) — แปลงเป็น OGG สเตอริโอ ตัดหางเสียงเงียบ และแพนตามไฟล์ SFZ ต้นฉบับ
-  ไฟล์เสียงชุดนี้ (รวมที่แก้ไขแล้ว) แจกต่อภายใต้ CC BY-SA 3.0 เช่นเดิม (`public/samples/avl/LICENSE-AVL-Drumkits-CC-BY-SA-3.0.txt`)
-- **Salamander Garage** — [Salamander Drumkit](https://github.com/studiorack/salamander-drumkit) โดย Alexander Holm (Rytmenpinne),
-  ไลเซนส์ [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) — เลือก 3–8 ระดับแรงตีต่อชิ้น แปลงเป็น OGG ตัดความยาว และปรับระดับเสียงตามแรงตี
-  ไฟล์ที่แก้ไขแล้วแจกต่อภายใต้ CC BY-SA 3.0 เช่นเดิม (`public/samples/sal/LICENSE-Salamander-Drumkit-CC-BY-SA-3.0.txt`)
-- **Synth Kit** — สร้างขึ้นในแอป
+- **Studio Maple**: [Virtuosity Drums](https://versilian-studios.com/virtuosity-drums/) by Versilian Studios, CC0 license.
+  Mixed from the kick + snare + overhead mics with a selection of velocity layers (`public/samples/LICENSE-VirtuosityDrums-CC0.txt`)
+- **Black Pearl / Red Zeppelin**: [AVL Drumkits](https://github.com/studiorack/avl-drumkits) by Glen MacArthur ([bandshed.net](http://www.bandshed.net/avldrumkits/)),
+  [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Converted to stereo OGG, silent tails trimmed, panned as in the original SFZ files.
+  These samples (including the modified ones) are redistributed under the same CC BY-SA 3.0 (`public/samples/avl/LICENSE-AVL-Drumkits-CC-BY-SA-3.0.txt`)
+- **Salamander Garage**: [Salamander Drumkit](https://github.com/studiorack/salamander-drumkit) by Alexander Holm (Rytmenpinne),
+  [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). 3–8 velocity layers chosen per piece, converted to OGG, shortened and level-matched by velocity.
+  The modified files are redistributed under the same CC BY-SA 3.0 (`public/samples/sal/LICENSE-Salamander-Drumkit-CC-BY-SA-3.0.txt`)
+- **Synth Kit**: generated in the app
