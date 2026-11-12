@@ -5,6 +5,8 @@ import { GROOVES } from '../score/grooves';
 import { importScoreFile, parseMidi, parseMusicXml } from '../score/importers';
 import { Notation } from '../score/Notation';
 import { DrumKit3D } from '../score/DrumKit3D';
+import type { KitLook } from '../score/DrumKit3D';
+import { LaneView } from '../score/LaneView';
 import { backing, loadMetaAll } from '../audio/backing';
 import type { BackingMeta } from '../audio/backing';
 import { BackingPanel } from './BackingPanel';
@@ -38,14 +40,16 @@ function saveJSON(k: string, v: unknown) {
 }
 
 type Mode = 'listen' | 'practice';
-interface Prefs { mode: Mode; guide: boolean; metronome: boolean; countIn: boolean; latency: number; kitView: boolean }
+interface Prefs { mode: Mode; guide: boolean; metronome: boolean; countIn: boolean; latency: number; kitView: boolean; kitLook: KitLook; laneKitLook: KitLook }
 
 const WIN = { ok: 0.04, judge: 0.15 };
 
 interface Stats { ok: number; early: number; late: number; miss: number; extra: number; offsets: number[] }
 const EMPTY_STATS: Stats = { ok: 0, early: 0, late: 0, miss: 0, extra: 0, offsets: [] };
 
-export function PracticePage() {
+/** variant 'lanes' = the note-highway tab: big neon kit on top, instrument lanes below (no staff) */
+export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'lanes' }) {
+  const isLanes = variant === 'lanes';
   const store = useStore();
   const { kit } = store;
   const kitRef = useRef(kit);
@@ -90,7 +94,7 @@ export function PracticePage() {
   const [scoreId, setScoreId] = useState(GROOVES[GROOVES.length - 1].id);
   const score = all.find((s) => s.id === scoreId) ?? GROOVES[0];
 
-  const [prefs, setPrefs] = useState<Prefs>(() => ({ mode: 'listen', guide: false, metronome: true, countIn: true, latency: 0, kitView: true, ...loadJSON(PREFS_KEY, {}) }));
+  const [prefs, setPrefs] = useState<Prefs>(() => ({ mode: 'listen', guide: false, metronome: true, countIn: true, latency: 0, kitView: true, kitLook: 'real', laneKitLook: 'neon', ...loadJSON(PREFS_KEY, {}) }));
   useEffect(() => saveJSON(PREFS_KEY, prefs), [prefs]);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
@@ -122,6 +126,10 @@ export function PracticePage() {
     setStats(EMPTY_STATS);
     setLast(null);
   }, [score]);
+
+  // look of the 3-D kit, remembered separately for each tab
+  const look: KitLook = isLanes ? prefs.laneKitLook : prefs.kitLook;
+  const setLook = (l: KitLook) => setPrefs((p) => (isLanes ? { ...p, laneKitLook: l } : { ...p, kitLook: l }));
 
   // ---- recording mode: only the sheet and the kit, in a small window OBS can capture ----
   const [rec, setRec] = useState<'portrait' | 'landscape' | false>(false);
@@ -416,7 +424,7 @@ export function PracticePage() {
           }}
         />
       ) : (
-      <section className="pr-main">
+      <section className={'pr-main' + (isLanes ? ' lanes-variant' : '')}>
         <div className="pr-transport">
           <button type="button" className={'btn play-btn' + (playing ? '' : ' primary')} onClick={() => (playing ? stop() : start())} aria-label={playing ? 'หยุด' : 'เล่น'}>
             {playing ? <Stop /> : <PlayIcon />} {playing ? 'หยุด' : 'เล่น'}
@@ -450,7 +458,7 @@ export function PracticePage() {
             <label><input type="checkbox" checked={prefs.countIn} onChange={(e) => setPrefs((p) => ({ ...p, countIn: e.target.checked }))} /> นับจังหวะก่อนเริ่ม</label>
             {prefs.mode === 'practice' && <label><input type="checkbox" checked={prefs.guide} onChange={(e) => setPrefs((p) => ({ ...p, guide: e.target.checked }))} /> เปิดเสียงนำเบา ๆ</label>}
             <label><input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> วนซ้ำ</label>
-            <label><input type="checkbox" checked={prefs.kitView} onChange={(e) => setPrefs((p) => ({ ...p, kitView: e.target.checked }))} /> แสดงชุดกลอง</label>
+            {!isLanes && <label><input type="checkbox" checked={prefs.kitView} onChange={(e) => setPrefs((p) => ({ ...p, kitView: e.target.checked }))} /> แสดงชุดกลอง</label>}
             <span className="row" style={{ gap: 2, flexWrap: 'nowrap' }} title="ซ่อนเมนูทั้งหมด เหลือโน้ตกับชุดกลองในหน้าต่างขนาดพอดีสำหรับ OBS · กด Space เล่น/หยุด · Esc ออก">
               <span className="faint">● อัดคลิป</span>
               <button type="button" className="btn sm ghost" onClick={() => setRec('portrait')}>แนวตั้ง</button>
@@ -469,33 +477,62 @@ export function PracticePage() {
         <BackingPanel score={score} meta={bkMeta} setMeta={setBkMeta} playing={playing} stopPlayer={stop} onTempo={(b) => setBpm(Math.round(b * 100) / 100)} />
 
         {rec && <button type="button" className="rec-exit" onClick={() => setRec(false)}>ออกจากโหมดอัดคลิป (Esc)</button>}
-        <div className="pr-sheet-scroll">
-          <div className="pr-sheet-head">
-            <h2>{score.title}</h2>
-            <span className="faint">{score.subtitle}{score.sections ? ' · ' + score.sections.map((s) => s.name).join(' → ') : ''}</span>
-            <span className="faint" style={{ marginLeft: 'auto' }}>คลิกที่ห้องใดก็ได้เพื่อเริ่มเล่นจากห้องนั้น</span>
+        {(() => {
+          const sheetBlock = (
+            <>
+          <div className={'pr-sheet-scroll' + (isLanes ? ' lanes' : '')}>
+            <div className="pr-sheet-head">
+              <h2>{score.title}</h2>
+              <span className="faint">{score.subtitle}{score.sections ? ' · ' + score.sections.map((s) => s.name).join(' → ') : ''}</span>
+              <span className="faint" style={{ marginLeft: 'auto' }}>คลิกที่ห้องใดก็ได้เพื่อเริ่มเล่นจากห้องนั้น</span>
+            </div>
+            {isLanes && (
+              <div className="pr-lane-wrap">
+                <LaneView
+                  score={score}
+                  tickRef={tickRef}
+                  bpm={bpm}
+                  startTick={range[0] * ticksPerMeasure(score)}
+                  onSeek={(m) => {
+                    setRange(([, b]) => [m, Math.max(m + 1, b)]);
+                    start(m);
+                  }}
+                />
+              </div>
+            )}
+            <div ref={wrap} className="pr-sheet-wrap" hidden={isLanes}>
+              <Notation
+                score={score}
+                width={w}
+                tickRef={tickRef}
+                marks={marks}
+                activeRange={range[0] > 0 || range[1] < score.measures ? range : undefined}
+                onSeek={(m) => {
+                  setRange(([, b]) => [m, Math.max(m + 1, b)]);
+                  start(m);
+                }}
+              />
+            </div>
           </div>
-          <div ref={wrap} className="pr-sheet-wrap">
-            <Notation
-              score={score}
-              width={w}
-              tickRef={tickRef}
-              marks={marks}
-              activeRange={range[0] > 0 || range[1] < score.measures ? range : undefined}
-              onSeek={(m) => {
-                setRange(([, b]) => [m, Math.max(m + 1, b)]);
-                start(m);
-              }}
-            />
-          </div>
-        </div>
-
-        {(prefs.kitView || rec) && (
-          <div className="pr-kitview">
-            <DrumKit3D kit={kit} />
-          </div>
-        )}
-
+  
+            </>
+          );
+          const kitBlock = (
+            <>
+          {(prefs.kitView || rec || isLanes) && (
+            <div className={'pr-kitview' + (look === 'neon' ? ' neon' : '')}>
+              <DrumKit3D kit={kit} look={look} />
+              <KitCaption score={score} tickRef={tickRef} />
+              <span className="seg kv-look" role="group" aria-label="หน้าตาชุดกลอง">
+                <button type="button" aria-pressed={look === 'neon'} onClick={() => setLook('neon')}>นีออน</button>
+                <button type="button" aria-pressed={look === 'real'} onClick={() => setLook('real')}>สมจริง</button>
+              </span>
+            </div>
+          )}
+            </>
+          );
+          return isLanes ? <>{kitBlock}{sheetBlock}</> : <>{sheetBlock}{kitBlock}</>;
+        })()}
         <div className="pr-stats">
           {prefs.mode === 'practice' ? (
             <>
@@ -529,3 +566,25 @@ export function PracticePage() {
   );
 }
 
+
+/** Big caption over the kit: the section being played (like a lesson title) and the song. */
+function KitCaption({ score, tickRef }: { score: Score; tickRef: React.MutableRefObject<number | null> }) {
+  const [sec, setSec] = useState<string | null>(null);
+  useEffect(() => {
+    const tpm = ticksPerMeasure(score);
+    const id = window.setInterval(() => {
+      const t = tickRef.current;
+      const m = t == null ? -1 : Math.floor(Math.max(0, t) / tpm);
+      let name: string | null = null;
+      for (const s of score.sections ?? []) if (s.measure <= m) name = s.name;
+      setSec(t == null ? null : name);
+    }, 150);
+    return () => window.clearInterval(id);
+  }, [score, tickRef]);
+  return (
+    <div className="kv-caption" aria-live="polite">
+      {sec && <b>{sec}</b>}
+      <span>{score.title}</span>
+    </div>
+  );
+}

@@ -7,6 +7,7 @@ import type { Kit } from '../types';
 import type { PadId } from './types';
 import { DrumKitView } from './DrumKitView';
 import { createSticking } from './sticking';
+import { PAD_COLOR } from './padColors';
 import type { Hand, HandPad } from './sticking';
 
 /**
@@ -116,7 +117,10 @@ interface PadVis {
   cym: boolean;
 }
 
-export function DrumKit3D({ kit }: { kit: Kit }) {
+/** 'real' = lacquered shells, coated heads, bronze; 'neon' = see-through glowing kit, one colour per drum (matches the lanes) */
+export type KitLook = 'real' | 'neon';
+
+export function DrumKit3D({ kit, look = 'real' }: { kit: Kit; look?: KitLook }) {
   const host = useRef<HTMLDivElement>(null);
   const kitRef = useRef(kit);
   kitRef.current = kit;
@@ -133,11 +137,12 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       return;
     }
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const neon = look === 'neon';
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.9;
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = !neon;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.domElement.className = 'kv3-canvas';
     renderer.domElement.setAttribute('role', 'img');
@@ -148,13 +153,13 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
     const pmrem = new THREE.PMREMGenerator(renderer);
     const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environment = envTex;
-    scene.environmentIntensity = 0.55;
+    scene.environmentIntensity = neon ? 0.25 : 0.55;
 
     const camera = new THREE.PerspectiveCamera(30, 3, 0.05, 20);
     camera.position.copy(CAM_POS);
 
     // ---------- lights ----------
-    scene.add(new THREE.HemisphereLight(0xfff1dc, 0x1a1410, 0.5));
+    scene.add(new THREE.HemisphereLight(neon ? 0xb8c8ff : 0xfff1dc, neon ? 0x0a0e18 : 0x1a1410, neon ? 0.8 : 0.5));
     const key = new THREE.DirectionalLight(0xfff0d8, 2.2);
     key.position.set(1.4, 3.2, 1.8);
     key.castShadow = true;
@@ -186,6 +191,15 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
     const accent = new THREE.Color(0xf2a93b);
     const headMat = (logoHead = false) => M(new THREE.MeshStandardMaterial({ map: logoHead ? logo : coated, roughness: 0.85, emissive: accent, emissiveIntensity: 0 }));
 
+    // neon look: tinted glass shells, dark heads that light up in the drum's colour, glowing rims
+    const col = (id: PadId) => new THREE.Color(PAD_COLOR[id]);
+    const glass = (id: PadId, opacity = 0.2) =>
+      M(new THREE.MeshStandardMaterial({ color: col(id), emissive: col(id), emissiveIntensity: 0.18, transparent: true, opacity, roughness: 0.3, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false }));
+    const neonHead = (id: PadId) => M(new THREE.MeshStandardMaterial({ color: 0x0c1220, emissive: col(id), emissiveIntensity: 0.06, transparent: true, opacity: 0.88, roughness: 0.6 }));
+    const glow = (id: PadId) => M(new THREE.MeshBasicMaterial({ color: col(id) }));
+    const neonLine = M(new THREE.MeshBasicMaterial({ color: 0x4a5a78 }));
+    const BASE_GLOW = 0.06;
+
     const add = (parent: THREE.Object3D, geo: THREE.BufferGeometry, mat: THREE.Material, shadow = true) => {
       const m = new THREE.Mesh(geo, mat);
       m.castShadow = shadow;
@@ -193,7 +207,7 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       parent.add(m);
       return m;
     };
-    const tube = (parent: THREE.Object3D, a: THREE.Vector3, b: THREE.Vector3, r = 0.011, mat = chrome) => {
+    const tube = (parent: THREE.Object3D, a: THREE.Vector3, b: THREE.Vector3, r = 0.011, mat: THREE.Material = neon ? neonLine : chrome) => {
       const d = b.clone().sub(a);
       const m = add(parent, new THREE.CylinderGeometry(r, r, d.length(), 14), mat);
       m.position.copy(a).add(b).multiplyScalar(0.5);
@@ -209,7 +223,7 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
         const a = (i / 3) * Math.PI * 2 + 0.5;
         const foot = new THREE.Vector3(x + Math.cos(a) * spread, 0.012, z + Math.sin(a) * spread);
         tube(g, hub, foot, 0.009);
-        const f = add(g, new THREE.SphereGeometry(0.018, 12, 8), rubber);
+        const f = add(g, new THREE.SphereGeometry(0.018, 12, 8), neon ? neonLine : rubber);
         f.position.copy(foot);
         f.scale.y = 0.6;
       }
@@ -225,20 +239,26 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       g.position.copy(pos);
       g.rotation.copy(rot);
       scene.add(g);
-      add(g, new THREE.CylinderGeometry(r, r, depth, 72, 1, true), shell);
-      const hm = headMat();
+      add(g, new THREE.CylinderGeometry(r, r, depth, 72, 1, true), neon ? glass(id) : shell, !neon);
+      const hm = neon ? neonHead(id) : headMat();
       const top = add(g, new THREE.CircleGeometry(r * 0.99, 72), hm, false);
       top.rotation.x = -Math.PI / 2;
       top.position.y = depth / 2 + 0.002;
-      const bottom = add(g, new THREE.CircleGeometry(r * 0.99, 72), logoFront ? headMat(true) : hm, false);
+      const bottom = add(g, new THREE.CircleGeometry(r * 0.99, 72), neon ? glass(id, 0.12) : logoFront ? headMat(true) : hm, false);
       bottom.rotation.x = Math.PI / 2;
       bottom.position.y = -depth / 2 - 0.002;
       for (const y of [depth / 2 + 0.006, -depth / 2 - 0.006]) {
-        const hoop = add(g, new THREE.TorusGeometry(r + 0.004, 0.0075, 10, 96), chrome);
+        const hoop = add(g, new THREE.TorusGeometry(r + 0.004, neon ? 0.005 : 0.0075, 10, 96), neon ? glow(id) : chrome, !neon);
         hoop.rotation.x = Math.PI / 2;
         hoop.position.y = y;
       }
-      const n = r > 0.2 ? 10 : 8;
+      if (neon) {
+        // inner ring on the head, like a target
+        const ring = add(g, new THREE.TorusGeometry(r * 0.45, 0.003, 8, 64), glow(id), false);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = depth / 2 + 0.004;
+      }
+      const n = neon ? 0 : r > 0.2 ? 10 : 8;
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2;
         const lug = add(g, new THREE.CapsuleGeometry(0.008, Math.min(0.06, depth * 0.3), 4, 8), chrome);
@@ -262,7 +282,7 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
     // pedal + beater
     const pedal = new THREE.Group();
     scene.add(pedal);
-    const board = add(pedal, new THREE.BoxGeometry(0.085, 0.015, 0.26), darkMetal);
+    const board = add(pedal, new THREE.BoxGeometry(0.085, 0.015, 0.26), neon ? glass('kick', 0.5) : darkMetal);
     board.position.set(0, 0.05, 0.2);
     board.rotation.x = 0.2;
     add(pedal, new THREE.BoxGeometry(0.16, 0.012, 0.09), darkMetal).position.set(0, 0.01, 0.06);
@@ -272,7 +292,7 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
     beater.position.set(0, 0.16, 0.07);
     pedal.add(beater);
     tube(beater, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.21, 0), 0.004, chrome);
-    const felt = add(beater, new THREE.CylinderGeometry(0.028, 0.028, 0.045, 18), M(new THREE.MeshStandardMaterial({ color: 0xe9e4d8, roughness: 1 })));
+    const felt = add(beater, new THREE.CylinderGeometry(0.028, 0.028, 0.045, 18), neon ? glow('kick') : M(new THREE.MeshStandardMaterial({ color: 0xe9e4d8, roughness: 1 })));
     felt.position.y = 0.21;
     felt.rotation.z = Math.PI / 2;
     const BEATER_REST = 0.42, BEATER_HIT = -0.12;
@@ -315,13 +335,18 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       pivot.position.copy(stand);
       pivot.rotation.copy(rot);
       scene.add(pivot);
-      const mesh = add(pivot, cymGeo(R), bronze);
-      void mesh;
-      add(pivot, new THREE.CylinderGeometry(0.016, 0.016, 0.02, 16), rubber).position.y = 0.04;
+      const cm = neon ? glass(id, 0.42) : bronze;
+      add(pivot, cymGeo(R), cm, !neon);
+      if (neon) {
+        const rim = add(pivot, new THREE.TorusGeometry(R, 0.004, 8, 96), glow(id), false);
+        rim.rotation.x = Math.PI / 2;
+        rim.position.y = -0.016;
+      }
+      add(pivot, new THREE.CylinderGeometry(0.016, 0.016, 0.02, 16), neon ? neonLine : rubber).position.y = 0.04;
       pivot.traverse((o) => (o.userData.pad = id));
       clickables.push(pivot);
       pivot.updateMatrixWorld(true);
-      const flashMat = undefined;
+      const flashMat = neon ? (cm as THREE.MeshStandardMaterial) : undefined;
       pads.set(id, { id, root: pivot, baseRot: pivot.rotation.clone(), flashMat, strike: pivot.localToWorld(strikeLocal.clone()), t0: -1, v: 0, cym: true });
       return pivot;
     };
@@ -331,30 +356,42 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
     // hi-hat: two cymbals on a stand with a pedal
     const hhX = -0.62, hhZ = 0.03;
     tripod(hhX, hhZ, 0.92, 0.2);
-    const hhBottom = add(scene, cymGeo(0.178), bronze);
+    const hhMat = neon ? glass('hihat', 0.42) : bronze;
+    const hhBottom = add(scene, cymGeo(0.178), hhMat, !neon);
     hhBottom.position.set(hhX, 0.875, hhZ);
     hhBottom.rotation.x = Math.PI;
     const hhTop = new THREE.Group();
     hhTop.position.set(hhX, 0.89, hhZ);
     scene.add(hhTop);
-    add(hhTop, cymGeo(0.178), bronze);
-    add(hhTop, new THREE.CylinderGeometry(0.014, 0.014, 0.03, 12), darkMetal).position.y = 0.04;
+    add(hhTop, cymGeo(0.178), hhMat, !neon);
+    if (neon) {
+      const rim = add(hhTop, new THREE.TorusGeometry(0.178, 0.004, 8, 96), glow('hihat'), false);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = -0.016;
+    }
+    add(hhTop, new THREE.CylinderGeometry(0.014, 0.014, 0.03, 12), neon ? neonLine : darkMetal).position.y = 0.04;
     hhTop.traverse((o) => (o.userData.pad = 'hihat'));
     hhBottom.userData.pad = 'hihat';
     clickables.push(hhTop, hhBottom);
     hhTop.updateMatrixWorld(true);
-    pads.set('hihat', { id: 'hihat', root: hhTop, baseRot: hhTop.rotation.clone(), strike: hhTop.localToWorld(new THREE.Vector3(0.11, 0.0, 0.1)), t0: -1, v: 0, cym: true });
+    pads.set('hihat', { id: 'hihat', root: hhTop, baseRot: hhTop.rotation.clone(), flashMat: neon ? (hhMat as THREE.MeshStandardMaterial) : undefined, strike: hhTop.localToWorld(new THREE.Vector3(0.11, 0.0, 0.1)), t0: -1, v: 0, cym: true });
     const hhPedal = new THREE.Group();
     hhPedal.position.set(hhX + 0.03, 0.03, hhZ + 0.08);
     scene.add(hhPedal);
-    add(hhPedal, new THREE.BoxGeometry(0.085, 0.015, 0.25), darkMetal).position.set(0, 0.02, 0.12);
+    add(hhPedal, new THREE.BoxGeometry(0.085, 0.015, 0.25), neon ? glass('hihat', 0.5) : darkMetal).position.set(0, 0.02, 0.12);
     hhPedal.rotation.x = -0.12;
     let hhPedalT = -1;
 
-    // floor rug
-    const rug = add(scene, new THREE.CircleGeometry(1.7, 64), M(new THREE.MeshStandardMaterial({ color: 0x3a2b22, roughness: 1 })), false);
-    rug.rotation.x = -Math.PI / 2;
-    rug.position.z = 0.1;
+    // floor: a rug, or a glowing grid for the neon look
+    if (neon) {
+      const grid = new THREE.GridHelper(3.2, 16, 0x31415f, 0x1f2a40);
+      grid.position.set(0, 0.002, 0.1);
+      scene.add(grid);
+    } else {
+      const rug = add(scene, new THREE.CircleGeometry(1.7, 64), M(new THREE.MeshStandardMaterial({ color: 0x3a2b22, roughness: 1 })), false);
+      rug.rotation.x = -Math.PI / 2;
+      rug.position.z = 0.1;
+    }
 
     // ---------- sticks ----------
     const stickGeo = (() => {
@@ -365,10 +402,41 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       ].map(([x, y]) => new THREE.Vector2(x, y));
       return new THREE.LatheGeometry(prof, 18);
     })();
+    const stickMat = neon ? M(new THREE.MeshBasicMaterial({ color: 0xf2f4f8 })) : wood;
     const sticks: Record<Hand, { mesh: THREE.Mesh; target: THREE.Vector3; hand: THREE.Vector3; t0: number; up: number }> = {
-      L: { mesh: add(scene, stickGeo, wood), target: pads.get(IDLE.L)!.strike.clone(), hand: HAND_BASE.L.clone(), t0: -10, up: 0.12 },
-      R: { mesh: add(scene, stickGeo, wood), target: pads.get(IDLE.R)!.strike.clone(), hand: HAND_BASE.R.clone(), t0: -10, up: 0.12 }
+      L: { mesh: add(scene, stickGeo, stickMat), target: pads.get(IDLE.L)!.strike.clone(), hand: HAND_BASE.L.clone(), t0: -10, up: 0.12 },
+      R: { mesh: add(scene, stickGeo, stickMat), target: pads.get(IDLE.R)!.strike.clone(), hand: HAND_BASE.R.clone(), t0: -10, up: 0.12 }
     };
+    // round labels: L / R near the butt of each stick, RF on the kick pedal, LF on the hi-hat pedal
+    const badgeTex: THREE.Texture[] = [];
+    const badge = (text: string, size = 0.07) => {
+      const t = canvasTex(128, 128, (g) => {
+        g.fillStyle = '#f3f5fa';
+        g.beginPath();
+        g.arc(64, 64, 58, 0, Math.PI * 2);
+        g.fill();
+        g.lineWidth = 6;
+        g.strokeStyle = 'rgba(20,26,40,0.5)';
+        g.stroke();
+        g.fillStyle = '#1b2233';
+        g.font = `800 ${text.length > 1 ? 50 : 66}px "Bai Jamjuree", system-ui, sans-serif`;
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.fillText(text, 64, 68);
+      });
+      badgeTex.push(t);
+      const sp = new THREE.Sprite(M(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })));
+      sp.scale.set(size, size, 1);
+      sp.renderOrder = 10;
+      scene.add(sp);
+      return sp;
+    };
+    const showBadges = neon;
+    const badges = showBadges ? { L: badge('L'), R: badge('R') } : null;
+    const rf = showBadges ? badge('RF', 0.08) : null;
+    rf?.position.set(0, 0.12, 0.3);
+    const lf = showBadges ? badge('LF', 0.08) : null;
+    lf?.position.set(-0.59, 0.12, 0.25);
     const Y = new THREE.Vector3(0, 1, 0);
     const tmp = new THREE.Vector3();
     const tip = new THREE.Vector3();
@@ -386,7 +454,9 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       const back = tmp.copy(s.hand).sub(s.target).normalize();
       tip.copy(s.target).addScaledVector(Y, lift).addScaledVector(back, lift * 0.25);
       s.mesh.position.copy(tip);
-      s.mesh.quaternion.setFromUnitVectors(Y, tmp.copy(s.hand).sub(tip).normalize());
+      tmp.copy(s.hand).sub(tip).normalize();
+      s.mesh.quaternion.setFromUnitVectors(Y, tmp);
+      if (badges) badges[h].position.copy(tip).addScaledVector(tmp, STICK_LEN * 0.9);
     };
 
     // ---------- reacting to hits ----------
@@ -478,12 +548,15 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       for (const p of pads.values()) {
         const dt = now - p.t0;
         if (p.t0 < 0 || dt > 2.5) {
-          if (p.flashMat) p.flashMat.emissiveIntensity = 0;
+          if (p.flashMat) p.flashMat.emissiveIntensity = neon ? (p.cym ? 0.18 : BASE_GLOW) : 0;
           if (p.cym) p.root.rotation.copy(p.baseRot);
           continue;
         }
         const k = p.v / 127;
-        if (p.flashMat) p.flashMat.emissiveIntensity = reduce ? 0 : 0.28 * k * Math.exp(-dt * 9);
+        if (p.flashMat) {
+          const base = neon ? (p.cym ? 0.18 : BASE_GLOW) : 0;
+          p.flashMat.emissiveIntensity = reduce ? base : base + (neon ? 1.4 : 0.28) * k * Math.exp(-dt * 9);
+        }
         if (p.cym && !reduce) {
           const a = 0.07 * k * Math.exp(-dt * 3.2) * Math.cos(dt * 24);
           p.root.rotation.set(p.baseRot.x + a, p.baseRot.y, p.baseRot.z + a * 0.4);
@@ -497,6 +570,8 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
       const close = hhPedalT < 0 ? 0 : Math.exp(-hd * 7);
       hhTop.position.y = 0.89 - 0.012 * close;
       hhPedal.rotation.x = -0.12 + 0.12 * close;
+      if (rf) rf.scale.setScalar(0.08 * (1 + 0.35 * (kickT < 0 ? 0 : Math.exp(-kd * 10))));
+      if (lf) lf.scale.setScalar(0.08 * (1 + 0.35 * close));
       poseStick('L', now);
       poseStick('R', now);
       renderer.render(scene, camera);
@@ -516,12 +591,12 @@ export function DrumKit3D({ kit }: { kit: Kit }) {
         if ((o as THREE.Mesh).geometry) (o as THREE.Mesh).geometry.dispose();
       });
       mats.forEach((m) => m.dispose());
-      [sparkle, lathe, coated, logo, envTex].forEach((t) => t.dispose());
+      [sparkle, lathe, coated, logo, envTex, ...badgeTex].forEach((t) => t.dispose());
       pmrem.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, []);
+  }, [look]);
 
   if (noGL) return <DrumKitView kit={kit} />;
   return <div ref={host} className="kv3" />;

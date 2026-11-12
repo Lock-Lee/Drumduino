@@ -158,10 +158,17 @@ export function LaneView({ score, tickRef, bpm, startTick, onSeek }: {
         // sticking / foot label
         const h = s.hands[i];
         const lab = h ?? (nt.pad === 'kick' ? 'RF' : nt.pad === 'hihat' && nt.art === 'pedal' ? 'LF' : '');
-        if (lab && rowH > 34) {
-          g.font = '700 10px "Bai Jamjuree", system-ui, sans-serif';
-          g.fillStyle = h === 'L' ? '#ffffff' : h === 'R' ? '#cfd6e6' : '#ffd1dc';
-          g.fillText(lab, x, y + sz * 0.95 + 6);
+        if (lab) {
+          // under the note when the lane is tall enough, otherwise just after it
+          const roomy = rowH > 40;
+          g.font = `800 ${roomy ? 11 : 10}px "Bai Jamjuree", system-ui, sans-serif`;
+          g.fillStyle = h === 'L' ? '#ffffff' : h === 'R' ? '#9fd0ff' : '#ffb3c6';
+          if (roomy) g.fillText(lab, x, y + sz * 0.95 + 7);
+          else {
+            g.textAlign = 'left';
+            g.fillText(lab, x + sz * 1.15 + 2, y + 1);
+            g.textAlign = 'center';
+          }
         }
         if (nt.art === 'open') {
           g.strokeStyle = '#ffffff';

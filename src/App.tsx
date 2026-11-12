@@ -9,7 +9,7 @@ import { HardwarePage } from './pages/HardwarePage';
 import { PracticePage } from './pages/PracticePage';
 import { engine } from './audio/engine';
 
-type Tab = 'kit' | 'practice' | 'library' | 'hardware';
+type Tab = 'kit' | 'practice' | 'lanes' | 'library' | 'hardware';
 
 function StatusPill() {
   const hw = useHardware();
@@ -40,6 +40,7 @@ export function App() {
   const tabs: { id: Tab; label: string }[] = [
     { id: 'kit', label: 'ชุดกลอง' },
     { id: 'practice', label: 'ฝึกตี' },
+    { id: 'lanes', label: 'ฝึกแบบเลน' },
     { id: 'library', label: 'คลังเสียง' },
     { id: 'hardware', label: 'ฮาร์ดแวร์' }
   ];
@@ -68,7 +69,9 @@ export function App() {
       ) : tab === 'kit' ? (
         <KitPage goLibrary={() => setTab('library')} />
       ) : tab === 'practice' ? (
-        <PracticePage />
+        <PracticePage key="classic" />
+      ) : tab === 'lanes' ? (
+        <PracticePage key="lanes" variant="lanes" />
       ) : tab === 'library' ? (
         <LibraryPage goKit={() => setTab('kit')} />
       ) : (

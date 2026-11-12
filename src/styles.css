@@ -388,3 +388,33 @@ body.rec-mode .pr-kitview { flex: 1 1 auto; height: auto; border-radius: 0; bord
 body.rec-landscape .pr-sheet-scroll { flex-basis: 40%; }
 .rec-exit { position: fixed; top: 8px; right: 8px; z-index: 50; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line-2); background: rgba(20,20,24,.85); color: var(--text); font-size: 12px; opacity: 0; transition: opacity .2s; }
 .rec-exit:hover, .rec-exit:focus-visible { opacity: 1; }
+
+/* note-lane view + neon kit */
+.pr-sheet-scroll.lanes { display: flex; flex-direction: column; background: #0d1322; border-color: #1c2740; overflow: hidden; }
+.pr-sheet-scroll.lanes .pr-sheet-head { color: #e8ecf6; padding-bottom: 8px; }
+.pr-sheet-scroll.lanes .pr-sheet-head h2 { color: #f4f6fb; }
+.pr-sheet-scroll.lanes .pr-sheet-head .faint { color: #8d97ad; }
+.pr-lane-wrap { flex: 1 1 auto; min-height: 160px; position: relative; }
+.lane-view { position: absolute; inset: 0; }
+.lane-view canvas { display: block; cursor: pointer; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
+.seg button { padding: 4px 10px; font-size: 12.5px; background: transparent; color: inherit; border: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #1a1206; font-weight: 600; }
+.pr-sheet-head .seg { border-color: rgba(0,0,0,.2); }
+.pr-kitview { position: relative; }
+.kv-caption { position: absolute; left: 14px; top: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none; }
+.kv-caption b { background: #5aa6ff; color: #0b1020; font-size: 26px; font-weight: 800; line-height: 1; padding: 6px 12px 4px; letter-spacing: .02em; text-transform: uppercase; }
+.kv-caption span { color: rgba(235,240,250,.85); font-size: 14px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.kv-look { position: absolute; right: 12px; top: 12px; background: rgba(12,16,26,.7); border-color: rgba(255,255,255,.15); color: #dfe5f2; }
+body.rec-mode .kv-look { display: none; }
+.pr-kitview.neon { background: radial-gradient(ellipse at 50% 30%, #1a2440 0%, #0b101c 75%); border-color: #1c2740; }
+body.rec-mode .pr-sheet-head .seg { display: none; }
+
+/* "ฝึกแบบเลน" tab: big kit on top, lanes underneath */
+.pr-main.lanes-variant .pr-kitview { flex: 1 1 52%; height: auto; min-height: 220px; }
+.pr-main.lanes-variant .pr-sheet-scroll.lanes { flex: 0 0 clamp(230px, 36vh, 340px); }
+.pr-main.lanes-variant .pr-sheet-head { padding: 8px 14px 6px; }
+.pr-main.lanes-variant .pr-sheet-head h2 { font-size: 15px; }
+body.rec-mode .pr-main.lanes-variant .pr-kitview { flex: 1 1 56%; }
+body.rec-mode .pr-main.lanes-variant .pr-sheet-scroll.lanes { flex: 0 0 44%; }
+body.rec-mode .pr-main.lanes-variant .pr-sheet-head { display: none; }
