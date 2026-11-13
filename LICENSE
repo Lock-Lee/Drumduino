@@ -1,0 +1,41 @@
+DrumDuino
+Copyright (c) 2026 Thirawut Khanpan (GitHub: Lock-Lee). All rights reserved.
+
+This repository and everything in it, except the third-party material listed
+below, is proprietary. This includes the application source code, firmware,
+OBS scripts, user-interface and visual designs, documentation and images, the
+PCB design files (schematics, layouts, Gerbers, BOM) and the 3D enclosure
+models.
+
+No license is granted to copy, modify, merge, publish, distribute, sublicense,
+sell, manufacture or otherwise use any part of this repository, in whole or in
+part, for any purpose, without prior written permission from the copyright
+holder. Being able to view this repository, or having received a copy of the
+application, does not grant any such right.
+
+For permission or licensing enquiries, contact the copyright holder through
+GitHub (https://github.com/Lock-Lee).
+
+THE SOFTWARE AND DESIGNS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THEIR USE.
+
+-------------------------------------------------------------------------------
+Third-party material (keeps its own license, which takes precedence for those
+files only)
+-------------------------------------------------------------------------------
+
+- Drum samples in public/samples/ (Studio Maple kit): Virtuosity Drums by
+  Versilian Studios, CC0 1.0.
+  See public/samples/LICENSE-VirtuosityDrums-CC0.txt
+
+- Drum samples in public/samples/avl/: AVL Drumkits by Glen MacArthur,
+  CC BY-SA 3.0. The modified samples are redistributed under the same license.
+  See public/samples/avl/LICENSE-AVL-Drumkits-CC-BY-SA-3.0.txt
+
+- Drum samples in public/samples/sal/: Salamander Drumkit by Alexander Holm,
+  CC BY-SA 3.0. The modified samples are redistributed under the same license.
+  See public/samples/sal/LICENSE-Salamander-Drumkit-CC-BY-SA-3.0.txt
+
+- Open-source libraries installed through npm (package.json) remain under
+  their own licenses.

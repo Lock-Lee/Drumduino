@@ -242,3 +242,7 @@ docs/images/     README images
   [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). 3–8 velocity layers chosen per piece, converted to OGG, shortened and level-matched by velocity.
   The modified files are redistributed under the same CC BY-SA 3.0 (`public/samples/sal/LICENSE-Salamander-Drumkit-CC-BY-SA-3.0.txt`)
 - **Synth Kit**: generated in the app
+
+## License
+
+Copyright © 2026 Thirawut Khanpan. **All rights reserved.** The code, firmware, designs, PCB and enclosure files are proprietary: copying, modifying, redistributing or using them commercially is not allowed without written permission. The drum samples listed above keep their own licenses (CC0 / CC BY-SA 3.0). See [LICENSE](LICENSE).

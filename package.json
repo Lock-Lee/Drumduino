@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "แอปกลองไฟฟ้าที่ต่อกับ Arduino — เพิ่มเสียงให้แต่ละชิ้นได้",
   "author": "DrumDuino",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
