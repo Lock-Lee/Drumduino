@@ -16,6 +16,8 @@ import type { DrumsMode, Expected } from '../score/player';
 import type { PadId, Score } from '../score/types';
 import { PPQ, ticksPerMeasure } from '../score/types';
 import { PAD_LABEL } from '../score/types';
+import { stickingFor } from '../score/sticking';
+import type { RemoteCue } from '../types';
 import { Plus, PlayIcon, Search, Stop, Trash, Upload } from '../components/Icons';
 import { ScoreEditor, newScore } from './ScoreEditor';
 
@@ -245,14 +247,47 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
     [player, mark]
   );
 
+  // iPhone pads: which drum comes next, with the hand, sent a little ahead of each note
+  const cueNotes = useMemo(() => {
+    const notes = score.notes.slice().sort((a, b) => a.tick - b.tick);
+    const spt = 60 / (PPQ * score.bpm);
+    const hands = stickingFor(notes.map((n) => ({ t: n.tick * spt, pad: n.pad, foot: n.pad === 'hihat' && n.art === 'pedal' })));
+    return notes.map((n, i) => ({ tick: n.tick, pad: n.pad, foot: n.pad === 'kick' || (n.pad === 'hihat' && n.art === 'pedal'), hand: hands[i] ?? (n.pad === 'kick' ? 'RF' : 'LF') }));
+  }, [score]);
+  const cueRef = useRef({ idx: 0, last: -Infinity });
+  const rangeRef = useRef(range);
+  rangeRef.current = range;
+
   // misses + playhead
   useEffect(() => {
     if (!playing) return;
     let raf = 0;
+    cueRef.current = { idx: 0, last: -Infinity };
+    const CUE_LEAD = 0.75; // seconds of warning before each note
     const loopFn = () => {
       raf = requestAnimationFrame(loopFn);
       if (tailRef.current) return;
       tickRef.current = player.currentTick();
+      if (window.drumduino?.remoteCues) {
+        const cur = tickRef.current;
+        const c = cueRef.current;
+        const notes = cueNotes;
+        if (cur < c.last - PPQ / 8) {
+          // looped or jumped back: start again from here
+          c.idx = 0;
+          while (c.idx < notes.length && notes[c.idx].tick < cur) c.idx++;
+        }
+        c.last = cur;
+        const tps = (PPQ * bpmRef.current) / 60;
+        const endTick = rangeRef.current[1] * ticksPerMeasure(scoreRef.current);
+        const out: RemoteCue[] = [];
+        while (c.idx < notes.length && (notes[c.idx].tick - cur) / tps <= CUE_LEAD) {
+          const n = notes[c.idx++];
+          if (n.tick < cur - PPQ / 16 || n.tick >= endTick) continue;
+          out.push({ pad: n.pad, ms: Math.max(0, Math.round(((n.tick - cur) / tps) * 1000)), hand: n.hand, foot: n.foot });
+        }
+        if (out.length) window.drumduino.remoteCues(out);
+      }
       const bk = bkRef.current;
       const sc = scoreRef.current;
       if (bk && backing.loadedId === sc.id) {
@@ -279,7 +314,7 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
       cancelAnimationFrame(raf);
       backing.pause();
     };
-  }, [playing, player, mark]);
+  }, [playing, player, mark, cueNotes]);
 
   const drums = (p: Prefs): DrumsMode => (p.mode === 'listen' ? 'full' : p.guide ? 'guide' : 'off');
 

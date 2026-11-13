@@ -183,6 +183,10 @@ function createRemote({ tokenFile, onMessage, onClients }) {
       state = { ...state, ...s };
       broadcast({ t: 'kit', ...state });
     },
+    /** anything else for the phones (note cues while a score plays) */
+    send(obj) {
+      if (clients.size) broadcast(obj);
+    },
     flash(pad, v) {
       if (clients.size) broadcast({ t: 'flash', pad, v });
     }

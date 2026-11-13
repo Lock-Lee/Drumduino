@@ -79,6 +79,15 @@
   .pedal .lbl { top: 50%; transform: translate(-50%, -50%); font-size: 10px; letter-spacing: .04em; }
   .pedal.held { background: linear-gradient(180deg, #6a5524, #3a2d12); border-color: #c99a45; }
 
+
+  /* note cues: a ring in the pad's colour closes in and lands on the drum exactly when it should be hit */
+  .cue { position: absolute; inset: -2%; border-radius: 50%; pointer-events: none; z-index: 2;
+    border: max(3px, calc(var(--d) * .035)) solid var(--c); box-shadow: 0 0 14px var(--c), inset 0 0 14px var(--c); }
+  .cue b { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); font-size: clamp(12px, calc(var(--d) * .12), 26px);
+    font-weight: 900; color: #fff; background: var(--c); border-radius: 999px; padding: .1em .45em; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+  .now { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; z-index: 1;
+    background: radial-gradient(circle closest-side, color-mix(in srgb, var(--c) 75%, transparent), color-mix(in srgb, var(--c) 25%, transparent) 80%, transparent); }
+  .pedal .cue, .pedal .now { border-radius: 14px; }
   #cover { position: fixed; inset: 0; background: rgba(8,10,14,.92); display: none; align-items: center; justify-content: center;
     text-align: center; padding: 30px; font-size: 16px; line-height: 1.5; z-index: 5; }
   #cover.show { display: flex; }
@@ -208,6 +217,7 @@
     if (pedalEl) {
       const w = u * .30, h = u * .16;
       Object.assign(pedalEl.style, { left: (W * .035 + w / 2) + 'px', top: (H - h / 2 - 2) + 'px', width: w + 'px', height: h + 'px', borderRadius: '14px' });
+      pedalEl.style.setProperty('--d', (h * 2.4) + 'px');
       pedalEl.rect = { x0: W * .035, x1: W * .035 + w, y0: H - h - 2, y1: H };
     }
   }
@@ -221,6 +231,31 @@
     el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
   };
   const flashPad = (id, v) => pieces.filter((p) => p.id === id).forEach((p) => flash(p.el, v));
+
+
+  // ---- cues from the app while a score plays ----
+  function cue(c) {
+    const targets = c.pad === 'hihat' && c.foot && pedalEl ? [{ el: pedalEl }] : pieces.filter((p) => p.id === c.pad);
+    // double kick: right foot on the right pedal, left foot on the left one
+    const list = c.pad === 'kick' && targets.length > 1 ? [targets[c.hand === 'LF' ? 0 : 1]] : targets;
+    for (const t of list) {
+      const el = t.el, ring = document.createElement('i');
+      ring.className = 'cue';
+      if (c.hand) { const b = document.createElement('b'); b.textContent = c.hand; ring.append(b); }
+      el.append(ring);
+      const ms = Math.max(0, c.ms);
+      const land = () => {
+        ring.remove();
+        const now = document.createElement('i');
+        now.className = 'now';
+        el.append(now);
+        now.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' }).onfinish = () => now.remove();
+      };
+      if (ms < 40) { land(); continue; }
+      ring.animate([{ transform: 'scale(1.75)', opacity: 0 }, { transform: 'scale(1.35)', opacity: .85, offset: .35 }, { transform: 'scale(1)', opacity: 1 }],
+        { duration: ms, easing: 'linear' }).onfinish = land;
+    }
+  }
 
   // one handler for the whole stage: round hit areas, the piece on top wins where they overlap
   const held = new Map();
@@ -277,6 +312,7 @@
         $('turnText').textContent = L.turn;
         build(m.pads || []);
       } else if (m.t === 'flash') flashPad(m.pad, m.v);
+      else if (m.t === 'cues') (m.list || []).forEach(cue);
       else if (m.t === 'pong' && m.id === pingId) $('lat').textContent = Math.round((performance.now() - pingT) / 2) + ' ms';
     };
     ws.onclose = () => {

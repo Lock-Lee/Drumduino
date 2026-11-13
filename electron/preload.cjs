@@ -33,6 +33,9 @@ contextBridge.exposeInMainWorld('drumduino', {
   remoteFlash(pad, v) {
     ipcRenderer.send('remote:flash', pad, v);
   },
+  remoteCues(list) {
+    ipcRenderer.send('remote:cues', list);
+  },
   onRemote(cb) {
     const l = (_e, msg) => cb(msg);
     ipcRenderer.on('remote:msg', l);

@@ -102,6 +102,8 @@ export interface PortInfo {
 /** iPhone / iPad pads over Wi-Fi */
 export interface RemoteInfo { ip?: string | null; port?: number; url?: string | null; clients?: number; error?: string }
 export interface RemotePad { id: string; name: string; color: string; hat: boolean; cym: boolean }
+/** a note coming up: light this pad, it should be hit in `ms` */
+export interface RemoteCue { pad: string; ms: number; hand?: string; foot?: boolean }
 export type RemoteMsg = { t: 'hit'; pad: string; v: number; z?: Zone } | { t: 'hat'; o: number };
 
 declare global {
@@ -118,6 +120,7 @@ declare global {
       remoteStop?(): Promise<boolean>;
       remoteState?(state: { pads: RemotePad[]; lang: string; kit: string }): void;
       remoteFlash?(pad: string, v: number): void;
+      remoteCues?(list: RemoteCue[]): void;
       onRemote?(cb: (msg: RemoteMsg) => void): () => void;
       onRemoteClients?(cb: (n: number) => void): () => void;
     };

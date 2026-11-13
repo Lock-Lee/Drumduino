@@ -171,6 +171,7 @@ ipcMain.handle('remote:stop', () => {
 });
 ipcMain.on('remote:state', (_e, s) => getRemote().setState(s));
 ipcMain.on('remote:flash', (_e, pad, v) => remote?.flash(pad, v));
+ipcMain.on('remote:cues', (_e, list) => remote?.send({ t: 'cues', list }));
 
 app.whenReady().then(() => {
   createWindow();

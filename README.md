@@ -35,7 +35,7 @@ The app speaks Thai and English (switch with **ไทย | EN** in the top right
 **Hardware**
 - Input over USB Serial (any board) or USB MIDI (Leonardo / Pro Micro); Arduino Mega gives 16 channels (A0–A15)
 - PCB design for the Mega 2560 PRO with 16 × 6.35 mm jacks, plus a 3D-printed case
-- No Arduino? Test with the keyboard, or **use an iPhone / iPad as wireless pads**: turn on *Play from iPhone / iPad* in the Hardware tab and scan the QR code. Taps play through the Mac over Wi-Fi (multi-touch, harder in the middle of a pad, hold-to-open hi-hat)
+- No Arduino? Test with the keyboard, or **use an iPhone / iPad as wireless pads**: turn on *Play from iPhone / iPad* in the Hardware tab and scan the QR code. Taps play through the Mac over Wi-Fi (realistic kit with double kick, multi-touch, harder in the middle of a pad, hold-to-open hi-hat). Press Play and a ring in the drum's colour closes in on the pad you need to hit next, with the hand (L / R / RF / LF)
 - Everything saves automatically; sample files stay on your computer
 
 ## Examples
