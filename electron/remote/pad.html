@@ -7,94 +7,212 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DrumDuino">
-<meta name="theme-color" content="#0b0d12">
+<meta name="theme-color" content="#0b0c10">
 <link rel="apple-touch-icon" href="/icon.png">
 <link rel="manifest" href="/manifest.json">
 <title>DrumDuino Pads</title>
 <style>
-  :root {
-    --bg: #0b0d12; --panel: #12151c; --line: #222733; --text: #eceef3; --muted: #8b90a0;
-    --ok: #4ade80; --bad: #ff8a80; --gap: 8px;
-  }
+  :root { --bg: #0b0c10; --text: #eceef3; --muted: #8b90a0; --ok: #4ade80; --bad: #ff8a80; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
-    font: 600 14px/1.2 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Thonburi', sans-serif;
+  html, body { margin: 0; height: 100%; color: var(--text); overflow: hidden;
+    font: 700 14px/1.2 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Thonburi', sans-serif;
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; overscroll-behavior: none; }
   body { display: flex; flex-direction: column;
-    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
-  header { display: flex; align-items: center; gap: 10px; height: 26px; flex: none; color: var(--muted); font-size: 12px; }
-  header b { color: var(--text); font-weight: 700; letter-spacing: .02em; }
+    background: radial-gradient(ellipse 80% 70% at 50% 60%, #2a2016 0%, #15110d 55%, var(--bg) 100%);
+    padding: max(4px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+  header { display: flex; align-items: center; gap: 10px; height: 22px; flex: none; color: var(--muted); font-size: 12px; position: relative; z-index: 3; }
+  header b { color: var(--text); letter-spacing: .02em; }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 8px var(--bad); flex: none; }
   .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
   header .sp { flex: 1; }
-  #grid { flex: 1; display: grid; gap: var(--gap); min-height: 0; padding-top: 4px;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1.15fr 0.9fr;
-    grid-template-areas:
-      "crash tom1  tom2  ride"
-      "hihat snare snare floor"
-      "hatp  kick  kick  floor"; }
-  #grid.extra { grid-template-rows: 1fr 1.15fr 0.9fr 0.8fr;
-    grid-template-areas:
-      "crash tom1  tom2  ride"
-      "hihat snare snare floor"
-      "hatp  kick  kick  floor"
-      "x     x     x     x"; }
-  #extra { grid-area: x; display: grid; gap: var(--gap); grid-auto-flow: column; grid-auto-columns: 1fr; }
-  .pad { --c: #4C8DF6; position: relative; border-radius: 18px; border: 2px solid color-mix(in srgb, var(--c) 70%, transparent);
-    background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--c) 26%, var(--panel)) 0%, var(--panel) 72%);
-    display: flex; align-items: flex-end; justify-content: flex-start; padding: 8px 11px; overflow: hidden;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03); transition: transform .06s; }
-  .pad.cym { border-radius: 50% / 38%; align-items: center; justify-content: center; }
-  .pad span { font-size: 13px; color: color-mix(in srgb, var(--c) 55%, #fff); text-shadow: 0 1px 2px #000; pointer-events: none; }
-  .pad i { position: absolute; inset: 0; background: var(--c); opacity: 0; pointer-events: none; border-radius: inherit; }
-  .pad.hit { transform: scale(.985); }
-  .pad.hit i { animation: flash .22s ease-out; }
-  @keyframes flash { from { opacity: var(--a, .7); } to { opacity: 0; } }
-  .pad.hatp { --c: #E9B949; border-style: dashed; align-items: center; justify-content: center; text-align: center; }
-  .pad.hatp.held { background: color-mix(in srgb, var(--c) 30%, var(--panel)); }
-  .pad.hatp small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 500; margin-top: 3px; }
+  #stage { flex: 1; position: relative; min-height: 0; }
+
+  /* ---------- pieces ---------- */
+  .pc { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;
+    display: flex; align-items: center; justify-content: center; will-change: transform, filter; }
+  .pc .lbl { position: absolute; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: .35em;
+    padding: .28em .7em .28em .45em; border-radius: 999px; white-space: nowrap; pointer-events: none;
+    font-size: clamp(10px, calc(var(--d) * .075), 17px); letter-spacing: .1em; text-transform: uppercase; font-weight: 800;
+    color: #fff; background: rgba(12,13,17,.72); border: 1px solid color-mix(in srgb, var(--c) 65%, transparent);
+    box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  .pc .lbl canvas { width: 1.9em; height: 1.5em; flex: none; }
+  .pc .glow { position: absolute; inset: -4%; border-radius: 50%; opacity: 0; pointer-events: none;
+    background: radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 65%); mix-blend-mode: screen; }
+  .pc.hit .glow { animation: glow .25s ease-out; }
+  @keyframes glow { from { opacity: var(--a, .7); } to { opacity: 0; } }
+
+  /* drums: coloured shell, chrome hoop, coated head */
+  .drum { background:
+      radial-gradient(circle closest-side at 50% 50%, #f4f1e8 0%, #ebe6d8 52%, #d6d0bf 66%, #b9b3a3 68.5%,
+        #f2f2f2 69.5%, #9a9ca3 72%, #e9eaee 74%, #6d7078 76.5%, var(--shell) 77.5%, var(--shell2) 92%, #141414 100%);
+    box-shadow: 0 calc(var(--d) * .04) calc(var(--d) * .08) rgba(0,0,0,.6); }
+  .drum::before { content: ''; position: absolute; inset: 24%; border-radius: 50%; /* worn spot in the middle */
+    background: radial-gradient(circle, rgba(120,110,90,.18), rgba(120,110,90,0) 70%); }
+  .drum .lbl { top: 58%; }
+  .drum.kick { background:
+      radial-gradient(circle closest-side at 50% 50%, #2b2d33 0%, #1e2025 56%, #0f1013 66%, #c9cbd1 67.5%, #6c6f77 70%,
+        #d9dbe0 72.5%, #4b4e55 75%, var(--shell) 76.5%, var(--shell2) 92%, #0b0b0b 100%); }
+  .drum.kick .lbl { top: 17%; }
+  .drum.kick::before { inset: 30%; background: radial-gradient(circle, rgba(255,255,255,.07), rgba(255,255,255,0) 70%); }
+
+  /* cymbals: brass with lathe grooves, raised bell */
+  .cym { background:
+      radial-gradient(circle closest-side at 50% 50%, #3b2a10 0%, #3b2a10 3%, #8a6326 3.6%, #d9ac55 9%, #f0cf7f 14%, #b8873a 19%, rgba(0,0,0,0) 20%),
+      repeating-radial-gradient(circle closest-side at 50% 50%, rgba(255,240,200,.10) 0 1px, rgba(60,40,10,.10) 1px 3px),
+      conic-gradient(from 20deg, #c99a45, #e8c375, #b07f34, #d8ad5c, #a4752e, #e2bb6c, #c08f40, #c99a45),
+      radial-gradient(circle closest-side, #d1a24f 0%, #b9883c 70%, #8c6224 100%);
+    box-shadow: 0 calc(var(--d) * .03) calc(var(--d) * .07) rgba(0,0,0,.55), inset 0 0 0 2px rgba(80,55,20,.6); }
+  .cym .lbl { top: 64%; }
+  .cym.hat .lbl { top: 16%; }
+  .cym.hit { animation: wob .5s ease-out; }
+  @keyframes wob { 0% { transform: translate(-50%, -50%) rotate(0) scale(.985); } 30% { transform: translate(-50%, -50%) rotate(2.5deg); }
+    60% { transform: translate(-50%, -50%) rotate(-1.2deg); } 100% { transform: translate(-50%, -50%) rotate(0); } }
+  .drum.hit { animation: thump .16s ease-out; }
+  @keyframes thump { 0% { transform: translate(-50%, -50%) scale(.965); } 100% { transform: translate(-50%, -50%) scale(1); } }
+  .cym.hat.open .lbl::after { content: ' · OPEN'; }
+
+  /* hi-hat foot pedal */
+  .pedal { border-radius: 14px; background: linear-gradient(180deg, #3a3d44, #1d1f24); border: 1px solid #50545d;
+    box-shadow: 0 4px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08); }
+  .pedal::before { content: ''; position: absolute; inset: 14% 22%; border-radius: 8px;
+    background: repeating-linear-gradient(180deg, #5b5f68 0 2px, #2b2e34 2px 6px); }
+  .pedal .lbl { top: 50%; transform: translate(-50%, -50%); font-size: 10px; letter-spacing: .04em; }
+  .pedal.held { background: linear-gradient(180deg, #6a5524, #3a2d12); border-color: #c99a45; }
+
   #cover { position: fixed; inset: 0; background: rgba(8,10,14,.92); display: none; align-items: center; justify-content: center;
     text-align: center; padding: 30px; font-size: 16px; line-height: 1.5; z-index: 5; }
   #cover.show { display: flex; }
   #cover small { display: block; color: var(--muted); font-size: 13px; font-weight: 500; margin-top: 8px; }
-  #rotate { display: none; }
-  @media (orientation: portrait) {
-    #grid { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr);
-      grid-template-areas: "crash ride" "tom1 tom2" "hihat floor" "snare snare" "hatp kick"; }
-    #grid.extra { grid-template-rows: repeat(6, 1fr);
-      grid-template-areas: "crash ride" "tom1 tom2" "hihat floor" "snare snare" "hatp kick" "x x"; }
-    #rotate { display: inline; }
-  }
+  #turn { position: fixed; inset: 0; z-index: 4; display: none; align-items: center; justify-content: center; text-align: center;
+    background: rgba(8,10,14,.9); font-size: 17px; padding: 30px; }
+  #turn div::before { content: '⟳'; display: block; font-size: 44px; margin-bottom: 8px; }
+  @media (orientation: portrait) { #turn { display: flex; } }
 </style>
 </head>
 <body>
 <header>
   <span class="dot" id="dot"></span><b>DrumDuino</b><span id="kit"></span>
-  <span class="sp"></span><span id="rotate"></span><span id="lat"></span>
+  <span class="sp"></span><span id="lat"></span>
 </header>
-<div id="grid"></div>
+<div id="stage"></div>
+<div id="turn"><div id="turnText">หมุนโทรศัพท์เป็นแนวนอน</div></div>
 <div id="cover" class="show"><div id="coverText">กำลังเชื่อมต่อ…</div></div>
 <script>
 (() => {
   const TXT = {
-    th: { connecting: 'กำลังเชื่อมต่อกับ DrumDuino…', lost: 'หลุดการเชื่อมต่อ กำลังต่อใหม่…', hint: 'ตรวจว่าเปิดแอป DrumDuino อยู่ และอยู่ใน Wi-Fi เดียวกัน', rotate: 'หมุนจอเป็นแนวนอนจะตีถนัดกว่า', hatp: 'แป้นไฮแฮท', hatpHint: 'กดค้าง = เปิด · ปล่อย = ปิด' },
-    en: { connecting: 'Connecting to DrumDuino…', lost: 'Connection lost, reconnecting…', hint: 'Check the DrumDuino app is open and on the same Wi-Fi', rotate: 'Turn sideways for more room', hatp: 'Hi-hat pedal', hatpHint: 'hold = open · release = close' }
+    th: { connecting: 'กำลังเชื่อมต่อกับ DrumDuino…', lost: 'หลุดการเชื่อมต่อ กำลังต่อใหม่…', hint: 'ตรวจว่าเปิดแอป DrumDuino อยู่ และอยู่ใน Wi-Fi เดียวกัน', turn: 'หมุนโทรศัพท์เป็นแนวนอน', pedal: 'HH Pedal' },
+    en: { connecting: 'Connecting to DrumDuino…', lost: 'Connection lost, reconnecting…', hint: 'Check the DrumDuino app is open and on the same Wi-Fi', turn: 'Turn your phone sideways', pedal: 'HH Pedal' }
   };
-  let L = TXT.th;
+  const SHORT = { crash: 'Crash', hihat: 'Hi-Hat', ride: 'Ride', tom1: 'Tom 1', tom2: 'Tom 2', floor: 'Floor', snare: 'Snare', kick: 'Kick' };
+  let L = TXT.th, lang = 'th';
   const $ = (id) => document.getElementById(id);
-  const grid = $('grid');
-  const AREAS = ['crash', 'tom1', 'tom2', 'ride', 'hihat', 'snare', 'floor', 'kick'];
-  const els = new Map();
-  let ws = null, ready = false, hatPad = null;
+  const stage = $('stage');
   const token = new URLSearchParams(location.search).get('k') || '';
 
-  // keep the screen on while playing (iOS 16.4+)
-  let lock = null;
-  const wake = async () => { try { if (!lock && navigator.wakeLock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => (lock = null)); } } catch {} };
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { wake(); if (!ready) connect(); } });
-  ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu'].forEach((e) => document.addEventListener(e, (ev) => ev.preventDefault(), { passive: false }));
-  document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+  // Kit as seen from the drum throne. x = share of stage width, y = share of height, d = diameter in "units"
+  // (1 unit = the stage height, or width / 2.1 on squarer screens). Two kick pedals = double bass.
+  const LAYOUT = {
+    crash: { x: .12, y: .27, d: .58, z: 2 },
+    tom1:  { x: .37, y: .25, d: .40, z: 3 },
+    tom2:  { x: .57, y: .25, d: .40, z: 3 },
+    ride:  { x: .86, y: .29, d: .62, z: 2 },
+    hihat: { x: .11, y: .72, d: .50, z: 4 },
+    snare: { x: .47, y: .60, d: .46, z: 5 },
+    floor: { x: .86, y: .80, d: .50, z: 4 },
+    kick:  [{ x: .30, y: 1.02, d: .54, z: 1 }, { x: .64, y: 1.02, d: .54, z: 1 }]
+  };
+  const EXTRA_SPOTS = [{ x: .70, y: .52, d: .34 }, { x: .27, y: .52, d: .30 }, { x: .97, y: .55, d: .26 }];
+  const SHELLS = { snare: ['#9aa0aa', '#4e535c'], kick: ['#7b1d24', '#3c0b10'], floor: ['#7b1d24', '#3c0b10'], tom1: ['#7b1d24', '#3c0b10'], tom2: ['#7b1d24', '#3c0b10'] };
+
+  const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+  function icon(pad, color, pedal) {
+    const c = document.createElement('canvas'), dpr = devicePixelRatio || 1, W = 38, H = 30;
+    c.width = W * dpr; c.height = H * dpr;
+    const g = c.getContext('2d'); g.scale(dpr, dpr);
+    const x = W / 2, y = H / 2 - 1, s = 11;
+    g.lineWidth = 2; g.strokeStyle = color; g.fillStyle = hexA(color, 0.28);
+    if (pedal) { g.beginPath(); g.roundRect(x - s * .35, y - s * .75, s * .7, s * 1.5, 3); g.fill(); g.stroke(); return c; }
+    if (pad === 'kick') {
+      g.beginPath(); g.arc(x, y, s * .8, 0, 7); g.fill(); g.stroke();
+      g.beginPath(); g.arc(x, y, s * .45, 0, 7); g.stroke();
+      g.beginPath(); g.moveTo(x - s * .55, y + s * .6); g.lineTo(x - s * .8, y + s * .95); g.moveTo(x + s * .55, y + s * .6); g.lineTo(x + s * .8, y + s * .95); g.stroke();
+      return c;
+    }
+    if (['crash', 'ride', 'hihat'].includes(pad)) {
+      const rx = s * 1.05, ry = s * .28;
+      g.beginPath(); g.moveTo(x, y + ry); g.lineTo(x, y + s * .9); g.moveTo(x - s * .35, y + s * .9); g.lineTo(x + s * .35, y + s * .9); g.stroke();
+      if (pad === 'hihat') { g.beginPath(); g.ellipse(x, y + ry * .9, rx, ry * .8, 0, 0, 7); g.fill(); g.stroke(); }
+      g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); g.stroke();
+      g.fillStyle = color; g.beginPath(); g.ellipse(x, y - ry * .35, rx * .28, ry * .6, 0, 0, 7); g.fill();
+      return c;
+    }
+    const rx = s * (pad === 'floor' ? .95 : .85), ry = s * .3, top = y - s * .35, bot = y + s * (pad === 'floor' ? .55 : .35);
+    g.beginPath(); g.moveTo(x - rx, top); g.lineTo(x - rx, bot); g.ellipse(x, bot, rx, ry, 0, Math.PI, 0, true); g.lineTo(x + rx, top); g.closePath(); g.fill(); g.stroke();
+    g.beginPath(); g.ellipse(x, top, rx, ry, 0, 0, 7); g.fillStyle = hexA(color, .5); g.fill(); g.stroke();
+    return c;
+  }
+  let pieces = [];       // { id, el, kind, x, y, r, z }  (x, y, r in px, filled by place())
+  let spec = [];         // what to draw
+  let hatId = null, pedalEl = null;
+  let ws = null, ready = false;
+
+  function build(pads) {
+    stage.innerHTML = ''; spec = []; hatId = null;
+    let extra = 0;
+    for (const p of pads) {
+      const at = LAYOUT[p.id];
+      const spots = Array.isArray(at) ? at : at ? [at] : EXTRA_SPOTS[extra++] ? [EXTRA_SPOTS[extra - 1]] : [];
+      for (const s of spots) spec.push({ pad: p, ...s, z: s.z ?? 3 });
+      if (p.hat && !hatId) hatId = p.id;
+    }
+    pieces = spec.map((s) => {
+      const p = s.pad, el = document.createElement('div');
+      const cym = p.cym, kick = p.id === 'kick';
+      el.className = 'pc ' + (cym ? 'cym' : 'drum') + (kick ? ' kick' : '') + (p.id === hatId ? ' hat' : '');
+      const sh = SHELLS[p.id] || ['#6b5a3c', '#2e2617'];
+      el.style.setProperty('--shell', sh[0]); el.style.setProperty('--shell2', sh[1]);
+      el.style.zIndex = s.z;
+      el.style.setProperty('--c', p.color);
+      const lbl = document.createElement('span'); lbl.className = 'lbl';
+      const name = document.createElement('b'); name.textContent = SHORT[p.id] || p.name;
+      lbl.append(icon(p.id, p.color), name);
+      el.append(lbl);
+      const g = document.createElement('i'); g.className = 'glow'; el.append(g);
+      stage.append(el);
+      return { id: p.id, el, s };
+    });
+    pedalEl = null;
+    if (hatId) {
+      pedalEl = document.createElement('div');
+      pedalEl.className = 'pc pedal';
+      pedalEl.style.zIndex = 6;
+      const hp = spec.find((x) => x.pad.id === hatId)?.pad;
+      pedalEl.style.setProperty('--c', hp?.color || '#E9B949');
+      const l = document.createElement('span'); l.className = 'lbl';
+      const nm = document.createElement('b'); nm.textContent = L.pedal;
+      l.append(icon('hihat', hp?.color || '#E9B949', true), nm); pedalEl.append(l);
+      stage.append(pedalEl);
+    }
+    place();
+  }
+
+  function place() {
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const u = Math.min(H, W / 2.1);
+    for (const p of pieces) {
+      const d = p.s.d * u;
+      p.x = p.s.x * W; p.y = Math.min(p.s.y * H, H + d * 0.18); p.r = d / 2;
+      Object.assign(p.el.style, { left: p.x + 'px', top: p.y + 'px', width: d + 'px', height: d + 'px' });
+      p.el.style.setProperty('--d', d + 'px');
+    }
+    if (pedalEl) {
+      const w = u * .30, h = u * .16;
+      Object.assign(pedalEl.style, { left: (W * .035 + w / 2) + 'px', top: (H - h / 2 - 2) + 'px', width: w + 'px', height: h + 'px', borderRadius: '14px' });
+      pedalEl.rect = { x0: W * .035, x1: W * .035 + w, y0: H - h - 2, y1: H };
+    }
+  }
+  addEventListener('resize', place);
+  addEventListener('orientationchange', () => setTimeout(place, 200));
 
   const send = (o) => { if (ready) try { ws.send(JSON.stringify(o)); } catch {} };
   const flash = (el, v) => {
@@ -102,49 +220,48 @@
     el.style.setProperty('--a', String(0.25 + 0.6 * (v / 127)));
     el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
   };
+  const flashPad = (id, v) => pieces.filter((p) => p.id === id).forEach((p) => flash(p.el, v));
 
-  function build(pads) {
-    grid.innerHTML = ''; els.clear(); hatPad = null;
-    const extra = document.createElement('div'); extra.id = 'extra';
-    for (const p of pads) {
-      const el = document.createElement('div');
-      el.className = 'pad' + (p.cym ? ' cym' : '');
-      el.style.setProperty('--c', p.color);
-      el.innerHTML = '<i></i><span></span>';
-      el.querySelector('span').textContent = p.name;
-      el.addEventListener('pointerdown', (e) => {
-        e.preventDefault(); wake();
-        // the middle of the pad is loudest, the edge softer — like a real drum
-        const r = el.getBoundingClientRect();
-        const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
-        const dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
-        const d = Math.min(1, Math.hypot(dx, dy));
-        const v = Math.round(127 - 72 * d * d);
-        send({ t: 'hit', pad: p.id, v });
-        flash(el, v);
-      }, { passive: false });
-      els.set(p.id, el);
-      if (AREAS.includes(p.id)) { el.style.gridArea = p.id; grid.appendChild(el); }
-      else extra.appendChild(el);
-      if (p.hat && !hatPad) hatPad = p.id;
+  // one handler for the whole stage: round hit areas, the piece on top wins where they overlap
+  const held = new Map();
+  stage.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); wake();
+    const r = stage.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const pr = pedalEl?.rect;
+    if (pr && x >= pr.x0 && x <= pr.x1 && y >= pr.y0 - 10 && y <= pr.y1 + 10) {
+      held.set(e.pointerId, true);
+      pedalEl.classList.add('held');
+      pieces.forEach((p) => p.id === hatId && p.el.classList.add('open'));
+      send({ t: 'hat', o: 1 });
+      return;
     }
-    // hi-hat pedal: hold to open, release to close (a quick release gives the foot "chick")
-    if (hatPad) {
-      const el = document.createElement('div');
-      el.className = 'pad hatp';
-      el.style.gridArea = 'hatp';
-      el.innerHTML = '<i></i><span></span>';
-      el.querySelector('span').innerHTML = '';
-      const s = el.querySelector('span');
-      s.append(L.hatp); const sm = document.createElement('small'); sm.textContent = L.hatpHint; s.append(sm);
-      const down = (e) => { e.preventDefault(); el.setPointerCapture?.(e.pointerId); el.classList.add('held'); send({ t: 'hat', o: 1 }); };
-      const up = () => { if (!el.classList.contains('held')) return; el.classList.remove('held'); send({ t: 'hat', o: 0 }); };
-      el.addEventListener('pointerdown', down, { passive: false });
-      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-      grid.appendChild(el);
+    let best = null;
+    for (const p of pieces) {
+      const d = Math.hypot(x - p.x, y - p.y) / p.r;
+      if (d <= 1.04 && (!best || p.s.z > best.p.s.z || (p.s.z === best.p.s.z && d < best.d))) best = { p, d };
     }
-    if (extra.children.length) { grid.classList.add('extra'); grid.appendChild(extra); } else grid.classList.remove('extra');
-  }
+    if (!best) return;
+    // centre of the head is loudest, the edge softer — like a real drum
+    const v = Math.round(127 - 70 * Math.min(1, best.d) ** 2);
+    send({ t: 'hit', pad: best.p.id, v });
+    flash(best.p.el, v);
+  }, { passive: false });
+  const release = (e) => {
+    if (!held.delete(e.pointerId) || held.size) return;
+    pedalEl?.classList.remove('held');
+    pieces.forEach((p) => p.id === hatId && p.el.classList.remove('open'));
+    send({ t: 'hat', o: 0 });
+  };
+  stage.addEventListener('pointerup', release);
+  stage.addEventListener('pointercancel', release);
+
+  // keep the screen on (iOS 16.4+) and stop iOS gestures
+  let lock = null;
+  const wake = async () => { try { if (!lock && navigator.wakeLock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => (lock = null)); } } catch {} };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { wake(); if (!ready) connect(); } });
+  ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu'].forEach((ev) => document.addEventListener(ev, (x) => x.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
   let pingT = 0, pingId = 0;
   function connect() {
@@ -154,17 +271,17 @@
     ws.onmessage = (ev) => {
       let m; try { m = JSON.parse(ev.data); } catch { return; }
       if (m.t === 'kit') {
-        L = TXT[m.lang === 'en' ? 'en' : 'th'];
-        document.documentElement.lang = m.lang === 'en' ? 'en' : 'th';
+        lang = m.lang === 'en' ? 'en' : 'th'; L = TXT[lang];
+        document.documentElement.lang = lang;
         $('kit').textContent = m.kit ? '· ' + m.kit : '';
-        $('rotate').textContent = L.rotate;
+        $('turnText').textContent = L.turn;
         build(m.pads || []);
-      } else if (m.t === 'flash') flash(els.get(m.pad), m.v);
+      } else if (m.t === 'flash') flashPad(m.pad, m.v);
       else if (m.t === 'pong' && m.id === pingId) $('lat').textContent = Math.round((performance.now() - pingT) / 2) + ' ms';
     };
     ws.onclose = () => {
       ready = false; $('dot').classList.remove('on'); $('lat').textContent = '';
-      $('coverText').innerHTML = ''; $('coverText').append(L.lost); const s = document.createElement('small'); s.textContent = L.hint; $('coverText').append(s);
+      const c = $('coverText'); c.textContent = L.lost; const s = document.createElement('small'); s.textContent = L.hint; c.append(s);
       $('cover').classList.add('show');
       setTimeout(connect, 1000);
     };
