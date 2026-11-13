@@ -122,14 +122,14 @@
   // Kit as seen from the drum throne. x = share of stage width, y = share of height, d = diameter in "units"
   // (1 unit = the stage height, or width / 2.1 on squarer screens). Two kick pedals = double bass.
   const LAYOUT = {
-    crash: { x: .12, y: .27, d: .58, z: 2 },
-    tom1:  { x: .37, y: .25, d: .40, z: 3 },
-    tom2:  { x: .57, y: .25, d: .40, z: 3 },
-    ride:  { x: .86, y: .29, d: .62, z: 2 },
-    hihat: { x: .11, y: .72, d: .50, z: 4 },
-    snare: { x: .47, y: .60, d: .46, z: 5 },
-    floor: { x: .86, y: .80, d: .50, z: 4 },
-    kick:  [{ x: .30, y: 1.02, d: .54, z: 1 }, { x: .64, y: 1.02, d: .54, z: 1 }]
+    crash: { x: .12, y: .27, d: .60, z: 2 },
+    tom1:  { x: .365, y: .26, d: .46, z: 3 },
+    tom2:  { x: .575, y: .26, d: .46, z: 3 },
+    ride:  { x: .865, y: .29, d: .62, z: 2 },
+    hihat: { x: .115, y: .68, d: .52, z: 4 },
+    snare: { x: .47, y: .62, d: .50, z: 5 },
+    floor: { x: .86, y: .76, d: .54, z: 4 },
+    kick:  [{ x: .29, y: .93, d: .50, z: 1 }, { x: .655, y: .93, d: .50, z: 1 }]
   };
   const EXTRA_SPOTS = [{ x: .70, y: .52, d: .34 }, { x: .27, y: .52, d: .30 }, { x: .97, y: .55, d: .26 }];
   const SHELLS = { snare: ['#9aa0aa', '#4e535c'], kick: ['#7b1d24', '#3c0b10'], floor: ['#7b1d24', '#3c0b10'], tom1: ['#7b1d24', '#3c0b10'], tom2: ['#7b1d24', '#3c0b10'] };
@@ -217,9 +217,9 @@
     }
     if (pedalEl) {
       const w = u * .30, h = u * .16;
-      Object.assign(pedalEl.style, { left: (W * .035 + w / 2) + 'px', top: (H - h / 2 - 2) + 'px', width: w + 'px', height: h + 'px', borderRadius: '14px' });
+      Object.assign(pedalEl.style, { left: (W * .035 + w / 2) + 'px', top: (H - h / 2 - 16) + 'px', width: w + 'px', height: h + 'px', borderRadius: '14px' });
       pedalEl.style.setProperty('--d', (h * 2.4) + 'px');
-      pedalEl.rect = { x0: W * .035, x1: W * .035 + w, y0: H - h - 2, y1: H };
+      pedalEl.rect = { x0: W * .035, x1: W * .035 + w, y0: H - h - 16, y1: H - 16 };
     }
   }
   addEventListener('resize', place);
@@ -258,39 +258,53 @@
     }
   }
 
-  // one handler for the whole stage: round hit areas, the piece on top wins where they overlap
-  const held = new Map();
-  stage.addEventListener('pointerdown', (e) => {
-    e.preventDefault(); wake();
+  // One handler for the whole stage. Touch events (not pointer events) because iOS Safari delivers
+  // touchstart at once for every finger, while pointer events can lag or drop on fast taps.
+  // Hit areas are generous: inside a piece the top one wins, in the gaps the nearest piece within reach.
+  const held = new Set();
+  function down(id, cx, cy) {
+    wake();
     const r = stage.getBoundingClientRect();
-    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const x = cx - r.left, y = cy - r.top;
     const pr = pedalEl?.rect;
-    if (pr && x >= pr.x0 && x <= pr.x1 && y >= pr.y0 - 10 && y <= pr.y1 + 10) {
-      held.set(e.pointerId, true);
+    if (pr && x >= pr.x0 - 12 && x <= pr.x1 + 12 && y >= pr.y0 - 14 && y <= pr.y1 + 14) {
+      held.add(id);
       pedalEl.classList.add('held');
       pieces.forEach((p) => p.id === hatId && p.el.classList.add('open'));
       send({ t: 'hat', o: 1 });
       return;
     }
-    let best = null;
+    let best = null, near = null;
     for (const p of pieces) {
       const d = Math.hypot(x - p.x, y - p.y) / p.r;
-      if (d <= 1.04 && (!best || p.s.z > best.p.s.z || (p.s.z === best.p.s.z && d < best.d))) best = { p, d };
+      if (d <= 1 && (!best || p.s.z > best.p.s.z || (p.s.z === best.p.s.z && d < best.d))) best = { p, d };
+      if (!near || d < near.d) near = { p, d };
     }
+    if (!best && near && near.d <= 1.45) best = near;
     if (!best) return;
-    // centre of the head is loudest, the edge softer — like a real drum
-    const v = Math.round(127 - 70 * Math.min(1, best.d) ** 2);
+    // centre of the head is a bit louder than the edge, like a real drum — but never too quiet
+    const v = Math.round(127 - 38 * Math.min(1, best.d) ** 2);
     send({ t: 'hit', pad: best.p.id, v });
     flash(best.p.el, v);
-  }, { passive: false });
-  const release = (e) => {
-    if (!held.delete(e.pointerId) || held.size) return;
+  }
+  function up(id) {
+    if (!held.delete(id) || held.size) return;
     pedalEl?.classList.remove('held');
     pieces.forEach((p) => p.id === hatId && p.el.classList.remove('open'));
     send({ t: 'hat', o: 0 });
-  };
-  stage.addEventListener('pointerup', release);
-  stage.addEventListener('pointercancel', release);
+  }
+  stage.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    for (const t of e.changedTouches) down('t' + t.identifier, t.clientX, t.clientY);
+  }, { passive: false });
+  const touchUp = (e) => { e.preventDefault(); for (const t of e.changedTouches) up('t' + t.identifier); };
+  stage.addEventListener('touchend', touchUp, { passive: false });
+  stage.addEventListener('touchcancel', touchUp, { passive: false });
+  // mouse / pen (iPad with a pencil, testing on a computer)
+  stage.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') { e.preventDefault(); down('p' + e.pointerId, e.clientX, e.clientY); } });
+  const pUp = (e) => { if (e.pointerType !== 'touch') up('p' + e.pointerId); };
+  stage.addEventListener('pointerup', pUp);
+  stage.addEventListener('pointercancel', pUp);
 
   // keep the screen on (iOS 16.4+) and stop iOS gestures
   let lock = null;
