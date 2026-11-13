@@ -1,0 +1,9 @@
+{
+  "name": "DrumDuino Pads",
+  "short_name": "DrumDuino",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b0d12",
+  "theme_color": "#0b0d12",
+  "icons": [{ "src": "/icon.png", "sizes": "180x180", "type": "image/png" }]
+}

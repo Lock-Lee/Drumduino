@@ -1,5 +1,6 @@
 import { useStore } from '../store';
 import { useHardware } from '../input/hardware';
+import { RemoteCard } from './RemoteCard';
 import { CHANNEL_COUNT, PIN_LABELS, sensitivityToThreshold } from '../types';
 
 import { t } from '../i18n';
@@ -80,6 +81,8 @@ export function HardwarePage() {
           )}
           {hw.error && <div className="alert" role="alert">{hw.error}</div>}
         </section>
+
+        <RemoteCard />
 
         <section className="card stack" aria-labelledby="fwH">
           <h2 id="fwH" style={{ fontSize: 19 }}>{t("วิธีลงเฟิร์มแวร์")}</h2>

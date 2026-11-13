@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DrumDuino">
+<meta name="theme-color" content="#0b0d12">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="manifest" href="/manifest.json">
+<title>DrumDuino Pads</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #12151c; --line: #222733; --text: #eceef3; --muted: #8b90a0;
+    --ok: #4ade80; --bad: #ff8a80; --gap: 8px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+    font: 600 14px/1.2 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Thonburi', sans-serif;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; overscroll-behavior: none; }
+  body { display: flex; flex-direction: column;
+    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+  header { display: flex; align-items: center; gap: 10px; height: 26px; flex: none; color: var(--muted); font-size: 12px; }
+  header b { color: var(--text); font-weight: 700; letter-spacing: .02em; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 8px var(--bad); flex: none; }
+  .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  header .sp { flex: 1; }
+  #grid { flex: 1; display: grid; gap: var(--gap); min-height: 0; padding-top: 4px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1.15fr 0.9fr;
+    grid-template-areas:
+      "crash tom1  tom2  ride"
+      "hihat snare snare floor"
+      "hatp  kick  kick  floor"; }
+  #grid.extra { grid-template-rows: 1fr 1.15fr 0.9fr 0.8fr;
+    grid-template-areas:
+      "crash tom1  tom2  ride"
+      "hihat snare snare floor"
+      "hatp  kick  kick  floor"
+      "x     x     x     x"; }
+  #extra { grid-area: x; display: grid; gap: var(--gap); grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .pad { --c: #4C8DF6; position: relative; border-radius: 18px; border: 2px solid color-mix(in srgb, var(--c) 70%, transparent);
+    background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--c) 26%, var(--panel)) 0%, var(--panel) 72%);
+    display: flex; align-items: flex-end; justify-content: flex-start; padding: 8px 11px; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03); transition: transform .06s; }
+  .pad.cym { border-radius: 50% / 38%; align-items: center; justify-content: center; }
+  .pad span { font-size: 13px; color: color-mix(in srgb, var(--c) 55%, #fff); text-shadow: 0 1px 2px #000; pointer-events: none; }
+  .pad i { position: absolute; inset: 0; background: var(--c); opacity: 0; pointer-events: none; border-radius: inherit; }
+  .pad.hit { transform: scale(.985); }
+  .pad.hit i { animation: flash .22s ease-out; }
+  @keyframes flash { from { opacity: var(--a, .7); } to { opacity: 0; } }
+  .pad.hatp { --c: #E9B949; border-style: dashed; align-items: center; justify-content: center; text-align: center; }
+  .pad.hatp.held { background: color-mix(in srgb, var(--c) 30%, var(--panel)); }
+  .pad.hatp small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 500; margin-top: 3px; }
+  #cover { position: fixed; inset: 0; background: rgba(8,10,14,.92); display: none; align-items: center; justify-content: center;
+    text-align: center; padding: 30px; font-size: 16px; line-height: 1.5; z-index: 5; }
+  #cover.show { display: flex; }
+  #cover small { display: block; color: var(--muted); font-size: 13px; font-weight: 500; margin-top: 8px; }
+  #rotate { display: none; }
+  @media (orientation: portrait) {
+    #grid { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr);
+      grid-template-areas: "crash ride" "tom1 tom2" "hihat floor" "snare snare" "hatp kick"; }
+    #grid.extra { grid-template-rows: repeat(6, 1fr);
+      grid-template-areas: "crash ride" "tom1 tom2" "hihat floor" "snare snare" "hatp kick" "x x"; }
+    #rotate { display: inline; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="dot"></span><b>DrumDuino</b><span id="kit"></span>
+  <span class="sp"></span><span id="rotate"></span><span id="lat"></span>
+</header>
+<div id="grid"></div>
+<div id="cover" class="show"><div id="coverText">กำลังเชื่อมต่อ…</div></div>
+<script>
+(() => {
+  const TXT = {
+    th: { connecting: 'กำลังเชื่อมต่อกับ DrumDuino…', lost: 'หลุดการเชื่อมต่อ กำลังต่อใหม่…', hint: 'ตรวจว่าเปิดแอป DrumDuino อยู่ และอยู่ใน Wi-Fi เดียวกัน', rotate: 'หมุนจอเป็นแนวนอนจะตีถนัดกว่า', hatp: 'แป้นไฮแฮท', hatpHint: 'กดค้าง = เปิด · ปล่อย = ปิด' },
+    en: { connecting: 'Connecting to DrumDuino…', lost: 'Connection lost, reconnecting…', hint: 'Check the DrumDuino app is open and on the same Wi-Fi', rotate: 'Turn sideways for more room', hatp: 'Hi-hat pedal', hatpHint: 'hold = open · release = close' }
+  };
+  let L = TXT.th;
+  const $ = (id) => document.getElementById(id);
+  const grid = $('grid');
+  const AREAS = ['crash', 'tom1', 'tom2', 'ride', 'hihat', 'snare', 'floor', 'kick'];
+  const els = new Map();
+  let ws = null, ready = false, hatPad = null;
+  const token = new URLSearchParams(location.search).get('k') || '';
+
+  // keep the screen on while playing (iOS 16.4+)
+  let lock = null;
+  const wake = async () => { try { if (!lock && navigator.wakeLock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => (lock = null)); } } catch {} };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { wake(); if (!ready) connect(); } });
+  ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu'].forEach((e) => document.addEventListener(e, (ev) => ev.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+  const send = (o) => { if (ready) try { ws.send(JSON.stringify(o)); } catch {} };
+  const flash = (el, v) => {
+    if (!el) return;
+    el.style.setProperty('--a', String(0.25 + 0.6 * (v / 127)));
+    el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+  };
+
+  function build(pads) {
+    grid.innerHTML = ''; els.clear(); hatPad = null;
+    const extra = document.createElement('div'); extra.id = 'extra';
+    for (const p of pads) {
+      const el = document.createElement('div');
+      el.className = 'pad' + (p.cym ? ' cym' : '');
+      el.style.setProperty('--c', p.color);
+      el.innerHTML = '<i></i><span></span>';
+      el.querySelector('span').textContent = p.name;
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault(); wake();
+        // the middle of the pad is loudest, the edge softer — like a real drum
+        const r = el.getBoundingClientRect();
+        const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+        const dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+        const d = Math.min(1, Math.hypot(dx, dy));
+        const v = Math.round(127 - 72 * d * d);
+        send({ t: 'hit', pad: p.id, v });
+        flash(el, v);
+      }, { passive: false });
+      els.set(p.id, el);
+      if (AREAS.includes(p.id)) { el.style.gridArea = p.id; grid.appendChild(el); }
+      else extra.appendChild(el);
+      if (p.hat && !hatPad) hatPad = p.id;
+    }
+    // hi-hat pedal: hold to open, release to close (a quick release gives the foot "chick")
+    if (hatPad) {
+      const el = document.createElement('div');
+      el.className = 'pad hatp';
+      el.style.gridArea = 'hatp';
+      el.innerHTML = '<i></i><span></span>';
+      el.querySelector('span').innerHTML = '';
+      const s = el.querySelector('span');
+      s.append(L.hatp); const sm = document.createElement('small'); sm.textContent = L.hatpHint; s.append(sm);
+      const down = (e) => { e.preventDefault(); el.setPointerCapture?.(e.pointerId); el.classList.add('held'); send({ t: 'hat', o: 1 }); };
+      const up = () => { if (!el.classList.contains('held')) return; el.classList.remove('held'); send({ t: 'hat', o: 0 }); };
+      el.addEventListener('pointerdown', down, { passive: false });
+      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+      grid.appendChild(el);
+    }
+    if (extra.children.length) { grid.classList.add('extra'); grid.appendChild(extra); } else grid.classList.remove('extra');
+  }
+
+  let pingT = 0, pingId = 0;
+  function connect() {
+    if (ws && ws.readyState <= 1) return;
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws?k=' + encodeURIComponent(token));
+    ws.onopen = () => { ready = true; $('dot').classList.add('on'); $('cover').classList.remove('show'); ping(); };
+    ws.onmessage = (ev) => {
+      let m; try { m = JSON.parse(ev.data); } catch { return; }
+      if (m.t === 'kit') {
+        L = TXT[m.lang === 'en' ? 'en' : 'th'];
+        document.documentElement.lang = m.lang === 'en' ? 'en' : 'th';
+        $('kit').textContent = m.kit ? '· ' + m.kit : '';
+        $('rotate').textContent = L.rotate;
+        build(m.pads || []);
+      } else if (m.t === 'flash') flash(els.get(m.pad), m.v);
+      else if (m.t === 'pong' && m.id === pingId) $('lat').textContent = Math.round((performance.now() - pingT) / 2) + ' ms';
+    };
+    ws.onclose = () => {
+      ready = false; $('dot').classList.remove('on'); $('lat').textContent = '';
+      $('coverText').innerHTML = ''; $('coverText').append(L.lost); const s = document.createElement('small'); s.textContent = L.hint; $('coverText').append(s);
+      $('cover').classList.add('show');
+      setTimeout(connect, 1000);
+    };
+    ws.onerror = () => {};
+  }
+  function ping() { if (!ready) return; pingT = performance.now(); send({ t: 'ping', id: ++pingId }); }
+  setInterval(ping, 3000);
+  $('coverText').textContent = L.connecting;
+  connect(); wake();
+})();
+</script>
+</body>
+</html>

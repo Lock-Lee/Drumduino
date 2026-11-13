@@ -419,3 +419,14 @@ body.rec-mode .pr-main.lanes-variant .pr-kitview { flex: 1 1 56%; }
 body.rec-mode .pr-main.lanes-variant .pr-sheet-scroll.lanes { flex: 0 0 44%; }
 body.rec-mode .pr-main.lanes-variant .pr-sheet-head { display: none; }
 .lang-switch { margin-right: 4px; }
+
+/* ---- iPhone / iPad pads card ---- */
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+.switch input { appearance: none; width: 38px; height: 22px; border-radius: 999px; background: var(--line-2, #34373D); position: relative; cursor: pointer; transition: background .15s; margin: 0; }
+.switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.switch input:checked { background: var(--ok, #34c37a); }
+.switch input:checked::after { transform: translateX(16px); }
+.switch input:focus-visible { outline: 2px solid var(--accent, #4C8DF6); outline-offset: 2px; }
+.remote-qr { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.remote-qr img { border-radius: 10px; background: #fff; padding: 6px; flex: none; }
+.remote-qr ol { flex: 1 1 160px; }

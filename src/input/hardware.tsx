@@ -4,7 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import { engine } from '../audio/engine';
 import { useStore } from '../store';
-import type { InputMode, PortInfo } from '../types';
+import type { InputMode, PortInfo, RemoteInfo, RemoteMsg } from '../types';
+import { PAD_COLOR } from '../score/padColors';
+import { lang } from '../i18n';
 import { CHANNEL_COUNT, sensitivityToThreshold } from '../types';
 import { SerialLink } from './serial';
 
@@ -41,11 +43,18 @@ interface Hardware {
   /** serial port picker (Electron) */
   portChoices: PortInfo[] | null;
   choosePort(id: string): void;
+  /** iPhone / iPad as wireless pads (Electron only) */
+  remoteSupported: boolean;
+  remoteOn: boolean;
+  setRemoteOn(on: boolean): void;
+  remoteInfo: RemoteInfo | null;
+  remoteClients: number;
 }
 
 const Ctx = createContext<Hardware | null>(null);
 
 const MODE_KEY = 'drumduino.inputMode';
+const REMOTE_KEY = 'drumduino.remote';
 
 export function HardwareProvider({ children }: { children: ReactNode }) {
   const { kit } = useStore();
@@ -71,7 +80,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
 
   // Pedal motion → openness, choke on close, and a "chick" when closed quickly.
   const track = useRef<Record<string, { o: number; peak: number; peakT: number }>>({});
-  const pedalMove = useCallback((padId: string, o: number, source: 'serial' | 'midi' | 'key' | 'ui') => {
+  const pedalMove = useCallback((padId: string, o: number, source: 'serial' | 'midi' | 'key' | 'ui' | 'remote') => {
     const pad = kitRef.current.pads.find((p) => p.id === padId);
     if (!pad) return;
     const now = performance.now();
@@ -297,6 +306,78 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
     };
   }, [pedalMove]);
 
+  // ---- iPhone / iPad pads over Wi-Fi ----
+  const remoteSupported = !!window.drumduino?.remoteStart;
+  const [remoteOn, setRemoteOnState] = useState(() => {
+    try {
+      return localStorage.getItem(REMOTE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [remoteInfo, setRemoteInfo] = useState<RemoteInfo | null>(null);
+  const [remoteClients, setRemoteClients] = useState(0);
+  const setRemoteOn = useCallback((on: boolean) => {
+    setRemoteOnState(on);
+    try {
+      localStorage.setItem(REMOTE_KEY, on ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  useEffect(() => {
+    const dd = window.drumduino;
+    if (!dd?.remoteStart) return;
+    if (!remoteOn) {
+      void dd.remoteStop?.();
+      setRemoteInfo(null);
+      setRemoteClients(0);
+      return;
+    }
+    let alive = true;
+    void dd.remoteStart().then((info) => alive && setRemoteInfo(info));
+    const offClients = dd.onRemoteClients?.((n) => setRemoteClients(n));
+    const offMsg = dd.onRemote?.((msg: RemoteMsg) => {
+      if (msg.t === 'hat') {
+        const hp = pedalPad();
+        if (hp) pedalMove(hp.id, Math.max(0, Math.min(1, msg.o)), 'remote');
+        return;
+      }
+      const pad = kitRef.current.pads.find((p) => p.id === msg.pad);
+      if (!pad) return;
+      const z = msg.z === 'rim' || msg.z === 'pedal' ? msg.z : 'head';
+      if (z === 'pedal') engine.choke(pad.id);
+      engine.play(pad, Math.max(1, Math.min(127, Math.round(msg.v))), 'remote', z);
+    });
+    return () => {
+      alive = false;
+      offClients?.();
+      offMsg?.();
+    };
+  }, [remoteOn, pedalMove]); // eslint-disable-line react-hooks/exhaustive-deps
+  // tell the phone which pads this kit has (re-sent when the kit or language changes)
+  useEffect(() => {
+    if (!remoteOn) return;
+    window.drumduino?.remoteState?.({
+      kit: kit.name,
+      lang,
+      pads: kit.pads.map((p) => ({
+        id: p.id,
+        name: lang === 'th' ? p.th || p.name : p.name,
+        color: PAD_COLOR[p.id as keyof typeof PAD_COLOR] ?? (p.cymbal ? '#E9B949' : '#4C8DF6'),
+        hat: p.openSamples.length > 0 || p.pedalChannel >= 0 || p.id === 'hihat',
+        cym: p.cymbal
+      }))
+    });
+  }, [remoteOn, kit, remoteClients]);
+  // light up the pad on the phone when it sounds (from any source)
+  useEffect(() => {
+    if (!remoteOn || !remoteClients) return;
+    return engine.onHit((padId, v, _zone, source) => {
+      if (source !== 'remote') window.drumduino?.remoteFlash?.(padId, v);
+    });
+  }, [remoteOn, remoteClients]);
+
   const setMode = useCallback((m: InputMode) => {
     setModeState(m);
     try {
@@ -327,7 +408,12 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
     flash,
     rimFlash,
     portChoices,
-    choosePort
+    choosePort,
+    remoteSupported,
+    remoteOn,
+    setRemoteOn,
+    remoteInfo,
+    remoteClients
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

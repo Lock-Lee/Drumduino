@@ -99,6 +99,11 @@ export interface PortInfo {
   likelyArduino: boolean;
 }
 
+/** iPhone / iPad pads over Wi-Fi */
+export interface RemoteInfo { ip?: string | null; port?: number; url?: string | null; clients?: number; error?: string }
+export interface RemotePad { id: string; name: string; color: string; hat: boolean; cym: boolean }
+export type RemoteMsg = { t: 'hit'; pad: string; v: number; z?: Zone } | { t: 'hat'; o: number };
+
 declare global {
   interface Window {
     drumduino?: {
@@ -109,6 +114,12 @@ declare global {
       listMyScores?(): Promise<{ name: string; key: string; data: string }[]>;
       openScoresFolder?(): Promise<string>;
       setRecMode?(mode: 'portrait' | 'landscape' | false): Promise<boolean>;
+      remoteStart?(): Promise<RemoteInfo>;
+      remoteStop?(): Promise<boolean>;
+      remoteState?(state: { pads: RemotePad[]; lang: string; kit: string }): void;
+      remoteFlash?(pad: string, v: number): void;
+      onRemote?(cb: (msg: RemoteMsg) => void): () => void;
+      onRemoteClients?(cb: (n: number) => void): () => void;
     };
   }
 }

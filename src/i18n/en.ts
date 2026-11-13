@@ -1,5 +1,18 @@
 // English for every Thai UI string (key = the Thai text in the code). Edit freely.
 export const EN: Record<string, string> = {
+  "ตีจาก iPhone / iPad": "Play from iPhone / iPad",
+  "ใช้จอ iPhone หรือ iPad เป็นแป้นกลองไร้สาย เสียงออกจากเครื่องนี้ ต้องอยู่ใน Wi-Fi เดียวกัน": "Use an iPhone or iPad screen as wireless drum pads. Sound comes from this computer. Both must be on the same Wi-Fi.",
+  "พอร์ต 8765 ถูกใช้อยู่ ลองปิดแอป DrumDuino ตัวอื่นแล้วเปิดใหม่": "Port 8765 is in use. Close any other DrumDuino window and try again.",
+  "กำลังเปิด…": "Starting…",
+  "เครื่องนี้ยังไม่ได้ต่อ Wi-Fi หรือเครือข่าย": "This computer isn't on Wi-Fi or a network.",
+  "QR code สำหรับเปิดหน้าแป้นกลองบน iPhone": "QR code that opens the drum pads on an iPhone",
+  "เปิดกล้อง iPhone แล้วสแกน QR นี้": "Open the iPhone camera and scan this QR code",
+  "หมุนโทรศัพท์เป็นแนวนอน แล้วแตะแป้นได้เลย": "Turn the phone sideways and tap the pads",
+  "กดแชร์ → “เพิ่มไปยังหน้าจอโฮม” เพื่อเปิดเต็มจอครั้งต่อไป": "Tap Share → “Add to Home Screen” to open it full screen next time",
+  "เชื่อมต่อแล้ว {0} เครื่อง": "{0} connected",
+  "รอโทรศัพท์เชื่อมต่อ…": "Waiting for a phone…",
+  "ที่อยู่": "Address",
+  "ครั้งแรก macOS อาจถามว่าจะให้ DrumDuino รับการเชื่อมต่อเข้ามาไหม ให้กด “อนุญาต”": "The first time, macOS may ask whether DrumDuino can accept incoming connections. Choose “Allow”.",
   "MIDI: ยังไม่ได้เลือกอุปกรณ์": "MIDI: no device selected",
   "เชื่อมต่อ Arduino แล้ว": "Arduino connected",
   "กำลังเชื่อมต่อ…": "Connecting…",

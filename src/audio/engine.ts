@@ -4,7 +4,7 @@ import { HH_HALF, HH_OPEN } from '../types';
 import { BUILTINS, renderBuiltin } from './synth';
 import { getSample } from './sampleDb';
 
-export type HitSource = 'serial' | 'midi' | 'key' | 'ui' | 'score';
+export type HitSource = 'serial' | 'midi' | 'key' | 'ui' | 'score' | 'remote';
 export type HitListener = (padId: string, velocity: number, zone: Zone, source: HitSource) => void;
 
 export interface PlayOpts {

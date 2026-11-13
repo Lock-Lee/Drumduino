@@ -2,6 +2,7 @@
 const { app, BrowserWindow, ipcMain, shell, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { createRemote } = require('./remote.cjs');
 
 // Drum score files (MIDI / MusicXML) the app picks up by itself on start.
 function scoreDirs() {
@@ -144,6 +145,32 @@ function createWindow() {
   }
   mainWindow.setMenuBarVisibility(false);
 }
+
+// iPhone / iPad as wireless pads (served on the local network while the user has it switched on)
+let remote = null;
+function getRemote() {
+  if (!remote) {
+    remote = createRemote({
+      tokenFile: path.join(app.getPath('userData'), 'remote-token.txt'),
+      onMessage: (msg) => mainWindow?.webContents.send('remote:msg', msg),
+      onClients: (n) => mainWindow?.webContents.send('remote:clients', n)
+    });
+  }
+  return remote;
+}
+ipcMain.handle('remote:start', async () => {
+  try {
+    return await getRemote().start();
+  } catch (e) {
+    return { error: e.code === 'EADDRINUSE' ? 'port' : String(e.message || e) };
+  }
+});
+ipcMain.handle('remote:stop', () => {
+  remote?.stop();
+  return true;
+});
+ipcMain.on('remote:state', (_e, s) => getRemote().setState(s));
+ipcMain.on('remote:flash', (_e, pad, v) => remote?.flash(pad, v));
 
 app.whenReady().then(() => {
   createWindow();
