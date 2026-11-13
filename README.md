@@ -30,7 +30,7 @@ The app speaks Thai and English (switch with **ไทย | EN** in the top right
 
 **Recording**
 - **Recording mode** in portrait or 16:9 landscape hides all menus, leaving only the notes and the 3D kit
-- A script sets up OBS completely: camera + app window + the app's audio captured directly
+- A script sets up OBS completely for Reels (9:16) and YouTube (16:9): the app window fills the picture, with the Mac's sound
 
 **Hardware**
 - Input over USB Serial (any board) or USB MIDI (Leonardo / Pro Micro); Arduino Mega gives 16 channels (A0–A15)
@@ -97,21 +97,21 @@ Section names (Markers) in a MIDI file appear as section labels on the score, an
 ```bash
 # Close OBS first, then run once (macOS)
 python3 obs/setup_obs.py
-open -a OBS --args --collection DrumDuino --profile DrumDuino
+open -a OBS --args --collection "DrumDuino Reels" --profile "DrumDuino Reels"
 ```
 
-The script creates a **DrumDuino** scene collection (1920×1080, 60 fps, clips saved to `~/Movies/DrumDuino`).
+The script creates two scene collections + profiles (60 fps, clips saved to `~/Movies/DrumDuino`):
 
-| OBS scene | Use with recording mode | In the frame |
-|---|---|---|
-| ตีกลอง: กล้อง + แอป | Portrait | Camera on the left, notes and kit on the right |
-| กล้องเต็มจอ | Any | Camera only |
-| แอปเต็มจอ (แนวนอน) | Landscape | Notes and 3D kit fill the frame |
-| แอปเต็มจอ + กล้องมุมเล็ก | Landscape | The same, with a small camera in the bottom-right corner |
+| Collection / profile | Size | Use with recording mode | For |
+|---|---|---|---|
+| DrumDuino Reels | 1080×1920 (9:16) | Portrait | Reels, TikTok, Shorts |
+| DrumDuino | 1920×1080 (16:9) | Landscape (full) | YouTube |
 
-In the app's Practice tab, press **● Record → Portrait** or **Landscape (full)**. The window shrinks and moves to exactly where OBS captures it (don't drag the window).
+Each has one scene, **แอปเต็มจอ**: the notes and 3D kit fill the whole picture, no camera. Switch between them in OBS under *Scene Collection* and *Profile*.
+
+In the app's Practice or Lanes tab, press **● Record → Portrait** or **Landscape (full)**. The window shrinks and moves to exactly where OBS captures it (don't drag the window).
 Space plays / stops, Esc leaves recording mode.
-Drums and the backing track are recorded straight from the app, delayed 100 ms to line up with the camera. A microphone source is included but muted.
+Sound is the Mac's own output (drums + backing track), so turn on Do Not Disturb while recording to keep notification sounds out.
 
 ### Example 5: try it without an Arduino
 

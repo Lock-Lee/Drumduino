@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
-"""Create an OBS Studio scene collection + profile "DrumDuino" for recording drum videos on macOS.
+"""Create OBS Studio scene collections + profiles for recording DrumDuino clips on macOS (no camera).
 
-Scenes (1920×1080, 60 fps):
-  1. ตีกลอง: กล้อง + แอป        camera square on the left, DrumDuino "อัดคลิป แนวตั้ง" window on the right
-  2. กล้องเต็มจอ               camera only
-  3. แอปเต็มจอ (แนวนอน)        DrumDuino "อัดคลิป แนวนอน" window filling the picture
-  4. แอปเต็มจอ + กล้องมุมเล็ก   the same with a small camera picture bottom-right
-Audio: DrumDuino's own sound (drums + backing track) straight from the app via ScreenCaptureKit,
-delayed 100 ms to line up with the camera; the microphone is added but muted.
+  "DrumDuino Reels"  1080×1920 (9:16) — Reels / TikTok / Shorts, from the app's "อัดคลิป แนวตั้ง" window
+  "DrumDuino"        1920×1080 (16:9) — YouTube, from the app's "อัดคลิป แนวนอน (เต็มจอ)" window
+Audio: the Mac's sound output (drums + backing track) through ScreenCaptureKit desktop audio. DrumDuino's
+own process can't be picked as an audio source because Electron plays sound from a helper process, so
+turn on Do Not Disturb while recording to keep notification sounds out.
 
 The DrumDuino window is captured with an application capture of the main display and cropped to the
-spot where the app puts its "โหมดอัดคลิป" window (REC below = electron/main.cjs REC).
+spot where the app puts its recording window (REC below = electron/main.cjs REC).
 
-Run with OBS closed:  python3 obs/setup_obs.py [camera-unique-id]   (--force: OBS may stay open; the
-                      DrumDuino collection/profile are separate files OBS does not overwrite)
-Then start OBS:       open -a OBS --args --collection DrumDuino --profile DrumDuino
+Run with OBS closed:  python3 obs/setup_obs.py   (--force: OBS may stay open; the DrumDuino
+                      collections/profiles are separate files OBS does not overwrite)
+Then start OBS:       open -a OBS --args --collection "DrumDuino Reels" --profile "DrumDuino Reels"
 """
 import json, os, subprocess, sys, uuid, ctypes, ctypes.util, re, configparser
 
 OBS = os.path.expanduser('~/Library/Application Support/obs-studio')
-NAME = 'DrumDuino'
 # points, content area of the recording window (= electron/main.cjs REC)
-REC = dict(x=40, y=110, w=560, h=720)     # แนวตั้ง
+REC = dict(x=40, y=110, w=468, h=832)     # แนวตั้ง (9:16)
 REC_L = dict(x=40, y=110, w=960, h=540)   # แนวนอน (เต็มจอ)
 APP_BUNDLE = 'com.github.Electron'      # DrumDuino run with `npx electron .`; the packaged app is com.drumduino.app
-W, H = 1920, 1080
 
 
 def main_display():
@@ -54,11 +50,6 @@ def main_display():
     return dict(w=w, h=h, pw=pw, ph=ph, uuid=buf.value.decode())
 
 
-def cameras():
-    out = subprocess.run(['system_profiler', 'SPCameraDataType'], capture_output=True, text=True).stdout
-    return re.findall(r'^\s{4}(\S.*?):\s*\n\s+.*?Unique ID: (\S+)', out, re.M | re.S)
-
-
 def src(name, sid, settings, **extra):
     d = {
         'prev_ver': 553648129, 'name': name, 'uuid': str(uuid.uuid4()), 'id': sid, 'versioned_id': sid,
@@ -71,11 +62,11 @@ def src(name, sid, settings, **extra):
     return d
 
 
-def item(source, i, pos=(0, 0), bounds=None, bounds_type=0, crop=(0, 0, 0, 0), bounds_crop=False, align=5, bounds_align=0, visible=True):
+def item(source, i, canvas, pos=(0, 0), bounds=None, bounds_type=0, crop=(0, 0, 0, 0), bounds_crop=False, align=5, bounds_align=0, visible=True):
     bx, by = bounds or (0, 0)
     return {
         'name': source['name'], 'source_uuid': source['uuid'], 'visible': visible, 'locked': False, 'rot': 0.0,
-        'scale_ref': {'x': float(W), 'y': float(H)}, 'align': align, 'bounds_type': bounds_type,
+        'scale_ref': {'x': float(canvas[0]), 'y': float(canvas[1])}, 'align': align, 'bounds_type': bounds_type,
         'bounds_align': bounds_align, 'bounds_crop': bounds_crop,
         'crop_left': crop[0], 'crop_top': crop[1], 'crop_right': crop[2], 'crop_bottom': crop[3],
         'id': i, 'group_item_backup': False, 'pos': {'x': float(pos[0]), 'y': float(pos[1])},
@@ -90,37 +81,22 @@ def scene(name, items):
                canvas_uuid='6c69626f-6273-4c00-9d88-c5136d61696e')
 
 
-def build(cam_id, disp):
+def build(name, canvas, rect, disp):
+    W, H = canvas
     sx, sy = disp['pw'] / disp['w'], disp['ph'] / disp['h']  # capture pixels per point
-    def crop_for(r, inset=2):
-        return (round(r['x'] * sx) + inset, round(r['y'] * sy) + inset,
-                round((disp['w'] - r['x'] - r['w']) * sx) + inset, round((disp['h'] - r['y'] - r['h']) * sy) + inset)
-    crop, crop_l = crop_for(REC), crop_for(REC_L)
+    inset = 2
+    crop = (round(rect['x'] * sx) + inset, round(rect['y'] * sy) + inset,
+            round((disp['w'] - rect['x'] - rect['w']) * sx) + inset, round((disp['h'] - rect['y'] - rect['h']) * sy) + inset)
     bg = src('พื้นหลัง', 'color_source_v3', {'color': 0xFF141210, 'width': W, 'height': H})
-    cam = src('กล้อง', 'macos-avcapture', {'device': cam_id, 'use_preset': True, 'preset': 'AVCaptureSessionPreset1920x1080'})
     app = src('DrumDuino (หน้าต่างอัดคลิป)', 'screen_capture',
               {'type': 2, 'display_uuid': disp['uuid'], 'application': APP_BUNDLE, 'show_cursor': False, 'hide_obs': True})
-    # app audio straight from DrumDuino; +100 ms so it lines up with the (later) camera picture
-    snd = src('เสียง DrumDuino', 'sck_audio_capture', {'type': 1, 'application': APP_BUNDLE}, sync=100_000_000)
-    mic = src('ไมค์', 'coreaudio_input_capture', {'device_id': 'default'}, muted=True)
-    side = W - H  # 840 px for the app next to a 1080×1080 camera square
-    s1 = scene('ตีกลอง: กล้อง + แอป', [
-        item(bg, 1),
-        item(cam, 2, (0, 0), (H, H), 3, bounds_crop=True),
-        item(app, 3, (H, 0), (side, H), 2, crop),
-        item(snd, 4), item(mic, 5)])
-    s2 = scene('กล้องเต็มจอ', [item(cam, 1, (0, 0), (W, H), 3, bounds_crop=True), item(snd, 2), item(mic, 3)])
-    # landscape recording window: 16:9, so it fills the whole picture
-    s3 = scene('แอปเต็มจอ (แนวนอน)', [item(bg, 1), item(app, 2, (0, 0), (W, H), 2, crop_l), item(snd, 3), item(mic, 4)])
-    pw, ph, m = 480, 270, 28
-    s4 = scene('แอปเต็มจอ + กล้องมุมเล็ก', [
-        item(bg, 1), item(app, 2, (0, 0), (W, H), 2, crop_l),
-        item(cam, 3, (W - pw - m, H - ph - m), (pw, ph), 3, bounds_crop=True),
-        item(snd, 4), item(mic, 5)])
-    scenes = [s1, s2, s3, s4]
+    # desktop audio (type 0): everything the Mac plays — DrumDuino's drums and backing track
+    snd = src('เสียงจากเครื่อง (DrumDuino)', 'sck_audio_capture', {'type': 0})
+    s1 = scene('แอปเต็มจอ', [item(bg, 1, canvas), item(app, 2, canvas, (0, 0), (W, H), 2, crop), item(snd, 3, canvas)])
+    scenes = [s1]
     return {
-        'name': NAME,
-        'sources': [bg, cam, app, snd, mic] + scenes,
+        'name': name,
+        'sources': [bg, app, snd] + scenes,
         'groups': [],
         'scene_order': [{'name': s['name']} for s in scenes],
         'current_scene': s1['name'], 'current_program_scene': s1['name'],
@@ -130,20 +106,21 @@ def build(cam_id, disp):
             {'name': 'Fade', 'duration': 300, 'hotkeys': [], 'id': 2, 'fade_to_black': False}],
         'preview_locked': False, 'scaling_enabled': False, 'scaling_level': 0, 'scaling_off_x': 0.0, 'scaling_off_y': 0.0,
         'modules': {}, 'resolution': {'x': W, 'y': H}, 'version': 2
-    }, (crop, crop_l)
+    }, crop
 
 
-def profile():
-    d = os.path.join(OBS, 'basic', 'profiles', NAME)
+def profile(name, canvas):
+    W, H = canvas
+    d = os.path.join(OBS, 'basic', 'profiles', name)
     os.makedirs(d, exist_ok=True)
     movies = os.path.expanduser('~/Movies/DrumDuino')
     os.makedirs(movies, exist_ok=True)
     ini = f"""[General]
-Name={NAME}
+Name={name}
 
 [Output]
 Mode=Simple
-FilenameFormatting=DrumDuino %CCYY-%MM-%DD %hh-%mm-%ss
+FilenameFormatting={name} %CCYY-%MM-%DD %hh-%mm-%ss
 
 [SimpleOutput]
 FilePath={movies}
@@ -179,20 +156,18 @@ ChannelSetup=Stereo
     return movies
 
 
+SETUPS = [('DrumDuino Reels', (1080, 1920), REC), ('DrumDuino', (1920, 1080), REC_L)]
+
 if __name__ == '__main__':
     if '--force' not in sys.argv and subprocess.run(['pgrep', '-x', 'OBS'], capture_output=True).returncode == 0:
         sys.exit('ปิด OBS ก่อน แล้วรันใหม่ (OBS จะเขียนทับไฟล์ตอนปิด)')
-    cams = cameras()
-    args = [a for a in sys.argv[1:] if not a.startswith('--')]
-    want = args[0] if args else None
-    cam_id = want or next((u for n, u in cams if 'iPhone' in n), cams[0][1] if cams else '')
     disp = main_display()
-    coll, crop = build(cam_id, disp)
-    path = os.path.join(OBS, 'basic', 'scenes', NAME + '.json')
-    with open(path, 'w') as f:
-        json.dump(coll, f, ensure_ascii=False, indent=4)
-    movies = profile()
-    print('scene collection:', path)
-    print('camera:', next((n for n, u in cams if u == cam_id), cam_id))
-    print('display:', disp, 'crop:', crop)
+    for name, canvas, rect in SETUPS:
+        coll, crop = build(name, canvas, rect, disp)
+        path = os.path.join(OBS, 'basic', 'scenes', name + '.json')
+        with open(path, 'w') as f:
+            json.dump(coll, f, ensure_ascii=False, indent=4)
+        movies = profile(name, canvas)
+        print(f'{name}: {canvas[0]}x{canvas[1]}  crop {crop}  ->  {path}')
+    print('display:', disp)
     print('recordings go to:', movies)

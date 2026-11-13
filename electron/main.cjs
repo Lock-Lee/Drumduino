@@ -108,7 +108,7 @@ function createWindow() {
   //   portrait  560×720 (7:9)  — next to a square camera picture
   //   landscape 960×540 (16:9) — fills a 1920×1080 video exactly (2× on Retina)
   // Keep REC in sync with obs/setup_obs.py.
-  const REC = { portrait: { x: 40, y: 110, w: 560, h: 720 }, landscape: { x: 40, y: 110, w: 960, h: 540 } };
+  const REC = { portrait: { x: 40, y: 110, w: 468, h: 832 }, landscape: { x: 40, y: 110, w: 960, h: 540 } };
   let normalBounds = null;
   ipcMain.removeHandler('window:recMode');
   ipcMain.handle('window:recMode', (_e, mode) => {
