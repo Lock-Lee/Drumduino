@@ -120,6 +120,9 @@ class BackingPlayer {
    * Keep the file at `target` seconds playing at `rate`. Small drift is pulled in by nudging the
    * speed, large jumps (loop back, seeking to a measure) by seeking.
    */
+  private lastSeek = -1e9;
+  private pendingPlay = false;
+
   follow(target: number, rate: number) {
     const el = this.el;
     if (!this.url) return;
@@ -128,15 +131,24 @@ class BackingPlayer {
       if (target < 0 && Math.abs(el.currentTime) > 0.01) el.currentTime = 0;
       return;
     }
+    // a seek is still settling: don't pile another one on top (that stalls the song)
+    if (el.seeking || this.pendingPlay) return;
     const drift = el.currentTime - target;
-    if (el.paused || Math.abs(drift) > 0.12) {
+    const now = performance.now();
+    // Jump only when far off, and at most once every 2 s. Long or VBR mp3 files report an inexact
+    // time right after a seek; seeking again on every frame made the song stall mid-way.
+    if (el.paused || (Math.abs(drift) > 0.3 && now - this.lastSeek > 2000)) {
+      this.lastSeek = now;
       el.currentTime = target;
       el.playbackRate = rate;
-      if (el.paused) void el.play().catch(() => undefined);
+      if (el.paused) {
+        this.pendingPlay = true;
+        void el.play().catch(() => undefined).finally(() => (this.pendingPlay = false));
+      }
       return;
     }
-    // ±4 % speed nudge at most, proportional to the drift
-    const nudge = Math.max(-0.04, Math.min(0.04, -drift * 0.8));
+    // otherwise catch up smoothly: up to ±6 % speed, proportional to the drift
+    const nudge = Math.max(-0.06, Math.min(0.06, -drift * 0.8));
     const r = rate * (1 + (Math.abs(drift) > 0.012 ? nudge : 0));
     if (Math.abs(el.playbackRate - r) > 0.002) el.playbackRate = r;
   }
