@@ -185,6 +185,8 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
   tailRef.current = tail;
   const onEndRef = useRef<() => void>(() => undefined);
   const toEndRef = useRef(false);
+  // the whole song with its backing track: play to the real end instead of looping back
+  const fullSongRef = useRef(false);
   onEndRef.current = () => {
     tickRef.current = null;
     if (toEndRef.current && bkRef.current && backing.loadedId === scoreRef.current.id && !backing.el.paused && !backing.el.ended) {
@@ -332,7 +334,8 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
     const leadIn = bk && from === 0 ? Math.max(0, (bk.offset * songBpm) / bpm - countInSec) : 0;
     setTail(false);
     toEndRef.current = to >= score.measures;
-    player.start(score, { bpm, from, to, loop, countIn: prefs.countIn, metronome: prefs.metronome, drums: drums(prefs), leadIn });
+    fullSongRef.current = !!bk && from === 0 && to >= score.measures;
+    player.start(score, { bpm, from, to, loop: loop && !fullSongRef.current, countIn: prefs.countIn, metronome: prefs.metronome, drums: drums(prefs), leadIn });
     setPlaying(true);
   };
   const stop = () => {
@@ -344,7 +347,7 @@ export function PracticePage({ variant = 'classic' }: { variant?: 'classic' | 'l
   };
 
   useEffect(() => player.setBpm(bpm), [bpm, player]);
-  useEffect(() => player.setOptions({ metronome: prefs.metronome, drums: drums(prefs), loop }), [prefs, loop, player]);
+  useEffect(() => player.setOptions({ metronome: prefs.metronome, drums: drums(prefs), loop: loop && !fullSongRef.current }), [prefs, loop, player]);
 
   // space = play/stop
   useEffect(() => {
